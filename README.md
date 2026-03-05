@@ -88,6 +88,44 @@ Verify with:
 - OpenCode: `/gsd-help`
 - Codex: `$gsd-help`
 
+### VS Code Copilot + Google Antigravity Integration
+
+This fork supports both environments with different invocation styles:
+
+- **VS Code Copilot chat:** use natural-language orchestration (assistant-driven GSD flow).
+- **Google Antigravity (Gemini CLI):** use native GSD slash commands after install.
+
+Install from this fork (recommended):
+
+```bash
+# Gemini / Antigravity
+node bin/install.js --gemini --global
+
+# Codex skills (if also used)
+node bin/install.js --codex --global
+```
+
+Copilot chat usage pattern:
+
+- Ask: "Run discuss phase 1 with PCJ and summarize Proposal/Critic/Judge."
+- Ask: "Plan phase 1 in budget mode, max 2-3 tasks per plan."
+- Ask: "Verify phase 1 with PCJ and apply HITL/HOTL guidance."
+
+Gemini/Antigravity usage pattern:
+
+```text
+/gsd:new-project
+/gsd:discuss-phase 1 --pcj
+/gsd:plan-phase 1
+/gsd:execute-phase 1
+/gsd:verify-work 1 --pcj
+```
+
+Integration note:
+
+- In Copilot chat, `/gsd:*` and `$gsd-*` are typically not native executable triggers; use assistant-orchestrated workflow prompts.
+- In Gemini/Antigravity runtime, native `/gsd:*` command flow is available after installation.
+
 > [!NOTE]
 > Codex installation uses skills (`skills/gsd-*/SKILL.md`) rather than custom prompts.
 
@@ -213,7 +251,7 @@ If you prefer not to use that flag, add this to your project's `.claude/settings
         ┌─────────────────▼───────────────────┐
         │ INTERNAL PCJ (Discuss) [LOCAL ONLY] │
         │ Proposer -> Critic -> Judge         │
-        │ writes development_process/PCJ_*.txt│
+        │ writes development/PCJ_*.txt        │
         └─────────────────┬───────────────────┘
                           │
           ┌───────────────▼──────────────────────────────┐
@@ -234,7 +272,7 @@ If you prefer not to use that flag, add this to your project's `.claude/settings
         ┌─────────────────▼────────────────────┐
         │ INTERNAL PCJ (Verify) [LOCAL ONLY]   │
         │ Proposer -> Critic -> Judge          │
-        │ writes development_process/PCJ_*.txt │
+        │ writes development/PCJ_*.txt         │
         └─────────────────┬────────────────────┘
                           │
           Curated outputs only -> .planning/* (no raw PCJ logs)
@@ -247,6 +285,92 @@ If you prefer not to use that flag, add this to your project's `.claude/settings
 ```
 
 This workflow is generic and can be applied worldwide across domains (software, policy interpretation, process design, documentation, and other structured problem-solving tasks).
+
+### PCJ Improvement Notes (vs base GSD)
+
+This fork keeps the core GSD flow, but adds an optional internal PCJ quality loop in Discuss and Verify.
+
+- Base GSD: Discuss captures preferences directly; Verify relies on UAT/diagnosis outputs.
+- This fork: Discuss/Verify can run Proposer → Critic → Judge before finalizing decisions.
+- Quality intent: reduce blind spots, challenge weak assumptions, and produce clearer final judgements for downstream planning/execution.
+- Scope intent: improve decision quality only in Discuss and Verify; Plan/Execute logic remains unchanged by default.
+- Privacy intent: raw PCJ reasoning stays local in `development/` (gitignored; legacy `development_process/` supported); curated outcomes only go to `.planning/*` docs.
+
+**Why this is constructive (not extra overhead):**
+
+- These controls are conditional, not always-on.
+- For low-risk work, run normal flow without PCJ for maximum speed/cost efficiency.
+- For ambiguous or high-impact work, PCJ + HITL/HOTL reduces blind spots, rework, and release risk.
+- Net effect: small targeted overhead in risky moments, lower total lifecycle cost overall.
+
+### GSD-PCJ UI (Transparent Decision Flow)
+
+This fork supports a practical PCJ UI pattern for chat-based workflows: users see concise role summaries and final control guidance, while raw internal logs remain local.
+
+#### Structured Assessment Framework
+
+PCJ uses different assessment dimensions for Discuss vs Verify so quality checks match intent.
+
+| Mode | Framework | Core Questions | Primary Goal |
+|------|-----------|----------------|--------------|
+| Discuss | `discussion-decision-framework` | Is scope aligned? Is strategy clear? Are assumptions explicit? Is execution ready? | Improve planning inputs before implementation |
+| Verify | `verification-risk-framework` | Is evidence reproducible? What is user impact? What is failure scope? Is release safe? | Improve release/readiness judgement |
+
+Each PCJ pass follows: **Proposal -> Critic -> Judge**.
+
+**What users see in chat:**
+- Proposal summary (what is being proposed)
+- Critic summary (what assumptions/risks are challenged)
+- Judge summary (final verdict + actions)
+- Human-control recommendation: `HOTL` (human oversight) or `HITL` (explicit human decision required)
+
+#### HITL/HOTL Routing
+
+| Condition | Control Mode | Why |
+|-----------|--------------|-----|
+| `verdict = needs-human-review` or unresolved high risk | `HITL` | Explicit human approval required before high-impact action |
+| `accepted-with-conditions` with bounded risk | `HOTL` | Proceed with oversight while conditions are monitored |
+| `accepted` with low residual risk | `HOTL` | Fast flow with lightweight oversight |
+
+**What is saved for traceability:**
+- Timestamped internal log: `development/PCJ_YYYYMMDDTHHMMSSZ.txt`
+- Curated verdict entries in `.planning/*` docs (Discuss/Verify state)
+
+#### Recorded Thinking Process and Outputs
+
+GSD-PCJ records **structured decision artifacts** (not unrestricted hidden reasoning dumps):
+
+- Role summaries shown in chat (Proposal/Critic/Judge)
+- Judge verdict + actions + human-control recommendation
+- Internal timestamped trail in `development/PCJ_*.txt`
+- Curated project-state updates in `.planning/*`
+
+This balances transparency, governance, and practical token usage.
+
+Example chat-style UI output:
+
+```text
+PCJ Discuss — Phase 03
+
+Proposal:
+- Use adapter-first strategy to reduce migration risk.
+
+Critic:
+- Missing rollback criteria; boundary conditions not explicit.
+
+Judge:
+- Verdict: accepted-with-conditions
+- Actions: add rollback trigger, lock invariants, define fallback path
+- Human Control: HOTL (monitor conditions during execution)
+```
+
+For high-risk verification outcomes:
+
+```text
+PCJ Verify — Phase 03
+- Verdict: needs-human-review
+- Human Control: HITL (release decision requires explicit human approval)
+```
 
 ### 1. Initialize Project
 
@@ -298,6 +422,11 @@ For each area you select, it asks until you're satisfied. The output — `CONTEX
 The deeper you go here, the more the system builds what you actually want. Skip it and you get reasonable defaults. Use it and you get *your* vision.
 
 With `--pcj`, Discuss runs a Proposal → Critic → Judge pass on scope/strategy/assumptions and writes the Judge output back to ACI/generic project-state docs.
+
+**Quality intent in Discuss:**
+- Improve framing quality before planning starts.
+- Force assumptions and tradeoffs to be explicit.
+- Produce judge-backed decision notes planners can execute without re-asking.
 
 **Creates:** `{phase_num}-CONTEXT.md`
 
@@ -398,6 +527,11 @@ The system:
 If everything passes, you move on. If something's broken, you don't manually debug — you just run `/gsd:execute-phase` again with the fix plans it created.
 
 With `--pcj`, Verify can run Proposal → Critic → Judge for interpretation/risk checks and persist a final verdict, including `needs_human_review`, into verification/state docs.
+
+**Quality intent in Verify:**
+- Improve confidence of release/readiness interpretation.
+- Surface unresolved risks earlier via Critic challenges.
+- Escalate ambiguous high-risk outcomes via `needs_human_review` instead of overconfident acceptance.
 
 **Creates:** `{phase_num}-UAT.md`, fix plans if issues found
 

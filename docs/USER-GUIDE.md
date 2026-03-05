@@ -8,6 +8,7 @@ A detailed reference for workflows, troubleshooting, and configuration. For quic
 
 - [Workflow Diagrams](#workflow-diagrams)
 - [Command Reference](#command-reference)
+- [Integration (Copilot + Antigravity)](#integration-copilot--antigravity)
 - [Copilot Chat Usage (No Context Switching)](#copilot-chat-usage-no-context-switching)
 - [PCJ Extension](#pcj-extension)
 - [Cost-Aware Quality Policy](#cost-aware-quality-policy)
@@ -251,6 +252,47 @@ enabled, or after `/gsd:audit-milestone` surfaces Nyquist compliance gaps.
 
 ---
 
+## Integration (Copilot + Antigravity)
+
+GSD-PCJ can be used in both VS Code Copilot chat and Google Antigravity (Gemini CLI), with slightly different invocation modes.
+
+### VS Code Copilot Chat
+
+- Native `/gsd:*` or `$gsd-*` triggers are usually not directly executable in Copilot chat.
+- Use assistant-orchestrated prompts to run the same workflow without leaving chat.
+
+Example prompts:
+
+- "Initialize this repo with GSD flow, then discuss phase 1 with PCJ."
+- "Plan phase 1 in budget mode and keep plans atomic."
+- "Verify phase 1 with PCJ and use HITL if verdict is needs-human-review."
+
+### Google Antigravity (Gemini CLI)
+
+Install from this fork:
+
+```bash
+node bin/install.js --gemini --global
+```
+
+Use native runtime commands:
+
+```text
+/gsd:new-project
+/gsd:discuss-phase 1 --pcj
+/gsd:plan-phase 1
+/gsd:execute-phase 1
+/gsd:verify-work 1 --pcj
+```
+
+### Cross-runtime consistency
+
+- Discuss and Verify use the same PCJ framework logic across runtimes.
+- Transparent role summaries and HITL/HOTL guidance are preserved.
+- Internal logs remain local in `development/PCJ_*.txt`; curated outcomes persist into `.planning/*`.
+
+---
+
 ## Copilot Chat Usage (No Context Switching)
 
 If you want to stay in GitHub Copilot chat, use GSD as an orchestration pattern through natural-language requests to the assistant.
@@ -294,6 +336,21 @@ Assessment frameworks are intentionally different:
 - Discuss (`discussion-decision-framework`): scope alignment, strategy clarity, assumption soundness, reversibility, execution readiness.
 - Verify (`verification-risk-framework`): evidence quality, user impact, reproducibility, scope of failure, release safety.
 
+Structured assessment matrix:
+
+| Mode | Framework | Key Evaluation Focus | Primary Outcome |
+|------|-----------|----------------------|-----------------|
+| Discuss | `discussion-decision-framework` | Scope fit, strategy clarity, assumption quality, planner readiness | Better planning inputs |
+| Verify | `verification-risk-framework` | Evidence quality, user impact, failure scope, release safety | Better release judgement |
+
+HITL/HOTL routing guidance:
+
+| Condition | Suggested Mode | Interpretation |
+|-----------|----------------|----------------|
+| `needs-human-review` or unresolved high-risk flags | `HITL` | Pause for explicit human approval |
+| `accepted-with-conditions` with bounded risk | `HOTL` | Continue with monitored oversight |
+| `accepted` with low residual risk | `HOTL` | Continue normal flow |
+
 Persistence behavior:
 
 - Discuss verdicts are written to ACI-aware or generic project/state docs.
@@ -301,6 +358,13 @@ Persistence behavior:
 - Raw Proposal/Critic/Judge logs are written to `development/PCJ_*.txt` for internal development only.
 - `development/` is auto-added to `.gitignore` so internal reasoning logs are not committed.
 - Legacy compatibility: existing `development_process/PCJ_*.txt` paths are still supported.
+
+Recorded process and outputs:
+
+- Chat-visible summaries: concise Proposal/Critic/Judge summaries for user transparency.
+- Control output: final Judge verdict plus suggested `HITL`/`HOTL` mode.
+- Internal trace: timestamped `development/PCJ_*.txt` records for audits and handoffs.
+- Curated state: project-facing decisions persisted into `.planning/*` docs.
 
 VS Code trigger examples:
 
