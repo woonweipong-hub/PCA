@@ -101,6 +101,8 @@ npx get-shit-done-cc@latest
 > node bin/install.js --gemini --global
 > ```
 
+After install, `node bin/install.js --help` should display the `GSD-PCJ` banner/logo and version in the CLI header.
+
 The installer prompts you to choose:
 1. **Runtime** — Claude Code, OpenCode, Gemini, Codex, or all
 2. **Location** — Global (all projects) or local (current project only)
