@@ -6,7 +6,8 @@ const fs = require('fs');
 const path = require('path');
 const { findPhaseInternal, resolveModelInternal, output, error } = require('./core.cjs');
 
-const DEV_PROCESS_DIR = 'development_process';
+const DEV_LOG_DIR = 'development';
+const LEGACY_DEV_PROCESS_DIR = 'development_process';
 
 function parseBoolean(value) {
   if (typeof value === 'boolean') return value;
@@ -19,10 +20,13 @@ function timestampId() {
   return iso.replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
 }
 
-function ensureDevelopmentProcessDir(cwd) {
-  const fullDir = path.join(cwd, DEV_PROCESS_DIR);
-  fs.mkdirSync(fullDir, { recursive: true });
-  return DEV_PROCESS_DIR;
+function ensureDevelopmentDirs(cwd) {
+  fs.mkdirSync(path.join(cwd, DEV_LOG_DIR), { recursive: true });
+  fs.mkdirSync(path.join(cwd, LEGACY_DEV_PROCESS_DIR), { recursive: true });
+  return {
+    primary: DEV_LOG_DIR,
+    legacy: LEGACY_DEV_PROCESS_DIR,
+  };
 }
 
 function ensureGitignoreEntry(cwd, entry) {
@@ -44,7 +48,43 @@ function ensureGitignoreEntry(cwd, entry) {
 
 function resolveLogFile(options) {
   if (options.log_file) return options.log_file;
-  return `${DEV_PROCESS_DIR}/PCJ_${timestampId()}.txt`;
+  return `${DEV_LOG_DIR}/PCJ_${timestampId()}.txt`;
+}
+
+function summarizeForChat(content) {
+  const text = String(content || '').replace(/\r\n/g, '\n').trim();
+  if (!text) return 'No role output provided.';
+  const compact = text.split('\n').map(line => line.trim()).filter(Boolean).join(' ');
+  return compact.length > 320 ? `${compact.slice(0, 317)}...` : compact;
+}
+
+function parseRiskFlags(value) {
+  if (!value) return [];
+  return String(value)
+    .split(/[;,\n]/)
+    .map(v => v.trim())
+    .filter(Boolean);
+}
+
+function getHumanControlRecommendation(mode, verdict, needsHumanReview, riskFlags) {
+  if (needsHumanReview || verdict === 'needs-human-review') {
+    return {
+      recommended_mode: 'HITL',
+      reason: 'High uncertainty or unresolved risk requires explicit human decision.',
+    };
+  }
+
+  if (mode === 'verify' && (verdict === 'accepted-with-conditions' || riskFlags.length > 0)) {
+    return {
+      recommended_mode: 'HOTL',
+      reason: 'Proceed with human oversight while conditions/risks are monitored.',
+    };
+  }
+
+  return {
+    recommended_mode: 'HOTL',
+    reason: 'No critical blockers detected; lightweight oversight is sufficient.',
+  };
 }
 
 function appendLogBlock(cwd, relPath, title, lines) {
@@ -196,8 +236,9 @@ function cmdPcjPrepare(cwd, mode, options, raw) {
     error('pcj prepare requires mode: discuss|verify');
   }
 
-  ensureDevelopmentProcessDir(cwd);
-  const gitignore = ensureGitignoreEntry(cwd, `${DEV_PROCESS_DIR}/`);
+  const dirs = ensureDevelopmentDirs(cwd);
+  const gitignorePrimary = ensureGitignoreEntry(cwd, `${DEV_LOG_DIR}/`);
+  const gitignoreLegacy = ensureGitignoreEntry(cwd, `${LEGACY_DEV_PROCESS_DIR}/`);
 
   const phase = options.phase || null;
   const decision = options.decision || null;
@@ -224,10 +265,11 @@ function cmdPcjPrepare(cwd, mode, options, raw) {
     decision,
     framework,
     storage: {
-      development_process_dir: DEV_PROCESS_DIR,
+      development_dir: dirs.primary,
+      development_process_dir_legacy: dirs.legacy,
       log_file: logFile,
-      gitignore_entry: `${DEV_PROCESS_DIR}/`,
-      gitignore_updated: gitignore.updated,
+      gitignore_entries: [`${DEV_LOG_DIR}/`, `${LEGACY_DEV_PROCESS_DIR}/`],
+      gitignore_updated: gitignorePrimary.updated || gitignoreLegacy.updated,
       internal_only: true,
     },
     models: {
@@ -255,8 +297,9 @@ function cmdPcjSave(cwd, mode, options, raw) {
     error('pcj save requires --role proposer|critic|judge');
   }
 
-  ensureDevelopmentProcessDir(cwd);
-  const gitignore = ensureGitignoreEntry(cwd, `${DEV_PROCESS_DIR}/`);
+  ensureDevelopmentDirs(cwd);
+  const gitignorePrimary = ensureGitignoreEntry(cwd, `${DEV_LOG_DIR}/`);
+  const gitignoreLegacy = ensureGitignoreEntry(cwd, `${LEGACY_DEV_PROCESS_DIR}/`);
 
   const phase = options.phase || null;
   const task = options.task || options.decision || 'unspecified task';
@@ -264,6 +307,7 @@ function cmdPcjSave(cwd, mode, options, raw) {
   const content = options.content || '';
   const framework = getAssessmentFramework(mode);
   const logFile = resolveLogFile(options);
+  const chatSummary = summarizeForChat(content);
 
   appendLogBlock(cwd, logFile, `## ${role.toUpperCase()} Output`, [
     `timestamp: ${new Date().toISOString()}`,
@@ -285,7 +329,12 @@ function cmdPcjSave(cwd, mode, options, raw) {
     decision,
     framework: framework.name,
     log_file: logFile,
-    gitignore_updated: gitignore.updated,
+    gitignore_updated: gitignorePrimary.updated || gitignoreLegacy.updated,
+    transparency: {
+      visible_summary: chatSummary,
+      role,
+      internal_reasoning_exposed: false,
+    },
   }, raw, logFile);
 }
 
@@ -347,8 +396,9 @@ function cmdPcjPersist(cwd, mode, options, raw) {
     error('pcj persist requires mode: discuss|verify');
   }
 
-  ensureDevelopmentProcessDir(cwd);
-  const gitignore = ensureGitignoreEntry(cwd, `${DEV_PROCESS_DIR}/`);
+  ensureDevelopmentDirs(cwd);
+  const gitignorePrimary = ensureGitignoreEntry(cwd, `${DEV_LOG_DIR}/`);
+  const gitignoreLegacy = ensureGitignoreEntry(cwd, `${LEGACY_DEV_PROCESS_DIR}/`);
 
   const phase = options.phase || null;
   const task = options.task || options.decision || 'unspecified task';
@@ -357,9 +407,12 @@ function cmdPcjPersist(cwd, mode, options, raw) {
   const judgement = options.judgement || '';
   const actions = options.actions || '';
   const riskFlags = options.risk_flags || '';
+  const riskFlagsList = parseRiskFlags(riskFlags);
   const needsHumanReview = parseBoolean(options.needs_human_review);
+  const control = getHumanControlRecommendation(mode, verdict, needsHumanReview, riskFlagsList);
   const framework = getAssessmentFramework(mode);
   const logFile = resolveLogFile(options);
+  const judgementSummary = summarizeForChat(judgement);
 
   const targetPath = options.target || (mode === 'verify' ? pickVerifyTarget(cwd, phase) : pickDiscussTarget(cwd));
   ensureParentDir(cwd, targetPath);
@@ -396,7 +449,9 @@ function cmdPcjPersist(cwd, mode, options, raw) {
     `judgement: ${judgement || 'n/a'}`,
     `actions: ${actions || 'n/a'}`,
     `risk_flags: ${riskFlags || '[]'}`,
-    'summary_recommendation: Curated judgement written to project/state docs; raw PCJ trail remains internal in development_process/.',
+    `human_control: ${control.recommended_mode}`,
+    `human_control_reason: ${control.reason}`,
+    'summary_recommendation: Curated judgement written to project/state docs; raw PCJ trail remains internal in development/ (legacy compatibility with development_process/).',
   ]);
 
   output({
@@ -407,9 +462,14 @@ function cmdPcjPersist(cwd, mode, options, raw) {
     decision,
     framework: framework.name,
     log_file: logFile,
-    gitignore_updated: gitignore.updated,
+    gitignore_updated: gitignorePrimary.updated || gitignoreLegacy.updated,
     verdict,
     needs_human_review: mode === 'verify' ? needsHumanReview : undefined,
+    transparency: {
+      visible_summary: judgementSummary,
+      internal_reasoning_exposed: false,
+      human_control: control,
+    },
   }, raw, targetPath);
 }
 

@@ -8,7 +8,9 @@ A detailed reference for workflows, troubleshooting, and configuration. For quic
 
 - [Workflow Diagrams](#workflow-diagrams)
 - [Command Reference](#command-reference)
+- [Copilot Chat Usage (No Context Switching)](#copilot-chat-usage-no-context-switching)
 - [PCJ Extension](#pcj-extension)
+- [Cost-Aware Quality Policy](#cost-aware-quality-policy)
 - [Configuration Reference](#configuration-reference)
 - [Usage Examples](#usage-examples)
 - [Troubleshooting](#troubleshooting)
@@ -23,7 +25,7 @@ A detailed reference for workflows, troubleshooting, and configuration. For quic
 ```
   ┌───────────────────────────────────────────────────────────────┐
   │                        NEW PROJECT                            │
-  │ /gsd:new-project  ->  Questions -> Research -> Req -> Roadmap│
+  │ /gsd:new-project  ->  Questions -> Research -> Req -> Roadmap │
   └──────────────────────────────┬────────────────────────────────┘
                                  │
                    ┌─────────────▼─────────────┐
@@ -32,16 +34,16 @@ A detailed reference for workflows, troubleshooting, and configuration. For quic
                                  │
           ┌──────────────────────▼──────────────────────┐
           │ /gsd:discuss-phase [N] [--pcj optional]     │
-          │ Capture implementation decisions              │
-          └───────────────┬──────────────────────────────┘
+          │ Capture implementation decisions            │
+          └───────────────┬─────────────────────────────┘
                           │
           if --pcj or config(pcj.enabled + pcj.discuss)
                           │
-        ┌─────────────────▼──────────────────┐
-        │ INTERNAL PCJ (Discuss) [LOCAL ONLY]│
-        │ Proposer -> Critic -> Judge        │
-        │ writes development_process/PCJ_*.txt
-        └─────────────────┬──────────────────┘
+        ┌─────────────────▼────────────────────┐
+        │ INTERNAL PCJ (Discuss) [LOCAL ONLY]  │
+        │ Proposer -> Critic -> Judge          │
+        │ writes development/PCJ_*.txt         │
+        └─────────────────┬────────────────────┘
                           │
           ┌───────────────▼──────────────────────────────┐
           │ /gsd:plan-phase [N]                          │
@@ -53,16 +55,16 @@ A detailed reference for workflows, troubleshooting, and configuration. For quic
                           │
           ┌───────────────▼──────────────────────────────┐
           │ /gsd:verify-work [N] [--pcj optional]        │
-          │ UAT + diagnosis                               │
+          │ UAT + diagnosis                              │
           └───────────────┬──────────────────────────────┘
                           │
           if --pcj or config(pcj.enabled + pcj.verify)
                           │
-        ┌─────────────────▼──────────────────┐
-        │ INTERNAL PCJ (Verify) [LOCAL ONLY] │
-        │ Proposer -> Critic -> Judge        │
-        │ writes development_process/PCJ_*.txt
-        └─────────────────┬──────────────────┘
+        ┌─────────────────▼────────────────────┐
+        │ INTERNAL PCJ (Verify) [LOCAL ONLY]   │
+        │ Proposer -> Critic -> Judge          │
+        │ writes development/PCJ_*.txt         │
+        └─────────────────┬────────────────────┘
                           │
           Curated outputs only -> .planning/* (no raw PCJ logs)
                           │
@@ -70,7 +72,7 @@ A detailed reference for workflows, troubleshooting, and configuration. For quic
                           │ No            │
   ┌───────────────────────▼───────────────▼──────────────────────┐
   │ /gsd:audit-milestone -> /gsd:complete-milestone -> next vX   │
-  └───────────────────────────────────────────────────────────────┘
+  └──────────────────────────────────────────────────────────────┘
 ```
 
 This lifecycle is domain-agnostic and designed for global use by individuals and teams across different industries.
@@ -249,6 +251,24 @@ enabled, or after `/gsd:audit-milestone` surfaces Nyquist compliance gaps.
 
 ---
 
+## Copilot Chat Usage (No Context Switching)
+
+If you want to stay in GitHub Copilot chat, use GSD as an orchestration pattern through natural-language requests to the assistant.
+
+- Native slash/skill triggers (`/gsd:*`, `$gsd-*`) are runtime-specific and are not directly executable in this chat.
+- In Copilot chat, ask the assistant to run the equivalent GSD workflow steps.
+
+Recommended starter prompts in Copilot chat:
+
+- "Initialize this repo using GSD flow (map codebase first if needed)."
+- "Run discuss for phase 1 with PCJ, then summarize decisions in state docs."
+- "Plan phase 1, keep it budget-oriented, max 2-3 tasks per plan file."
+- "Execute phase 1 and then verify phase 1 with PCJ only if risks are high."
+
+This keeps your development in one conversation while preserving the GSD workflow discipline.
+
+---
+
 ## PCJ Extension
 
 PCJ is an optional inner loop used only in Discuss and Verify:
@@ -263,6 +283,12 @@ Scope in this fork:
 - Used in Verify for high-stakes interpretation checks.
 - Not enabled by default in Plan/Execute.
 
+Improvement notes compared with base GSD:
+
+- Base GSD already has strong discuss and verify phases; this fork adds an optional internal adversarial review layer.
+- PCJ’s intent is quality uplift, not workflow replacement: better assumptions in Discuss, better risk interpretation in Verify.
+- The output path is split: internal raw reasoning stays local, curated judgement is written back into project/verification state.
+
 Assessment frameworks are intentionally different:
 
 - Discuss (`discussion-decision-framework`): scope alignment, strategy clarity, assumption soundness, reversibility, execution readiness.
@@ -272,8 +298,9 @@ Persistence behavior:
 
 - Discuss verdicts are written to ACI-aware or generic project/state docs.
 - Verify verdicts are written to verification/state docs, including `needs_human_review`.
-- Raw Proposal/Critic/Judge logs are written to `development_process/PCJ_*.txt` for internal development only.
-- `development_process/` is auto-added to `.gitignore` so internal reasoning logs are not committed.
+- Raw Proposal/Critic/Judge logs are written to `development/PCJ_*.txt` for internal development only.
+- `development/` is auto-added to `.gitignore` so internal reasoning logs are not committed.
+- Legacy compatibility: existing `development_process/PCJ_*.txt` paths are still supported.
 
 VS Code trigger examples:
 
@@ -286,13 +313,54 @@ Programmatic helper commands used by workflows:
 
 ```bash
 node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj prepare discuss --phase 3 --decision "scope, strategy, assumptions"
-node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj save discuss --role proposer --phase 3 --task "Task T" --decision "scope, strategy, assumptions" --content "..." --log-file "development_process/PCJ_20260305T090000Z.txt"
-node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj save discuss --role critic --phase 3 --task "Task T" --decision "scope, strategy, assumptions" --content "..." --log-file "development_process/PCJ_20260305T090000Z.txt"
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj save discuss --role proposer --phase 3 --task "Task T" --decision "scope, strategy, assumptions" --content "..." --log-file "development/PCJ_20260305T090000Z.txt"
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj save discuss --role critic --phase 3 --task "Task T" --decision "scope, strategy, assumptions" --content "..." --log-file "development/PCJ_20260305T090000Z.txt"
 node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj persist discuss --phase 3 --decision "scope, strategy, assumptions" --verdict "accepted-with-conditions" --judgement "..." --actions "..."
 
 node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj prepare verify --phase 3 --decision "verification interpretation and release risk"
 node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj persist verify --phase 3 --decision "verification interpretation and release risk" --verdict "needs-human-review" --judgement "..." --actions "..." --needs-human-review true
 ```
+
+---
+
+## Cost-Aware Quality Policy
+
+Use this policy to keep token costs low while improving quality where it matters most.
+
+Default operating mode:
+
+- Keep normal flow: Discuss (optional) -> Plan -> Execute -> Verify.
+- Use lower-cost profile by default (`budget` or `balanced`).
+- Keep PCJ off unless risk is meaningful.
+
+Escalation policy (automatable):
+
+- Step 1 (default): no PCJ.
+- Step 2 (if decision is ambiguous/high-impact): enable PCJ for Discuss or Verify only.
+- Step 3 (if verify fails once): escalate model profile for Critic/Judge roles.
+- Step 4 (if verify fails twice): require human review decision before release.
+
+Suggested model role split for PCJ:
+
+- Proposal: fastest/cheapest capable model.
+- Critic: stronger reasoning model.
+- Judge: strongest available model for final verdict.
+
+Token and cost impact (typical ranges):
+
+| Mode | Relative Token Use | Typical Use Case |
+|------|--------------------|------------------|
+| No PCJ | 1.0x | Routine implementation/verification |
+| PCJ in Discuss only | 1.2x-1.6x | Architecture or scope decisions |
+| PCJ in Verify only | 1.2x-1.8x | Release-risk interpretation |
+| PCJ in Discuss + Verify | 1.5x-2.5x | High-stakes phases |
+
+Practical cost controls:
+
+- Keep prompts scoped to one phase and one decision domain at a time.
+- Ask for concise outputs and explicit action lists.
+- Cap refinement loops (for example, max 2) before human review.
+- Return to default low-cost profile after high-risk checkpoints complete.
 
 ---
 

@@ -23,6 +23,7 @@ reports/
 RAILROAD_ARCHITECTURE.md
 .planning/
 analysis/
+development/
 development_process/
 docs/GSD-MASTER-ARCHITECTURE.md
 docs/GSD-RUST-IMPLEMENTATION-GUIDE.md

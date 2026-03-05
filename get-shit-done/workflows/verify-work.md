@@ -321,7 +321,7 @@ Run this when either is true:
 node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pcj prepare verify --phase "${phase_number}" --decision "verification interpretation and release risk"
 ```
 
-Capture `storage.log_file` from prepare output. This file is under `development_process/` and is internal-only.
+Capture `storage.log_file` from prepare output. This file is under `development/` (legacy `development_process/` still supported) and is internal-only.
 
 2) Execute Proposal/Critic/Judge (using `pcj_proposal_model`, `pcj_critic_model`, `pcj_judge_model`) over current UAT outcomes and diagnosis context.
 Use the `verification-risk-framework` scorecard to determine release risk and `needs_human_review`.
@@ -338,7 +338,7 @@ node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pcj save verify --role crit
 node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pcj persist verify --phase "${phase_number}" --task "${TASK}" --decision "verification interpretation and release risk" --verdict "${JUDGE_VERDICT}" --judgement "${JUDGE_JUDGEMENT}" --actions "${JUDGE_ACTIONS}" --needs-human-review "${NEEDS_HUMAN_REVIEW}" --risk-flags "${JUDGE_RISK_FLAGS}" --log-file "${PCJ_LOG_FILE}"
 ```
 
-Raw PCJ trail remains in `development_process/`; curated Judge output writes to phase verification doc when available, otherwise to ACI/generic state docs.
+Raw PCJ trail remains in `development/` (legacy `development_process/` supported); curated Judge output writes to phase verification doc when available, otherwise to ACI/generic state docs.
 
 Present summary:
 ```

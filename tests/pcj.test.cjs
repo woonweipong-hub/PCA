@@ -30,8 +30,9 @@ describe('pcj command', () => {
     assert.ok(output.models.critic);
     assert.ok(output.models.judge);
     assert.strictEqual(output.framework.name, 'discussion-decision-framework');
-    assert.strictEqual(output.storage.development_process_dir, 'development_process');
-    assert.ok(output.storage.log_file.startsWith('development_process/PCJ_'));
+    assert.strictEqual(output.storage.development_dir, 'development');
+    assert.strictEqual(output.storage.development_process_dir_legacy, 'development_process');
+    assert.ok(output.storage.log_file.startsWith('development/PCJ_'));
     assert.ok(Array.isArray(output.framework.criteria));
     assert.ok(output.framework.criteria.some(c => c.key === 'scope_alignment'));
     assert.ok(output.prompts.proposal.includes('Proposal role'));
@@ -86,6 +87,7 @@ describe('pcj command', () => {
     assert.strictEqual(output.target_path, '.planning/phases/01-verify-pcj/01-VERIFICATION.md');
     assert.strictEqual(output.framework, 'verification-risk-framework');
     assert.strictEqual(output.needs_human_review, true);
+    assert.strictEqual(output.transparency.human_control.recommended_mode, 'HITL');
 
     const content = fs.readFileSync(path.join(phaseDir, '01-VERIFICATION.md'), 'utf-8');
     assert.ok(content.includes('## PCJ Verify Judgements'));
@@ -93,7 +95,7 @@ describe('pcj command', () => {
     assert.ok(content.includes('needs_human_review: true'));
   });
 
-  test('pcj save appends proposer/critic logs to development_process file', () => {
+  test('pcj save appends proposer/critic logs to development file', () => {
     const prep = runGsdTools('pcj prepare discuss --phase 1 --task "Draft framework" --decision "scope"', tmpDir);
     assert.ok(prep.success, `Prepare failed: ${prep.error}`);
     const prepOut = JSON.parse(prep.output);
@@ -128,14 +130,19 @@ describe('pcj command', () => {
     assert.ok(content.includes('Proposer output body'));
     assert.ok(content.includes('## CRITIC Output'));
     assert.ok(content.includes('Critic output body'));
+
+    const saveOutput = JSON.parse(saveC.output);
+    assert.strictEqual(saveOutput.transparency.internal_reasoning_exposed, false);
+    assert.ok(saveOutput.transparency.visible_summary.includes('Critic output body'));
   });
 
-  test('pcj prepare ensures development_process is gitignored', () => {
+  test('pcj prepare ensures development folders are gitignored', () => {
     const result = runGsdTools('pcj prepare discuss --phase 1 --decision "scope"', tmpDir);
     assert.ok(result.success, `Prepare failed: ${result.error}`);
 
     const gitignorePath = path.join(tmpDir, '.gitignore');
     const gitignore = fs.readFileSync(gitignorePath, 'utf-8');
+    assert.ok(gitignore.includes('development/'));
     assert.ok(gitignore.includes('development_process/'));
   });
 });

@@ -455,7 +455,7 @@ Use helper command to generate role-separated prompt packs:
 node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pcj prepare discuss --phase "${phase_number}" --decision "scope, strategy, assumptions"
 ```
 
-Capture `storage.log_file` from prepare output. This file is under `development_process/` and is internal-only.
+Capture `storage.log_file` from prepare output. This file is under `development/` (legacy `development_process/` still supported) and is internal-only.
 
 Run Proposal → Critic → Judge using the resolved models (`pcj_proposal_model`, `pcj_critic_model`, `pcj_judge_model`) and the helper prompts. Keep outputs concise.
 Use the `discussion-decision-framework` scores to choose final framing for planning.
@@ -473,7 +473,7 @@ Then persist Judge outcome to project docs (ACI-aware fallback):
 node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pcj persist discuss --phase "${phase_number}" --task "${TASK}" --decision "scope, strategy, assumptions" --verdict "${JUDGE_VERDICT}" --judgement "${JUDGE_JUDGEMENT}" --actions "${JUDGE_ACTIONS}" --risk-flags "${JUDGE_RISK_FLAGS}" --log-file "${PCJ_LOG_FILE}"
 ```
 
-Raw PCJ trail remains in `development_process/`; curated Judge output writes to `.planning/ACI-STATE.md`/`.planning/ACI-PROJECT.md` when present, otherwise `.planning/STATE.md`/`.planning/PROJECT.md`.
+Raw PCJ trail remains in `development/` (legacy `development_process/` supported); curated Judge output writes to `.planning/ACI-STATE.md`/`.planning/ACI-PROJECT.md` when present, otherwise `.planning/STATE.md`/`.planning/PROJECT.md`.
 
 If PCJ is not requested/enabled, skip this step and proceed.
 </step>
