@@ -7,6 +7,8 @@ commands.html
 
 # Local test installs
 .claude/
+.codex/
+.gemini/
 
 # Build artifacts (committed to npm, not git)
 hooks/dist/

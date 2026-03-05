@@ -126,6 +126,23 @@ Integration note:
 - In Copilot chat, `/gsd:*` and `$gsd-*` are typically not native executable triggers; use assistant-orchestrated workflow prompts.
 - In Gemini/Antigravity runtime, native `/gsd:*` command flow is available after installation.
 
+#### Antigravity Chatbox Quick Start (Common Pitfall)
+
+- Install once in terminal: `node bin/install.js --gemini --global`
+- Open your project in Antigravity/Gemini chat.
+- Run commands **inside the Antigravity chatbox/session**, not in PowerShell.
+
+Use this exact sequence in Antigravity chat:
+
+```text
+/gsd:help
+/gsd:new-project
+/gsd:discuss-phase 1 --pcj
+/gsd:plan-phase 1
+```
+
+If commands are not recognized, restart the Antigravity/Gemini session after install.
+
 ### Where to Run (Important)
 
 - Open your **actual app/project folder** in VS Code, then run GSD there.
