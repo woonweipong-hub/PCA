@@ -1,8 +1,8 @@
 <div align="center">
 
-# GET SHIT DONE
+# GSD-PCJ
 
-**A light-weight and powerful meta-prompting, context engineering and spec-driven development system for Claude Code, OpenCode, Gemini CLI, and Codex.**
+**A fork-based quality extension of GSD with structured Proposal -> Critic -> Judge decision loops for Claude Code, OpenCode, Gemini CLI, and Codex.**
 
 **Solves context rot — the quality degradation that happens as Claude fills its context window.**
 
@@ -50,6 +50,9 @@ npx get-shit-done-cc@latest
 As of 2026-03-05, this repository is a fork-based extension of the upstream GSD project.
 
 - Upstream GSD concepts, naming, and baseline workflow remain attributed to their original authors/project.
+- This add-on work in GSD-PCJ is an independent contribution developed out of curiosity and original ideas, using VS Code Copilot with GPT-5.3-Codex.
+- No separate direct approval request was made for this add-on; the fork and extension are made under the rights granted by the MIT license.
+- Under MIT, others may fork, modify, redistribute, and rebrand this work, provided the original copyright and license notice are retained.
 - This fork adds the GSD-PCJ quality layer focused on structured Discuss/Verify improvements (Proposal -> Critic -> Judge, HITL/HOTL routing, and transparent decision records).
 - Preserve upstream license terms and attribution when redistributing or modifying this fork.
 - If publishing externally, avoid implying official endorsement/partnership unless explicitly granted.
