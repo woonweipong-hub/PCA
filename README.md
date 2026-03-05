@@ -56,19 +56,18 @@ As of 2026-03-05, this repository is a fork-based extension of the upstream GSD 
 
 ---
 
-## Why I Built This
+## Why This Fork Exists
 
-I'm a solo developer. I don't write code — Claude Code does.
+This repository extends upstream GSD with a focused quality layer for decision-making in Discuss and Verify.
 
-Other spec-driven development tools exist; BMAD, Speckit... But they all seem to make things way more complicated than they need to be (sprint ceremonies, story points, stakeholder syncs, retrospectives, Jira workflows) or lack real big picture understanding of what you're building. I'm not a 50-person software company. I don't want to play enterprise theater. I'm just a creative person trying to build great things that work.
+What this fork adds:
 
-So I built GSD. The complexity is in the system, not in your workflow. Behind the scenes: context engineering, XML prompt formatting, subagent orchestration, state management. What you see: a few commands that just work.
+- Structured Proposal -> Critic -> Judge loops in Discuss/Verify.
+- Distinct assessment frameworks for discussion and verification.
+- HITL/HOTL guidance for safer decision routing.
+- Transparent decision summaries with local internal trace logs.
 
-The system gives Claude everything it needs to do the work *and* verify it. I trust the workflow. It just does a good job.
-
-That's what this is. No enterprise roleplay bullshit. Just an incredibly effective system for building cool stuff consistently using Claude Code.
-
-— **TÂCHES**
+This keeps core GSD workflow strengths while improving decision quality, auditability, and cross-runtime consistency.
 
 ---
 
@@ -89,6 +88,15 @@ People who want to describe what they want and have it built correctly — witho
 ```bash
 npx get-shit-done-cc@latest
 ```
+
+> [!IMPORTANT]
+> `npx get-shit-done-cc@latest` installs the upstream npm package. To use this fork's latest GSD-PCJ branding and behavior, install from this repository source:
+>
+> ```bash
+> node bin/install.js --codex --global
+> # or
+> node bin/install.js --gemini --global
+> ```
 
 The installer prompts you to choose:
 1. **Runtime** — Claude Code, OpenCode, Gemini, Codex, or all
