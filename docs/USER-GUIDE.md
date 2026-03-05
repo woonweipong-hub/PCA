@@ -27,6 +27,7 @@ As of 2026-03-05, this repository is maintained as a fork-based extension of the
 - Upstream GSD baseline workflow and branding remain attributed to the upstream project.
 - This add-on work in GSD-PCJ is an independent contribution developed out of curiosity and original ideas, using VS Code Copilot with GPT-5.3-Codex.
 - No separate direct approval request was made for this add-on; the fork and extension are made under the rights granted by the MIT license.
+- Under MIT, others may fork, modify, redistribute, and rebrand this work, provided the original copyright and license notice are retained.
 - This fork contributes the GSD-PCJ quality extension for structured Discuss/Verify evaluation.
 - Keep upstream license and attribution notices intact when redistributing.
 - Public communications should avoid implying official upstream endorsement unless explicitly granted.
