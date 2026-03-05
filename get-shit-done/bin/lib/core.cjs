@@ -28,6 +28,9 @@ const MODEL_PROFILES = {
   'gsd-plan-checker':         { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
   'gsd-integration-checker':  { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
   'gsd-nyquist-auditor':      { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
+  'gsd-pcj-proposal':         { quality: 'opus', balanced: 'sonnet', budget: 'haiku' },
+  'gsd-pcj-critic':           { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
+  'gsd-pcj-judge':            { quality: 'opus', balanced: 'sonnet', budget: 'haiku' },
 };
 
 // ─── Output helpers ───────────────────────────────────────────────────────────
@@ -80,6 +83,11 @@ function loadConfig(cwd) {
     nyquist_validation: true,
     parallelization: true,
     brave_search: false,
+    pcj: {
+      enabled: false,
+      discuss: false,
+      verify: false,
+    },
   };
 
   try {
@@ -123,6 +131,11 @@ function loadConfig(cwd) {
       parallelization,
       brave_search: get('brave_search') ?? defaults.brave_search,
       model_overrides: parsed.model_overrides || null,
+      pcj: {
+        enabled: parsed.pcj?.enabled ?? defaults.pcj.enabled,
+        discuss: parsed.pcj?.discuss ?? defaults.pcj.discuss,
+        verify: parsed.pcj?.verify ?? defaults.pcj.verify,
+      },
     };
   } catch {
     return defaults;

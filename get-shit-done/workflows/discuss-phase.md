@@ -117,7 +117,7 @@ INIT=$(node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" init phase-op "${PHA
 if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
-Parse JSON for: `commit_docs`, `phase_found`, `phase_dir`, `phase_number`, `phase_name`, `phase_slug`, `padded_phase`, `has_research`, `has_context`, `has_plans`, `has_verification`, `plan_count`, `roadmap_exists`, `planning_exists`.
+Parse JSON for: `commit_docs`, `phase_found`, `phase_dir`, `phase_number`, `phase_name`, `phase_slug`, `padded_phase`, `has_research`, `has_context`, `has_plans`, `has_verification`, `plan_count`, `roadmap_exists`, `planning_exists`, `pcj_enabled`, `pcj_discuss_enabled`, `pcj_proposal_model`, `pcj_critic_model`, `pcj_judge_model`.
 
 **If `phase_found` is false:**
 ```
@@ -437,6 +437,47 @@ Back to [current area]: [return to current question]"
 Track deferred ideas internally.
 </step>
 
+<step name="optional_pcj_refinement">
+Optional PCJ refinement on framing decisions (**Discuss-only**).
+
+Trigger this step when either is true:
+- User passed `--pcj`, OR
+- `pcj_enabled` and `pcj_discuss_enabled` are true in config.
+
+Focus PCJ on key framing questions from this phase discussion:
+- scope boundary interpretation
+- implementation strategy direction
+- critical assumptions to carry into planning
+
+Use helper command to generate role-separated prompt packs:
+
+```bash
+node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pcj prepare discuss --phase "${phase_number}" --decision "scope, strategy, assumptions"
+```
+
+Capture `storage.log_file` from prepare output. This file is under `development_process/` and is internal-only.
+
+Run Proposal → Critic → Judge using the resolved models (`pcj_proposal_model`, `pcj_critic_model`, `pcj_judge_model`) and the helper prompts. Keep outputs concise.
+Use the `discussion-decision-framework` scores to choose final framing for planning.
+
+After each role, append raw output to the same internal log file:
+
+```bash
+node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pcj save discuss --role proposer --phase "${phase_number}" --task "${TASK}" --decision "scope, strategy, assumptions" --content "${PROPOSER_OUTPUT}" --log-file "${PCJ_LOG_FILE}"
+node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pcj save discuss --role critic --phase "${phase_number}" --task "${TASK}" --decision "scope, strategy, assumptions" --content "${CRITIC_OUTPUT}" --log-file "${PCJ_LOG_FILE}"
+```
+
+Then persist Judge outcome to project docs (ACI-aware fallback):
+
+```bash
+node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pcj persist discuss --phase "${phase_number}" --task "${TASK}" --decision "scope, strategy, assumptions" --verdict "${JUDGE_VERDICT}" --judgement "${JUDGE_JUDGEMENT}" --actions "${JUDGE_ACTIONS}" --risk-flags "${JUDGE_RISK_FLAGS}" --log-file "${PCJ_LOG_FILE}"
+```
+
+Raw PCJ trail remains in `development_process/`; curated Judge output writes to `.planning/ACI-STATE.md`/`.planning/ACI-PROJECT.md` when present, otherwise `.planning/STATE.md`/`.planning/PROJECT.md`.
+
+If PCJ is not requested/enabled, skip this step and proceed.
+</step>
+
 <step name="write_context">
 Create CONTEXT.md capturing decisions made.
 
@@ -478,6 +519,11 @@ mkdir -p ".planning/phases/${padded_phase}-${phase_slug}"
 
 ### Claude's Discretion
 [Areas where user said "you decide" — note that Claude has flexibility here]
+
+### PCJ Judge Outcome (if run)
+- Verdict: [accepted | accepted-with-conditions | needs-human-review]
+- Final judgement: [concise]
+- Action deltas for planning: [3-5 bullets]
 
 </decisions>
 

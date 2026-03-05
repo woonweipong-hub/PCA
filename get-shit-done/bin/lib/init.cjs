@@ -344,9 +344,14 @@ function cmdInitVerifyWork(cwd, phase, raw) {
     // Models
     planner_model: resolveModelInternal(cwd, 'gsd-planner'),
     checker_model: resolveModelInternal(cwd, 'gsd-plan-checker'),
+    pcj_proposal_model: resolveModelInternal(cwd, 'gsd-pcj-proposal'),
+    pcj_critic_model: resolveModelInternal(cwd, 'gsd-pcj-critic'),
+    pcj_judge_model: resolveModelInternal(cwd, 'gsd-pcj-judge'),
 
     // Config
     commit_docs: config.commit_docs,
+    pcj_enabled: !!config.pcj?.enabled,
+    pcj_verify_enabled: !!config.pcj?.verify,
 
     // Phase info
     phase_found: !!phaseInfo,
@@ -390,6 +395,11 @@ function cmdInitPhaseOp(cwd, phase, raw) {
     // Config
     commit_docs: config.commit_docs,
     brave_search: config.brave_search,
+    pcj_enabled: !!config.pcj?.enabled,
+    pcj_discuss_enabled: !!config.pcj?.discuss,
+    pcj_proposal_model: resolveModelInternal(cwd, 'gsd-pcj-proposal'),
+    pcj_critic_model: resolveModelInternal(cwd, 'gsd-pcj-critic'),
+    pcj_judge_model: resolveModelInternal(cwd, 'gsd-pcj-judge'),
 
     // Phase info
     phase_found: !!phaseInfo,

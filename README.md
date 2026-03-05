@@ -191,6 +191,63 @@ If you prefer not to use that flag, add this to your project's `.claude/settings
 
 > **Already have code?** Run `/gsd:map-codebase` first. It spawns parallel agents to analyze your stack, architecture, conventions, and concerns. Then `/gsd:new-project` knows your codebase — questions focus on what you're adding, and planning automatically loads your patterns.
 
+### Full Project Lifecycle (with optional internal PCJ)
+
+```
+  ┌───────────────────────────────────────────────────────────────┐
+  │                        NEW PROJECT                            │
+  │ /gsd:new-project  ->  Questions -> Research -> Req -> Roadmap │
+  └──────────────────────────────┬────────────────────────────────┘
+                                 │
+                   ┌─────────────▼─────────────┐
+                   │       FOR EACH PHASE      │
+                   └─────────────┬─────────────┘
+                                 │
+          ┌──────────────────────▼──────────────────────┐
+          │ /gsd:discuss-phase [N] [--pcj optional]     │
+          │ Capture implementation decisions            │
+          └───────────────┬─────────────────────────────┘
+                          │
+          if --pcj or config(pcj.enabled + pcj.discuss)
+                          │
+        ┌─────────────────▼──────────────────┐
+        │ INTERNAL PCJ (Discuss) [LOCAL ONLY]│
+        │ Proposer -> Critic -> Judge        │
+        │ writes development_process/PCJ_*.txt
+        └─────────────────┬──────────────────┘
+                          │
+          ┌───────────────▼──────────────────────────────┐
+          │ /gsd:plan-phase [N]                          │
+          └───────────────┬──────────────────────────────┘
+                          │
+          ┌───────────────▼──────────────────────────────┐
+          │ /gsd:execute-phase [N]                       │
+          └───────────────┬──────────────────────────────┘
+                          │
+          ┌───────────────▼──────────────────────────────┐
+          │ /gsd:verify-work [N] [--pcj optional]        │
+          │ UAT + diagnosis                              │
+          └───────────────┬──────────────────────────────┘
+                          │
+          if --pcj or config(pcj.enabled + pcj.verify)
+                          │
+        ┌─────────────────▼────────────────────┐
+        │ INTERNAL PCJ (Verify) [LOCAL ONLY]   │
+        │ Proposer -> Critic -> Judge          │
+        │ writes development_process/PCJ_*.txt │
+        └─────────────────┬────────────────────┘
+                          │
+          Curated outputs only -> .planning/* (no raw PCJ logs)
+                          │
+                    Next phase? ── Yes ──┐
+                          │ No            │
+  ┌───────────────────────▼───────────────▼──────────────────────┐
+  │ /gsd:audit-milestone -> /gsd:complete-milestone -> next vX   │
+  └──────────────────────────────────────────────────────────────┘
+```
+
+This workflow is generic and can be applied worldwide across domains (software, policy interpretation, process design, documentation, and other structured problem-solving tasks).
+
 ### 1. Initialize Project
 
 ```
@@ -216,6 +273,12 @@ You approve the roadmap. Now you're ready to build.
 /gsd:discuss-phase 1
 ```
 
+Optional PCJ loop for key framing decisions:
+
+```
+/gsd:discuss-phase 1 --pcj
+```
+
 **This is where you shape the implementation.**
 
 Your roadmap has a sentence or two per phase. That's not enough context to build something the way *you* imagine it. This step captures your preferences before anything gets researched or planned.
@@ -233,6 +296,8 @@ For each area you select, it asks until you're satisfied. The output — `CONTEX
 2. **Planner reads it** — Knows what decisions are locked ("infinite scroll decided" → plan includes scroll handling)
 
 The deeper you go here, the more the system builds what you actually want. Skip it and you get reasonable defaults. Use it and you get *your* vision.
+
+With `--pcj`, Discuss runs a Proposal → Critic → Judge pass on scope/strategy/assumptions and writes the Judge output back to ACI/generic project-state docs.
 
 **Creates:** `{phase_num}-CONTEXT.md`
 
@@ -313,6 +378,12 @@ This is why "vertical slices" (Plan 01: User feature end-to-end) parallelize bet
 /gsd:verify-work 1
 ```
 
+Optional high-stakes PCJ verification checkpoint:
+
+```
+/gsd:verify-work 1 --pcj
+```
+
 **This is where you confirm it actually works.**
 
 Automated verification checks that code exists and tests pass. But does the feature *work* the way you expected? This is your chance to use it.
@@ -325,6 +396,8 @@ The system:
 4. **Creates verified fix plans** — Ready for immediate re-execution
 
 If everything passes, you move on. If something's broken, you don't manually debug — you just run `/gsd:execute-phase` again with the fix plans it created.
+
+With `--pcj`, Verify can run Proposal → Critic → Judge for interpretation/risk checks and persist a final verdict, including `needs_human_review`, into verification/state docs.
 
 **Creates:** `{phase_num}-UAT.md`, fix plans if issues found
 
@@ -467,10 +540,10 @@ You're never locked in. The system adapts.
 | Command | What it does |
 |---------|--------------|
 | `/gsd:new-project [--auto]` | Full initialization: questions → research → requirements → roadmap |
-| `/gsd:discuss-phase [N] [--auto]` | Capture implementation decisions before planning |
+| `/gsd:discuss-phase [N] [--auto] [--pcj]` | Capture implementation decisions before planning (optional Proposal→Critic→Judge) |
 | `/gsd:plan-phase [N] [--auto]` | Research + plan + verify for a phase |
 | `/gsd:execute-phase <N>` | Execute all plans in parallel waves, verify when complete |
-| `/gsd:verify-work [N]` | Manual user acceptance testing ¹ |
+| `/gsd:verify-work [N] [--pcj]` | Manual user acceptance testing ¹ (optional Proposal→Critic→Judge) |
 | `/gsd:audit-milestone` | Verify milestone achieved its definition of done |
 | `/gsd:complete-milestone` | Archive milestone, tag release |
 | `/gsd:new-milestone [name]` | Start next version: questions → research → requirements → roadmap |

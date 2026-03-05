@@ -29,6 +29,15 @@
  *   phase-plan-index <phase>           Index plans with waves and status
  *   websearch <query>                  Search web via Brave API (if configured)
  *     [--limit N] [--freshness day|week|month]
+ *   pcj prepare <discuss|verify>       Build Proposal/Critic/Judge prompt pack
+ *     [--phase N] [--task "..."] [--decision "..."] [--context "..."] [--log-file path]
+ *   pcj save <discuss|verify>          Append Proposer/Critic/Judge raw output to internal log
+ *     --role proposer|critic|judge [--phase N] [--task "..."] [--decision "..."]
+ *     --content "..." [--log-file path]
+ *   pcj persist <discuss|verify>       Persist Judge output into docs
+ *     [--phase N] [--task "..."] [--decision "..."] [--verdict "..."]
+ *     [--judgement "..."] [--actions "..."]
+ *     [--needs-human-review true|false] [--risk-flags "..."] [--target path] [--log-file path]
  *
  * Phase Operations:
  *   phase next-decimal <phase>         Calculate next decimal phase number
@@ -139,6 +148,7 @@ const milestone = require('./lib/milestone.cjs');
 const commands = require('./lib/commands.cjs');
 const init = require('./lib/init.cjs');
 const frontmatter = require('./lib/frontmatter.cjs');
+const pcj = require('./lib/pcj.cjs');
 
 // ─── CLI Router ───────────────────────────────────────────────────────────────
 
@@ -172,7 +182,7 @@ async function main() {
   const command = args[0];
 
   if (!command) {
-    error('Usage: gsd-tools <command> [args] [--raw] [--cwd <path>]\nCommands: state, resolve-model, find-phase, commit, verify-summary, verify, frontmatter, template, generate-slug, current-timestamp, list-todos, verify-path-exists, config-ensure-section, init');
+    error('Usage: gsd-tools <command> [args] [--raw] [--cwd <path>]\nCommands: state, resolve-model, find-phase, commit, verify-summary, verify, frontmatter, template, generate-slug, current-timestamp, list-todos, verify-path-exists, config-ensure-section, init, pcj');
   }
 
   switch (command) {
@@ -581,6 +591,41 @@ async function main() {
         limit: limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : 10,
         freshness: freshnessIdx !== -1 ? args[freshnessIdx + 1] : null,
       }, raw);
+      break;
+    }
+
+    case 'pcj': {
+      const subcommand = args[1];
+      const mode = args[2];
+      const getArg = (flag) => {
+        const idx = args.indexOf(flag);
+        return idx !== -1 ? args[idx + 1] : null;
+      };
+      const options = {
+        phase: getArg('--phase'),
+        task: getArg('--task'),
+        decision: getArg('--decision'),
+        context: getArg('--context'),
+        role: getArg('--role'),
+        content: getArg('--content'),
+        verdict: getArg('--verdict'),
+        judgement: getArg('--judgement'),
+        actions: getArg('--actions'),
+        needs_human_review: getArg('--needs-human-review'),
+        risk_flags: getArg('--risk-flags'),
+        target: getArg('--target'),
+        log_file: getArg('--log-file'),
+      };
+
+      if (subcommand === 'prepare') {
+        pcj.cmdPcjPrepare(cwd, mode, options, raw);
+      } else if (subcommand === 'save') {
+        pcj.cmdPcjSave(cwd, mode, options, raw);
+      } else if (subcommand === 'persist') {
+        pcj.cmdPcjPersist(cwd, mode, options, raw);
+      } else {
+        error('Unknown pcj subcommand. Available: prepare, save, persist');
+      }
       break;
     }
 

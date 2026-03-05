@@ -8,6 +8,7 @@ A detailed reference for workflows, troubleshooting, and configuration. For quic
 
 - [Workflow Diagrams](#workflow-diagrams)
 - [Command Reference](#command-reference)
+- [PCJ Extension](#pcj-extension)
 - [Configuration Reference](#configuration-reference)
 - [Usage Examples](#usage-examples)
 - [Troubleshooting](#troubleshooting)
@@ -20,48 +21,59 @@ A detailed reference for workflows, troubleshooting, and configuration. For quic
 ### Full Project Lifecycle
 
 ```
-  ┌──────────────────────────────────────────────────┐
-  │                   NEW PROJECT                    │
-  │  /gsd:new-project                                │
-  │  Questions -> Research -> Requirements -> Roadmap│
-  └─────────────────────────┬────────────────────────┘
-                            │
-             ┌──────────────▼─────────────┐
-             │      FOR EACH PHASE:       │
-             │                            │
-             │  ┌────────────────────┐    │
-             │  │ /gsd:discuss-phase │    │  <- Lock in preferences
-             │  └──────────┬─────────┘    │
-             │             │              │
-             │  ┌──────────▼─────────┐    │
-             │  │ /gsd:plan-phase    │    │  <- Research + Plan + Verify
-             │  └──────────┬─────────┘    │
-             │             │              │
-             │  ┌──────────▼─────────┐    │
-             │  │ /gsd:execute-phase │    │  <- Parallel execution
-             │  └──────────┬─────────┘    │
-             │             │              │
-             │  ┌──────────▼─────────┐    │
-             │  │ /gsd:verify-work   │    │  <- Manual UAT
-             │  └──────────┬─────────┘    │
-             │             │              │
-             │     Next Phase?────────────┘
-             │             │ No
-             └─────────────┼──────────────┘
-                            │
-            ┌───────────────▼──────────────┐
-            │  /gsd:audit-milestone        │
-            │  /gsd:complete-milestone     │
-            └───────────────┬──────────────┘
-                            │
-                   Another milestone?
-                       │          │
-                      Yes         No -> Done!
-                       │
-               ┌───────▼──────────────┐
-               │  /gsd:new-milestone  │
-               └──────────────────────┘
+  ┌───────────────────────────────────────────────────────────────┐
+  │                        NEW PROJECT                            │
+  │ /gsd:new-project  ->  Questions -> Research -> Req -> Roadmap│
+  └──────────────────────────────┬────────────────────────────────┘
+                                 │
+                   ┌─────────────▼─────────────┐
+                   │       FOR EACH PHASE      │
+                   └─────────────┬─────────────┘
+                                 │
+          ┌──────────────────────▼──────────────────────┐
+          │ /gsd:discuss-phase [N] [--pcj optional]     │
+          │ Capture implementation decisions              │
+          └───────────────┬──────────────────────────────┘
+                          │
+          if --pcj or config(pcj.enabled + pcj.discuss)
+                          │
+        ┌─────────────────▼──────────────────┐
+        │ INTERNAL PCJ (Discuss) [LOCAL ONLY]│
+        │ Proposer -> Critic -> Judge        │
+        │ writes development_process/PCJ_*.txt
+        └─────────────────┬──────────────────┘
+                          │
+          ┌───────────────▼──────────────────────────────┐
+          │ /gsd:plan-phase [N]                          │
+          └───────────────┬──────────────────────────────┘
+                          │
+          ┌───────────────▼──────────────────────────────┐
+          │ /gsd:execute-phase [N]                       │
+          └───────────────┬──────────────────────────────┘
+                          │
+          ┌───────────────▼──────────────────────────────┐
+          │ /gsd:verify-work [N] [--pcj optional]        │
+          │ UAT + diagnosis                               │
+          └───────────────┬──────────────────────────────┘
+                          │
+          if --pcj or config(pcj.enabled + pcj.verify)
+                          │
+        ┌─────────────────▼──────────────────┐
+        │ INTERNAL PCJ (Verify) [LOCAL ONLY] │
+        │ Proposer -> Critic -> Judge        │
+        │ writes development_process/PCJ_*.txt
+        └─────────────────┬──────────────────┘
+                          │
+          Curated outputs only -> .planning/* (no raw PCJ logs)
+                          │
+                    Next phase? ── Yes ──┐
+                          │ No            │
+  ┌───────────────────────▼───────────────▼──────────────────────┐
+  │ /gsd:audit-milestone -> /gsd:complete-milestone -> next vX   │
+  └───────────────────────────────────────────────────────────────┘
 ```
+
+This lifecycle is domain-agnostic and designed for global use by individuals and teams across different industries.
 
 ### Planning Agent Coordination
 
@@ -192,10 +204,10 @@ enabled, or after `/gsd:audit-milestone` surfaces Nyquist compliance gaps.
 |---------|---------|-------------|
 | `/gsd:new-project` | Full project init: questions, research, requirements, roadmap | Start of a new project |
 | `/gsd:new-project --auto @idea.md` | Automated init from document | Have a PRD or idea doc ready |
-| `/gsd:discuss-phase [N]` | Capture implementation decisions | Before planning, to shape how it gets built |
+| `/gsd:discuss-phase [N] [--pcj]` | Capture implementation decisions (optional Proposal→Critic→Judge) | Before planning, to shape how it gets built |
 | `/gsd:plan-phase [N]` | Research + plan + verify | Before executing a phase |
 | `/gsd:execute-phase <N>` | Execute all plans in parallel waves | After planning is complete |
-| `/gsd:verify-work [N]` | Manual UAT with auto-diagnosis | After execution completes |
+| `/gsd:verify-work [N] [--pcj]` | Manual UAT with auto-diagnosis (optional Proposal→Critic→Judge) | After execution completes |
 | `/gsd:audit-milestone` | Verify milestone met its definition of done | Before completing milestone |
 | `/gsd:complete-milestone` | Archive milestone, tag release | All phases verified |
 | `/gsd:new-milestone [name]` | Start next version cycle | After completing a milestone |
@@ -237,6 +249,53 @@ enabled, or after `/gsd:audit-milestone` surfaces Nyquist compliance gaps.
 
 ---
 
+## PCJ Extension
+
+PCJ is an optional inner loop used only in Discuss and Verify:
+
+- Proposal: generates a concrete recommendation for a key decision.
+- Critic: stress-tests assumptions, risks, and missing evidence.
+- Judge: produces a final actionable judgement.
+
+Scope in this fork:
+
+- Used in Discuss for framing decisions (scope, strategy, assumptions).
+- Used in Verify for high-stakes interpretation checks.
+- Not enabled by default in Plan/Execute.
+
+Assessment frameworks are intentionally different:
+
+- Discuss (`discussion-decision-framework`): scope alignment, strategy clarity, assumption soundness, reversibility, execution readiness.
+- Verify (`verification-risk-framework`): evidence quality, user impact, reproducibility, scope of failure, release safety.
+
+Persistence behavior:
+
+- Discuss verdicts are written to ACI-aware or generic project/state docs.
+- Verify verdicts are written to verification/state docs, including `needs_human_review`.
+- Raw Proposal/Critic/Judge logs are written to `development_process/PCJ_*.txt` for internal development only.
+- `development_process/` is auto-added to `.gitignore` so internal reasoning logs are not committed.
+
+VS Code trigger examples:
+
+```bash
+/gsd:discuss-phase 3 --pcj
+/gsd:verify-work 3 --pcj
+```
+
+Programmatic helper commands used by workflows:
+
+```bash
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj prepare discuss --phase 3 --decision "scope, strategy, assumptions"
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj save discuss --role proposer --phase 3 --task "Task T" --decision "scope, strategy, assumptions" --content "..." --log-file "development_process/PCJ_20260305T090000Z.txt"
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj save discuss --role critic --phase 3 --task "Task T" --decision "scope, strategy, assumptions" --content "..." --log-file "development_process/PCJ_20260305T090000Z.txt"
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj persist discuss --phase 3 --decision "scope, strategy, assumptions" --verdict "accepted-with-conditions" --judgement "..." --actions "..."
+
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj prepare verify --phase 3 --decision "verification interpretation and release risk"
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj persist verify --phase 3 --decision "verification interpretation and release risk" --verdict "needs-human-review" --judgement "..." --actions "..." --needs-human-review true
+```
+
+---
+
 ## Configuration Reference
 
 GSD stores project settings in `.planning/config.json`. Configure during `/gsd:new-project` or update later with `/gsd:settings`.
@@ -257,6 +316,11 @@ GSD stores project settings in `.planning/config.json`. Configure during `/gsd:n
     "plan_check": true,
     "verifier": true,
     "nyquist_validation": true
+  },
+  "pcj": {
+    "enabled": false,
+    "discuss": false,
+    "verify": false
   },
   "git": {
     "branching_strategy": "none",
@@ -294,6 +358,14 @@ GSD stores project settings in `.planning/config.json`. Configure during `/gsd:n
 
 Disable these to speed up phases in familiar domains or when conserving tokens.
 
+### PCJ Toggles
+
+| Setting | Options | Default | What it Controls |
+|---------|---------|---------|------------------|
+| `pcj.enabled` | `true`, `false` | `false` | Master toggle for PCJ availability |
+| `pcj.discuss` | `true`, `false` | `false` | Allow PCJ loop in `/gsd:discuss-phase` |
+| `pcj.verify` | `true`, `false` | `false` | Allow PCJ loop in `/gsd:verify-work` |
+
 ### Git Branching
 
 | Setting | Options | Default | What it Controls |
@@ -327,6 +399,9 @@ Disable these to speed up phases in familiar domains or when conserving tokens.
 | gsd-verifier | Sonnet | Sonnet | Haiku |
 | gsd-plan-checker | Sonnet | Sonnet | Haiku |
 | gsd-integration-checker | Sonnet | Sonnet | Haiku |
+| gsd-pcj-proposal | Opus | Sonnet | Haiku |
+| gsd-pcj-critic | Sonnet | Sonnet | Haiku |
+| gsd-pcj-judge | Opus | Sonnet | Haiku |
 
 **Profile philosophy:**
 - **quality** -- Opus for all decision-making agents, Sonnet for read-only verification. Use when quota is available and the work is critical.

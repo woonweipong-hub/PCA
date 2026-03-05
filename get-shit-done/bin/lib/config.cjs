@@ -65,11 +65,17 @@ function cmdConfigEnsureSection(cwd, raw) {
     },
     parallelization: true,
     brave_search: hasBraveSearch,
+    pcj: {
+      enabled: false,
+      discuss: false,
+      verify: false,
+    },
   };
   const defaults = {
     ...hardcoded,
     ...userDefaults,
     workflow: { ...hardcoded.workflow, ...(userDefaults.workflow || {}) },
+    pcj: { ...hardcoded.pcj, ...(userDefaults.pcj || {}) },
   };
 
   try {
