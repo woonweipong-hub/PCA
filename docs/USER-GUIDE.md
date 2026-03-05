@@ -291,6 +291,24 @@ Use native runtime commands:
 - Transparent role summaries and HITL/HOTL guidance are preserved.
 - Internal logs remain local in `development/PCJ_*.txt`; curated outcomes persist into `.planning/*`.
 
+### Where to run
+
+- Open your actual application/project folder in VS Code before running GSD workflow.
+- Use an empty folder only for a brand-new project.
+- Keep the `gsd-pcj` repository for framework development unless your goal is to modify GSD itself.
+
+### Why use GSD if Copilot already executes code?
+
+Copilot can execute tasks directly; GSD adds workflow discipline and quality controls around that capability:
+
+- Persistent project memory in `.planning/*` for continuity and handoff.
+- Structured decision quality checks in Discuss/Verify (Proposal -> Critic -> Judge).
+- Explicit safety routing via `HITL/HOTL` guidance.
+- Phase-scoped planning that reduces rework and drift.
+- Cost controls via profile selection and conditional PCJ usage.
+
+In short: Copilot is the execution engine; GSD is the reliability layer.
+
 ---
 
 ## Copilot Chat Usage (No Context Switching)

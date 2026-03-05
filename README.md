@@ -126,6 +126,24 @@ Integration note:
 - In Copilot chat, `/gsd:*` and `$gsd-*` are typically not native executable triggers; use assistant-orchestrated workflow prompts.
 - In Gemini/Antigravity runtime, native `/gsd:*` command flow is available after installation.
 
+### Where to Run (Important)
+
+- Open your **actual app/project folder** in VS Code, then run GSD there.
+- Use an **empty folder** only for brand-new projects.
+- Keep this `gsd-pcj` repository for framework development, not as your product workspace (unless you are changing GSD itself).
+
+### Why Use GSD If Copilot Already Executes Code?
+
+Copilot can execute tasks directly. GSD adds a repeatable system around that capability:
+
+- **Better context continuity:** persistent project memory in `.planning/*`.
+- **Higher decision quality:** optional Proposal -> Critic -> Judge checks in Discuss/Verify.
+- **Safer delivery:** structured verification and explicit `HITL/HOTL` escalation.
+- **Lower rework:** phase-scoped planning before execution reduces backtracking.
+- **Cost control:** budget/quality profiles and conditional PCJ usage instead of always-on heavy reasoning.
+
+In short: Copilot is the execution engine; GSD is the workflow/quality layer that improves reliability, predictability, and team handoff quality.
+
 > [!NOTE]
 > Codex installation uses skills (`skills/gsd-*/SKILL.md`) rather than custom prompts.
 
