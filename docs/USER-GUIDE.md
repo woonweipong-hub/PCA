@@ -6,6 +6,7 @@ A detailed reference for workflows, troubleshooting, and configuration. For quic
 
 ## Table of Contents
 
+- [Fork Notice (IP and Attribution)](#fork-notice-ip-and-attribution)
 - [Workflow Diagrams](#workflow-diagrams)
 - [Command Reference](#command-reference)
 - [Integration (Copilot + Antigravity)](#integration-copilot--antigravity)
@@ -16,6 +17,17 @@ A detailed reference for workflows, troubleshooting, and configuration. For quic
 - [Usage Examples](#usage-examples)
 - [Troubleshooting](#troubleshooting)
 - [Recovery Quick Reference](#recovery-quick-reference)
+
+---
+
+## Fork Notice (IP and Attribution)
+
+As of 2026-03-05, this repository is maintained as a fork-based extension of the upstream GSD project.
+
+- Upstream GSD baseline workflow and branding remain attributed to the upstream project.
+- This fork contributes the GSD-PCJ quality extension for structured Discuss/Verify evaluation.
+- Keep upstream license and attribution notices intact when redistributing.
+- Public communications should avoid implying official upstream endorsement unless explicitly granted.
 
 ---
 

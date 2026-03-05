@@ -45,6 +45,17 @@ npx get-shit-done-cc@latest
 
 ---
 
+## Fork Notice (IP and Attribution)
+
+As of 2026-03-05, this repository is a fork-based extension of the upstream GSD project.
+
+- Upstream GSD concepts, naming, and baseline workflow remain attributed to their original authors/project.
+- This fork adds the GSD-PCJ quality layer focused on structured Discuss/Verify improvements (Proposal -> Critic -> Judge, HITL/HOTL routing, and transparent decision records).
+- Preserve upstream license terms and attribution when redistributing or modifying this fork.
+- If publishing externally, avoid implying official endorsement/partnership unless explicitly granted.
+
+---
+
 ## Why I Built This
 
 I'm a solo developer. I don't write code — Claude Code does.
