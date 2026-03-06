@@ -22,3 +22,17 @@ node bin/pca.js evidence-check verify --decision "scope framing" --context "phas
 - Keep prompts concise and evidence-based.
 - Apply PCA on ambiguous or high-impact decisions.
 - Escalate with `HITL` for unresolved high-risk states.
+
+## Runtime Verification (After Copilot)
+
+Once Copilot smoke passes, run Antigravity smoke:
+
+```bash
+npm run smoke:antigravity
+```
+
+For full sequential validation in one command:
+
+```bash
+npm run smoke:runtimes
+```

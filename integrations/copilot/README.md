@@ -32,3 +32,16 @@ Open `http://localhost:4173`, then run `Run Live Debate x3` to view cycle-by-cyc
 - Treat PCA JSON outputs as source of truth for governance decisions.
 - Keep adapter logic thin and stateless.
 - Prefer structured JSON exchange over fragile prompt text parsing.
+
+## Runtime Verification (Copilot First)
+
+Run an end-to-end smoke check against live API + SSE behavior:
+
+```bash
+npm run smoke:copilot
+```
+
+This validates:
+
+- `/api/debate-live` emits final verify-gate and route recommendation payloads.
+- `/api/run-pipeline` completes `Input -> Process -> Output` with governance output.
