@@ -93,7 +93,7 @@ body {
   width: 100%;
   max-width: none;
   margin: 0 auto;
-  padding: 1.2rem 2rem 2.2rem;
+  padding: 1.2rem 2rem 1.4rem;
 }
 
 .hero h1 {
@@ -212,7 +212,7 @@ body {
 }
 
 .continuous-input-text {
-  min-height: 94px;
+  min-height: 75px;
   resize: vertical;
 }
 
@@ -336,6 +336,12 @@ body {
 .secondary-output-card > .muted,
 .continuous-input-card > .muted {
   margin: 0 0 0.35rem;
+}
+
+.primary-output-card > .muted,
+.secondary-output-card > .muted {
+  font-size: 0.82rem;
+  line-height: 1.15;
 }
 
 .compact-head {
@@ -842,15 +848,14 @@ pre.compact {
 }
 
 .statusbar {
-  position: sticky;
-  bottom: 0.6rem;
-  margin-top: 1rem;
-  padding: 0.65rem 0.8rem;
+  position: static;
+  margin-top: 0.6rem;
+  padding: 0.38rem 0.65rem;
   border-radius: 10px;
   background: rgba(16, 27, 24, 0.88);
   color: #d1fae5;
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: 0.76rem;
   backdrop-filter: blur(14px) saturate(120%);
   -webkit-backdrop-filter: blur(14px) saturate(120%);
 }
