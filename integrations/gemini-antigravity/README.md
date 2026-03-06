@@ -1,6 +1,6 @@
-# Gemini Antigravity Integration (Overlay Pattern)
+# Gemini Antigravity Integration (Orchestration Surface)
 
-Use PCA as a policy and debate layer above Antigravity execution.
+Use PCA as the governed decision layer above Antigravity execution and orchestration.
 
 ## Suggested Pattern
 
@@ -20,7 +20,7 @@ node bin/pca.js evidence-check verify --decision "scope framing" --context "phas
 ## Runtime Guidance
 
 - Keep prompts concise and evidence-based.
-- Apply PCA on ambiguous or high-impact decisions.
+- Apply PCA on ambiguous, high-impact, or multi-source decisions.
 - Escalate with `HITL` for unresolved high-risk states.
 
 ## Runtime Verification (After Copilot)

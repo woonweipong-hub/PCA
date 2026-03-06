@@ -1,11 +1,11 @@
-# Copilot Integration (Overlay Pattern)
+# Copilot Integration (VS Code Surface)
 
-Use PCA as an orchestration/governance layer on top of Copilot-driven workflows.
+Use PCA as the governed decision layer on top of Copilot-driven workflows in VS Code.
 
 ## Recommended Setup
 
 1. Keep Copilot as the model runtime in VS Code.
-2. Use PCA CLI/Web UI to structure debate and governance.
+2. Use PCA CLI, PCA agents, or PCA Web UI to structure debate and governance.
 3. Watch continuous debate in PCA Web UI (`Run Live Debate x3`).
 
 ## CLI Control Flow

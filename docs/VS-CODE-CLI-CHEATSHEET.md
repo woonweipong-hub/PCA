@@ -1,6 +1,6 @@
 # PCA VS Code CLI Cheat Sheet
 
-This is the shortest practical guide to using PCA inside VS Code.
+This is the shortest practical guide to using PCA on its VS Code surface.
 
 PCA can be used in three ways:
 
@@ -10,7 +10,7 @@ PCA can be used in three ways:
 
 ## Core Idea
 
-PCA is not just a chat prompt. In VS Code it works as:
+PCA is not just a chat prompt. In VS Code it works as a governed co-working layer through:
 
 - a CLI: `node bin/pca.js ...`
 - a local web service/UI: `npm run ui:start`
@@ -21,13 +21,25 @@ PCA is not just a chat prompt. In VS Code it works as:
 
 This workspace includes PCA-native agent modes for the VS Code agent picker:
 
-- `PCA Orchestrator`
-- `PCA Proposer`
-- `PCA Critic`
-- `PCA Assessor`
-- `PCA Governor`
+- `PCA 0 Auto Flow`
+- `PCA 1 Orchestrator`
+- `PCA 2 Proposer`
+- `PCA 3 Critic`
+- `PCA 4 Assessor`
+- `PCA 5 Governor`
 
 Use them when you want PCA to behave like a first-class working method in chat, not just a terminal workflow.
+
+Use `PCA 0 Auto Flow` when you want one autonomous entrypoint that chooses adaptive debate depth and can include Z3-backed verification logic.
+
+Recommended order:
+
+1. `PCA 0 Auto Flow` for autonomous governed runs
+2. `PCA 1 Orchestrator`
+3. `PCA 2 Proposer`
+4. `PCA 3 Critic`
+5. `PCA 4 Assessor`
+6. `PCA 5 Governor`
 
 ## Quick Start
 
@@ -89,7 +101,7 @@ This workspace already exposes:
 
 These are defined in `.vscode/tasks.json` and can be run from the VS Code task runner.
 
-### Runtime validation
+### Antigravity Runtime Validation
 
 ```bash
 npm run smoke:copilot

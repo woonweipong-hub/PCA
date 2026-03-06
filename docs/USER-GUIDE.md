@@ -1,8 +1,8 @@
 # PCA User Guide
 
-PCA is an Evidence-Governed Adaptive Solver for high-stakes decision workflows.
+PCA is an Evidence-Governed Adaptive Solver for human-machine co-working in high-stakes decision workflows.
 
-This guide defines PCA operational use, command behavior, governance routing, and quality standards.
+This guide explains how to operate PCA as a governed product across VS Code, Antigravity, and the Browser UI, including command behavior, adaptive depth, governance routing, and quality standards.
 
 ## General Framework vs Specific Use Cases
 
@@ -34,23 +34,23 @@ Verdict set:
 
 ```mermaid
 flowchart TD
-	A[Input: Data, requirements, objectives] --> B[Process: Organize]
-	B --> C[Process: Propose]
-	C --> D[Process: Critique]
-	D --> E[Process: Assess]
-	E --> F[Process: Verify gates]
-	F --> G[Output: Recommend actions]
-	G --> H[Output: Action contract]
-	H --> I{Route HITL/HOTL}
-	I --> J{Execution readiness}
-	J -->|Ready| K[Implement]
-	J -->|Blocked| C
-	K --> L[Document artifacts and rationale]
-	L --> M[Observe outcomes]
-	M --> N[Learn and update corpus]
-	N --> O{Drift or new risk}
-	O -->|Yes| B
-	O -->|No| P[Concrete outcome delivered]
+  A[Input: Data, requirements, objectives] --> B[Process: Organize]
+  B --> C[Process: Propose]
+  C --> D[Process: Critique]
+  D --> E[Process: Assess]
+  E --> F[Process: Verify gates]
+  F --> G[Output: Recommend actions]
+  G --> H[Output: Action contract]
+  H --> I{Route HITL/HOTL}
+  I --> J{Execution readiness}
+  J -->|Ready| K[Implement]
+  J -->|Blocked| C
+  K --> L[Document artifacts and rationale]
+  L --> M[Observe outcomes]
+  M --> N[Learn and update corpus]
+  N --> O{Drift or new risk}
+  O -->|Yes| B
+  O -->|No| P[Concrete outcome delivered]
 ```
 
 Operational principle: `Input -> Process -> Output` loop throughout the run, with action contract and readiness checks before implementation.
@@ -65,7 +65,7 @@ Detailed role swimlane and agent topology: `docs/WORKFLOW.md`
 ## Roles and Agents
 
 | Stage | Primary Role | Typical Runtime |
-|---|---|---|
+| --- | --- | --- |
 | Input framing | Requester | Human |
 | Session preparation | Orchestrator | AI agent/CI |
 | Proposal generation | Proposer | AI agent |
@@ -73,6 +73,18 @@ Detailed role swimlane and agent topology: `docs/WORKFLOW.md`
 | Final judgement | Assessor | AI agent |
 | Governance gate | Human Reviewer (when HITL) | Human |
 | Artifact persistence | Orchestrator | AI agent/CI |
+
+## Choose Your Surface
+
+PCA uses the same governed method across three main operating surfaces. Choose the one that best matches how you want to work.
+
+| Surface | Best For | Primary Controls | Choose This When |
+| --- | --- | --- | --- |
+| VS Code | Chat-first co-working, coding-adjacent decisions, agent-guided runs | CLI, custom PCA agents, local tasks | You want PCA embedded in your editor workflow and want to switch between autonomous and stage-specific modes |
+| Antigravity | Orchestration-first workflows with PCA as the governance layer | PCA CLI, API, artifacts, runtime smoke checks | You already use Antigravity to drive execution and want PCA to structure evidence, critique, and routing around it |
+| Browser UI | Visual control desk, live timeline review, downloadable artifacts | UI controls, live debate, adaptive depth, verify gates, optional Z3 checks | You want visible debate flow, corpus preview, human checkpoints, and a browser-first operating experience |
+
+The method stays the same across all three surfaces: frame the work, gather evidence, run adaptive proposal and critique passes, assess readiness, and route the result under explicit human control.
 
 ## Traceability and Transparency
 
@@ -116,37 +128,37 @@ If you are installing PCA to use inside VS Code, start with this sequence:
 npm install
 ```
 
-4. Confirm the CLI is working:
+1. Confirm the CLI is working:
 
 ```bash
 node bin/pca.js help
 ```
 
-5. Start the local PCA UI and API service:
+1. Start the local PCA UI and API service:
 
 ```bash
 npm run ui:start
 ```
 
-6. Open:
+1. Open:
 
 - `http://localhost:4173`
 
-7. Run your first PCA workflow, for example:
+1. Run your first PCA workflow, for example:
 
 ```bash
 node bin/pca.js prepare discuss --decision "API strategy" --context "Migrate safely"
 node bin/pca.js quality-check --sources "data/public-pdf-text"
 ```
 
-8. If you want a quick VS Code trial without typing long commands, use the built-in tasks in `.vscode/tasks.json`:
+1. If you want a quick VS Code trial without typing long commands, use the built-in tasks in `.vscode/tasks.json`:
 
 - `PCA: Start UI Server`
 - `PCA: Copilot Framework Proposal`
 - `PCA: Copilot Research Pack`
 - `PCA: Copilot Live Debate (1 cycle smoke)`
 
-9. If you want to validate the runtime path end-to-end, run:
+1. If you want to validate the runtime path end-to-end, run:
 
 ```bash
 npm run smoke:copilot
@@ -160,21 +172,44 @@ This workspace now includes PCA-native custom agents in `.github/agents/` so PCA
 
 Available agent modes:
 
-- `PCA Orchestrator`
-- `PCA Proposer`
-- `PCA Critic`
-- `PCA Assessor`
-- `PCA Governor`
+- `PCA 0 Auto Flow`
+- `PCA 1 Orchestrator`
+- `PCA 2 Proposer`
+- `PCA 3 Critic`
+- `PCA 4 Assessor`
+- `PCA 5 Governor`
 
 Use these when you want PCA to feel like a selectable working method rather than only a CLI or browser tool.
 
 Recommended usage:
 
-- `PCA Orchestrator` for framing, sequencing, and overall PCA flow
-- `PCA Proposer` for best-current-option generation
-- `PCA Critic` for challenge, contradiction, and risk surfacing
-- `PCA Assessor` for verdict and action requirements
-- `PCA Governor` for `HITL/HOTL` and readiness routing
+- `PCA 0 Auto Flow` when you want one governed autonomous run that selects depth and can include optional Z3-style hard-constraint verification
+- `PCA 1 Orchestrator` for framing, sequencing, requirements, dataset scope, and overall PCA flow
+- `PCA 2 Proposer` for the best current option after framing is clear
+- `PCA 3 Critic` for challenge, contradiction, evidence gaps, and risk surfacing
+- `PCA 4 Assessor` for verdict and action requirements after debate
+- `PCA 5 Governor` for `HITL/HOTL`, verify gates, and readiness routing
+
+Default sequence:
+
+1. `PCA 0 Auto Flow` when you want the full flow handled through one entrypoint
+2. `PCA 1 Orchestrator`
+3. `PCA 2 Proposer`
+4. `PCA 3 Critic`
+5. `PCA 4 Assessor`
+6. `PCA 5 Governor`
+
+Role note:
+
+- `PCA 0 Auto Flow` is the automation entrypoint. It is for users who do not want to choose each stage manually.
+- The visible VS Code picker exposes five top-level PCA stages.
+- Within a stage, the agent may still perform multiple sub-roles internally. For example, `PCA 1 Orchestrator` can break work into framing, requirements clarification, dataset scoping, evidence-check planning, and route planning before handing off to later stages.
+- If needed later, more specialized PCA stage agents can be added without changing the top-level sequence.
+
+Automation note:
+
+- If the problem includes hard constraints, geometry, configuration validity, or satisfiability checks, state that clearly in the `PCA 0 Auto Flow` prompt so the run treats formal verification as part of the governed decision.
+- In the browser UI and API, the equivalent automation controls are `passStrategy: adaptive`, `riskLevel`, and `enableZ3GeometryCheck`.
 
 ```bash
 npm install
@@ -211,26 +246,26 @@ Use this mode when Antigravity is your orchestration/runtime layer and PCA is yo
 npm install
 ```
 
-2. Prepare a text corpus if your sources are PDFs:
+1. Prepare a text corpus if your sources are PDFs:
 
 ```bash
 npm run convert:pdf -- --input-dir "C:\path\to\public-pdfs" --output-dir "data/public-pdf-text" --recursive true
 ```
 
-3. Run PCA quality and evidence checks:
+1. Run PCA quality and evidence checks:
 
 ```bash
 node bin/pca.js quality-check --sources "data/public-pdf-text" --min-sources 2 --min-total-claims 6 --min-avg-claims-per-doc 2
 node bin/pca.js evidence-check verify --decision "Interpret requirements" --context "Cross-document consistency check" --sources "data/public-pdf-text" --policy strict --max-files 200 --prioritize-requirements true
 ```
 
-4. Persist the result for action handoff:
+1. Persist the result for action handoff:
 
 ```bash
 node bin/pca.js persist verify --verdict "accepted-with-conditions" --judgement "Proceed with tracked conditions" --actions "Assign owners and due dates" --policy strict --output outputs/antigravity-decision.json --format json
 ```
 
-5. If you want to validate the runtime path end-to-end:
+1. If you want to validate the runtime path end-to-end:
 
 ```bash
 npm run smoke:antigravity
@@ -248,17 +283,17 @@ Use this mode when you want a browser-based control desk for evidence review, li
 npm install
 ```
 
-2. Start the local PCA UI and API service:
+1. Start the local PCA UI and API service:
 
 ```bash
 npm run ui:start
 ```
 
-3. Open:
+1. Open:
 
 - `http://localhost:4173`
 
-4. Typical browser-first flow:
+1. Typical browser-first flow:
 
 - preview corpus and references
 - run framework proposal
@@ -271,18 +306,18 @@ Use this mode when the user needs stronger visibility, traceability, and human r
 
 ### Which Mode To Choose
 
-- Use VS Code CLI when you want the fastest terminal-driven workflow and direct use with Copilot.
-- Use Antigravity when you want an external orchestration/runtime layer and PCA to govern quality and routing.
-- Use Browser UI when you want a visual control desk, live timeline, source preview, and downloadable artifacts.
-- Use the hybrid pattern when you want Antigravity or Copilot to drive execution while PCA UI provides transparency and governance visibility.
+- Use VS Code when you want PCA embedded in your normal editor workflow through CLI, tasks, and custom PCA agents.
+- Use Antigravity when you want an external orchestration/runtime layer and PCA to govern evidence quality, critique, and routing.
+- Use Browser UI when you want a visual control desk, live timeline, source preview, verify-gate visibility, and downloadable artifacts.
+- Use the hybrid pattern when you want Copilot or Antigravity to drive execution while PCA UI provides transparency and governance visibility.
 
 ### Free/Open Local Model Path
 
 PCA can run without paid APIs using local OSS models via Ollama:
 
-1. Install Ollama: https://ollama.com/download
-2. Pull models, for example: `qwen2.5:7b`, `llama3.1:8b`, `qwen2.5:14b`
-3. Run adapter: `node integrations/ollama/adapter.js discuss --decision "..." --context "..."`
+1. Install Ollama: [ollama.com/download](https://ollama.com/download)
+1. Pull models, for example: `qwen2.5:7b`, `llama3.1:8b`, `qwen2.5:14b`
+1. Run adapter: `node integrations/ollama/adapter.js discuss --decision "..." --context "..."`
 
 Model selection strategy and routing patterns: `docs/MODEL-ROUTING.md`
 
@@ -415,11 +450,11 @@ Equivalent manual command:
 ```powershell
 New-Item -ItemType Directory -Force -Path "data\trhs-text" | Out-Null
 Get-ChildItem -Path "C:\2026_Research\Assets" -File |
-	Where-Object { $_.Extension -ieq ".pdf" -and $_.Name -match '^(BCA|URA|SCDF)_' -and $_.Name -ne 'BCA_HS_Checks_Scope.pdf' } |
-	ForEach-Object {
-		$out = Join-Path "data\trhs-text" ($_.BaseName + ".txt")
-		& "C:\poppler\Library\bin\pdftotext.exe" -layout -enc UTF-8 $_.FullName $out
-	}
+  Where-Object { $_.Extension -ieq ".pdf" -and $_.Name -match '^(BCA|URA|SCDF)_' -and $_.Name -ne 'BCA_HS_Checks_Scope.pdf' } |
+  ForEach-Object {
+    $out = Join-Path "data\trhs-text" ($_.BaseName + ".txt")
+    & "C:\poppler\Library\bin\pdftotext.exe" -layout -enc UTF-8 $_.FullName $out
+  }
 ```
 
 ### Step 2: Build evidence digest
@@ -517,7 +552,7 @@ Operational runbooks and release assurance:
 
 ## Contact and Q&A
 
-- Submit a query: https://forms.gle/Qdk6xzGDchnk9h2u7
-- Browse past Q&A: https://docs.google.com/spreadsheets/d/1AbtKfvaiZCV3Fq6FoAEopUGhehiDHHaapCwKvlKnKNU/edit?usp=sharing
+- Submit a query: [Google Form](https://forms.gle/Qdk6xzGDchnk9h2u7)
+- Browse past Q&A: [Google Sheet](https://docs.google.com/spreadsheets/d/1AbtKfvaiZCV3Fq6FoAEopUGhehiDHHaapCwKvlKnKNU/edit?usp=sharing)
 
 Do not submit confidential data.

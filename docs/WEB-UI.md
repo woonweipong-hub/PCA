@@ -1,9 +1,9 @@
 # PCA Web UI
 
-PCA is an Evidence-Governed Adaptive Solver, and this UI is the operational control desk for that workflow.
-It also supports optional Python package-backed symbolic checks (`z3-solver`) to strengthen verify gates when formal constraints are required.
+PCA is an Evidence-Governed Adaptive Solver, and this Browser UI is its visual control-desk surface for governed human-machine work.
+It supports adaptive debate depth, evidence checks, explicit `HITL/HOTL` routing, and optional Python package-backed symbolic checks (`z3-solver`) when formal constraints matter.
 
-PCA Web UI provides a browser-based control desk for OCR, PDF conversion, quality gating, evidence checks, and artifact downloads.
+PCA Web UI provides a browser-based control desk for OCR, PDF conversion, quality gating, evidence checks, live governed runs, and artifact downloads.
 
 ## What You Can Do
 

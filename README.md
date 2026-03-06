@@ -1,8 +1,10 @@
 # PCA
 
-PCA (Propose-Critique-Assess) is an Evidence-Governed Adaptive Solver.
+PCA (Propose-Critique-Assess) is an Evidence-Governed Adaptive Solver for human-machine co-working.
 
-It applies structured debate, quality checks, and explicit governance (`HITL`/`HOTL`) to improve decision quality before execution.
+It helps teams frame decisions, run adaptive propose-critique-assess loops, apply evidence and optional formal checks, and route actions through explicit governance (`HITL`/`HOTL`) before execution.
+
+PCA runs consistently across three primary operating surfaces: VS Code, Antigravity, and the Browser UI, so the same governed workflow can be used in chat-first, orchestration-first, or visual control-desk workflows.
 
 "This project is independently developed. Any similarity to other systems reflects common industry patterns (for example proposer/critic/evaluator workflows) and does not imply code, prompt, or proprietary method reuse."
 
@@ -23,10 +25,13 @@ LinkedIn: `https://www.linkedin.com/in/woonwei/`
 
 ## Why PCA
 
-- Independent workflow: use PCA in any project or stack.
-- Quality-first: force assumptions and risks into the open.
-- Traceable outputs: verdict + actions + risk flags.
-- Governance-ready: clear routing to `HITL` or `HOTL`.
+PCA exists for teams that need more than a fast answer.
+
+- Independent workflow: use PCA across different stacks, runtimes, and operating environments.
+- Quality-first: expose assumptions, contradictions, and unresolved risks before action.
+- Traceable outputs: produce reviewable verdicts, actions, evidence signals, and route decisions.
+- Governance-ready: move work forward with explicit `HITL` or `HOTL` routing instead of implicit judgement.
+- Surface-flexible: run the same governed method in VS Code, Antigravity, or the Browser UI.
 
 ## Problem Statement
 
@@ -38,6 +43,8 @@ Human-machine collaboration often breaks down in two predictable ways:
 In normal one-pass long conversations, these weaknesses compound over time. Important assumptions stay hidden, weak proposals go unchallenged, contradictions are missed, and the conversation often drifts toward whichever answer sounds plausible first.
 
 PCA is designed to solve that failure mode. It turns a long, fragile, one-pass interaction into a governed decision loop that can expose assumptions, challenge weak logic, check evidence, and produce an actionable outcome with explicit human control.
+
+In product terms, PCA is a decision-quality layer for human-machine work. It helps a team move from raw prompts and documents to a governed output that is easier to review, hand off, automate, and defend.
 
 ## What PCA Can Do
 
@@ -55,6 +62,19 @@ PCA can be used as a general-purpose human-machine decision system for any domai
 - Produce audit-friendly artifacts for handoff, review, and repeatable execution.
 - Work across Copilot, Antigravity, local terminal workflows, BYOM, Ollama, and browser-based UI/API usage.
 - Expose PCA-native agent modes in VS Code for orchestrator, proposer, critic, assessor, and governor workflows.
+- Provide an autonomous agent entrypoint for adaptive multi-pass PCA with optional Z3-backed verification when the human wants one governed run instead of manual stage selection.
+
+## Which Surface To Use
+
+PCA exposes the same governed method through three main operating surfaces. Choose the one that best matches how your team wants to work.
+
+| Surface | Best For | Primary Controls | Choose This When |
+| --- | --- | --- | --- |
+| VS Code | Chat-first co-working, coding-adjacent decisions, agent-guided runs | CLI, custom PCA agents, local tasks | You want PCA embedded in your normal editor workflow and want to switch between autonomous and stage-specific agent modes |
+| Antigravity | Orchestration-first workflows with PCA as a governance layer | PCA CLI, API, artifacts, runtime smoke checks | You already use Antigravity to drive execution and want PCA to structure evidence, critique, and routing around it |
+| Browser UI | Visual control desk, live timeline review, downloadable artifacts | UI controls, live debate, adaptive depth, verify gates, optional Z3 checks | You want visible debate flow, human checkpoints, corpus preview, and a browser-first operating experience |
+
+The underlying PCA logic remains the same across all three surfaces: frame the work, gather evidence, run adaptive proposal and critique passes, assess readiness, and route the result under explicit human control.
 
 ## Human-Machine Co-Working Method
 
@@ -102,6 +122,27 @@ In PCA, transparency does not mean dumping unrestricted hidden reasoning. It mea
 - verify-gate status
 - route recommendation
 - persisted artifact for review, audit, or execution handoff
+
+## Default Surface Behavior vs PCA Mode
+
+PCA does not replace the native experience of each surface. It adds a governed operating method on top of VS Code, Antigravity, and the Browser UI.
+
+| Dimension | Default or Raw Surface Behavior | PCA Mode |
+| --- | --- | --- |
+| Primary goal | Fast assistance, execution, or UI-driven operation | Governed decision quality |
+| Typical output shape | One direct answer, action, or run result | Structured staged output |
+| Problem framing | Optional, operator-dependent | Expected as part of the method |
+| Critique step | May happen informally or not at all | Explicit and role-separated |
+| Assessment verdict | Usually implicit | Explicit verdict with conditions |
+| Governance routing | Usually not first-class | Explicit `HITL` or `HOTL` recommendation |
+| Evidence handling | Helpful when requested | Central to the workflow |
+| Formal verification | Not part of the default flow | Can include optional Z3-backed checks |
+| Auditability | Varies by runtime or conversation | Designed for structured review and artifacts |
+| Best fit | Fast drafting, direct execution, low-risk tasks, or lightweight review | Ambiguous, high-stakes, evidence-heavy, or review-sensitive work |
+
+Use the default or raw surface behavior when speed and low-friction operation matter most.
+
+Use PCA mode when the process itself needs to be defensible, inspectable, and governed across VS Code, Antigravity, or the Browser UI.
 
 ## How PCA Supports Existing Copilot Work
 
@@ -278,7 +319,7 @@ Operational rule: move forward only when qualitative assessment, symbolic feasib
 ## Role and Agent Showcase
 
 | Role | Typical Owner | Responsibility |
-|---|---|---|
+| --- | --- | --- |
 | Requester | Human | Provides decision and context |
 | Orchestrator | AI agent or automation | Runs CLI commands and coordinates flow |
 | Proposer | AI agent | Produces recommendation and assumptions |
@@ -295,6 +336,17 @@ If you are using PCA in VS Code, start with the `VS Code Quick Start` section in
 The same User Guide also includes `Antigravity Quick Start`, `Browser UI Quick Start`, and `Which Mode To Choose` for different user needs.
 
 Workspace-level PCA custom agents are also available under `.github/agents/` for the VS Code agent picker.
+
+### VS Code Agent Entry Modes
+
+PCA now supports two ways to work in the VS Code agent picker:
+
+- `PCA 0 Auto Flow`: one entrypoint for autonomous framing, adaptive debate depth, optional formal verification, and final routing.
+- `PCA 1 Orchestrator` through `PCA 5 Governor`: manual stage entrypoints when the human wants tighter control over a specific phase.
+
+Use `PCA 0 Auto Flow` when you want PCA to decide how much discussion depth is needed and whether hard-constraint verification should be part of the run.
+
+Use the numbered stage agents when you want to intervene at a specific point or rerun only one stage.
 
 ### Local dev usage
 
@@ -327,17 +379,17 @@ Antigravity integration guide (CLI-only and hybrid UI workflows): `docs/ANTIGRAV
 ## Command Reference
 
 | Command | Purpose | Output |
-|---|---|---|
-| `pca prepare <discuss|verify>` | Build PCA session contract (framework + prompts) | JSON session object |
-| `pca run <discuss|verify>` | Current alias of `prepare` for standalone MVP | JSON session object |
-| `pca propose <discuss|verify>` | Build proposer payload and prompt | JSON proposer object |
-| `pca critique <discuss|verify>` | Build critic payload, prompt, and extracted risks | JSON critic object |
-| `pca route <discuss|verify>` | Compute governance routing from verdict/risk | JSON with `human_control` |
-| `pca assess <discuss|verify>` | Build final PCA assessment payload | JSON assessment object |
-| `pca persist <discuss|verify>` | Save assessment output to disk | JSON receipt + saved file |
+| --- | --- | --- |
+| `pca prepare <mode>` (`discuss` or `verify`) | Build PCA session contract (framework + prompts) | JSON session object |
+| `pca run <mode>` (`discuss` or `verify`) | Current alias of `prepare` for standalone MVP | JSON session object |
+| `pca propose <mode>` (`discuss` or `verify`) | Build proposer payload and prompt | JSON proposer object |
+| `pca critique <mode>` (`discuss` or `verify`) | Build critic payload, prompt, and extracted risks | JSON critic object |
+| `pca route <mode>` (`discuss` or `verify`) | Compute governance routing from verdict/risk | JSON with `human_control` |
+| `pca assess <mode>` (`discuss` or `verify`) | Build final PCA assessment payload | JSON assessment object |
+| `pca persist <mode>` (`discuss` or `verify`) | Save assessment output to disk | JSON receipt + saved file |
 | `pca ingest` | Ingest local sources into claim digest | JSON evidence digest |
 | `pca quality-check` | Validate corpus quality before evidence-check | JSON quality gate report |
-| `pca evidence-check <discuss|verify>` | Cross-document support/contradiction checks + assessment | JSON evidence + assessment |
+| `pca evidence-check <mode>` (`discuss` or `verify`) | Cross-document support/contradiction checks + assessment | JSON evidence + assessment |
 | `pca help` | Show CLI usage and examples | Plain text reference |
 
 Detailed per-command reference: `docs/COMMAND-REFERENCE.md`
@@ -472,7 +524,7 @@ PCA is an independently developed quality-first decision engine.
 
 ## Contact and Q&A
 
-- Submit a query: https://forms.gle/Qdk6xzGDchnk9h2u7
-- Browse past Q&A: https://docs.google.com/spreadsheets/d/1AbtKfvaiZCV3Fq6FoAEopUGhehiDHHaapCwKvlKnKNU/edit?usp=sharing
+- Submit a query: [Google Form](https://forms.gle/Qdk6xzGDchnk9h2u7)
+- Browse past Q&A: [Google Sheet](https://docs.google.com/spreadsheets/d/1AbtKfvaiZCV3Fq6FoAEopUGhehiDHHaapCwKvlKnKNU/edit?usp=sharing)
 
 Do not submit confidential data.
