@@ -3,6 +3,8 @@ const resultView = document.getElementById('resultView');
 const outcomeSummaryView = document.getElementById('outcomeSummaryView');
 const artifactList = document.getElementById('artifactList');
 const draftStatus = document.getElementById('draftStatus');
+const useCaseHub = document.getElementById('useCaseHub');
+const selectedUseCaseNote = document.getElementById('selectedUseCaseNote');
 
 const inputDir = document.getElementById('inputDir');
 const ocrDir = document.getElementById('ocrDir');
@@ -71,6 +73,7 @@ const btnRefreshArtifacts = document.getElementById('btnRefreshArtifacts');
 const btnSaveDraft = document.getElementById('btnSaveDraft');
 const btnRestoreDraft = document.getElementById('btnRestoreDraft');
 const btnClearDraft = document.getElementById('btnClearDraft');
+const btnContinueSession = document.getElementById('btnContinueSession');
 
 const debateState = document.getElementById('debateState');
 const debateTimeline = document.getElementById('debateTimeline');
@@ -206,6 +209,49 @@ const USE_CASE_PROFILES = {
     researchNeeds: 'BCA requirement extraction by domain\nCross-domain rule conflicts and precedence\nSubmission evidence packaging requirements',
     constraints: 'No unresolved critical life-safety issues\nOnly raise rule-verified findings\nPreserve traceability for officer/QP review',
     policy: 'strict'
+  }
+};
+
+const USE_CASE_CARD_META = {
+  corenetx: {
+    title: 'Automated Pre-Submission',
+    outcome: 'Reduce rework and clear submission blockers earlier.'
+  },
+  accessibility: {
+    title: 'Accessible Routes and Facilities',
+    outcome: 'Shape route options that stay compliant and usable.'
+  },
+  buildability: {
+    title: 'Buildability and Constructability',
+    outcome: 'Choose more buildable options without compliance regressions.'
+  },
+  mepcs: {
+    title: 'MEP and C&S Clash-Aware Design',
+    outcome: 'Resolve clashes through feasible coordination choices.'
+  },
+  greenmark: {
+    title: 'Envelope and Systems Optimization',
+    outcome: 'Improve performance with lower redesign disruption.'
+  },
+  maintainability: {
+    title: 'Maintainability and FM Access',
+    outcome: 'Surface maintainability blockers before late-stage discovery.'
+  },
+  hschecks: {
+    title: 'HS Requirements vs Drawings',
+    outcome: 'Prioritize true safety issues with traceable review.'
+  },
+  costverify: {
+    title: 'Cost Verification',
+    outcome: 'Turn discrepancy review into actionable package-level findings.'
+  },
+  specdraw: {
+    title: 'Specification vs Drawing Consistency',
+    outcome: 'Reduce false positives and clarify true coordination issues.'
+  },
+  bca_master: {
+    title: 'BCA Master Compliance Pre-Check',
+    outcome: 'Get one readiness view across multiple compliance domains.'
   }
 };
 
@@ -661,6 +707,61 @@ function renderRuntimeGuide() {
   cliSnippetsView.textContent = buildCliSnippets();
 }
 
+function updateSelectedUseCaseNote() {
+  if (!selectedUseCaseNote) return;
+  if (!useCaseProfile.value || useCaseProfile.value === 'custom') {
+    selectedUseCaseNote.textContent = 'Choose a use case path to start fast, or continue an earlier session.';
+    return;
+  }
+  const meta = USE_CASE_CARD_META[useCaseProfile.value];
+  selectedUseCaseNote.textContent = meta
+    ? `Current path: ${meta.title}. ${meta.outcome}`
+    : 'Current path selected.';
+}
+
+function renderUseCaseHub() {
+  if (!useCaseHub) return;
+  useCaseHub.innerHTML = '';
+
+  Object.entries(USE_CASE_CARD_META).forEach(([key, meta]) => {
+    const card = document.createElement('article');
+    card.className = `use-case-card${useCaseProfile.value === key ? ' active' : ''}`;
+    card.tabIndex = 0;
+
+    const title = document.createElement('h3');
+    title.textContent = meta.title;
+
+    const body = document.createElement('p');
+    body.textContent = meta.outcome;
+
+    const foot = document.createElement('div');
+    foot.className = 'use-case-meta';
+    foot.textContent = `Policy: ${(USE_CASE_PROFILES[key] && USE_CASE_PROFILES[key].policy) || 'balanced'}`;
+
+    const activate = () => {
+      useCaseProfile.value = key;
+      applyUseCaseProfile(key);
+      renderUseCaseHub();
+      updateSelectedUseCaseNote();
+      renderInputRegistry();
+      scheduleDraftSave();
+    };
+
+    card.addEventListener('click', activate);
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        activate();
+      }
+    });
+
+    card.appendChild(title);
+    card.appendChild(body);
+    card.appendChild(foot);
+    useCaseHub.appendChild(card);
+  });
+}
+
 function applyUseCaseProfile(profileKey) {
   if (!profileKey || profileKey === 'custom') return;
   const profile = USE_CASE_PROFILES[profileKey];
@@ -674,6 +775,7 @@ function applyUseCaseProfile(profileKey) {
   constraints.value = profile.constraints;
   policy.value = profile.policy;
   renderRuntimeGuide();
+  updateSelectedUseCaseNote();
 }
 
 function setBusy(message) {
@@ -1244,7 +1346,7 @@ btnFramework.addEventListener('click', async () => {
     }
     if (data.result && data.result.verification_plan) {
       scoringView.textContent = JSON.stringify({
-      collaborationMode,
+        selected_profile: useCaseProfile.value || 'custom',
         verification_plan: data.result.verification_plan,
         active_ai_search_plan: data.result.active_ai_search_plan || null,
         data_inputs: data.result.data_inputs || null,
@@ -1266,9 +1368,6 @@ btnResearch.addEventListener('click', async () => {
     setBusy('Running research pack (quality + evidence + synthesis)...');
     const data = await callApi('/api/research-pack', {
       ...commonPayload(),
-  userRequests,
-  openTopics,
-  continuationNotes,
       decision: decision.value,
       context: contextText.value,
       policy: policy.value,
@@ -1904,8 +2003,16 @@ btnClearDraft.addEventListener('click', () => {
   clearSavedDraft();
 });
 
+if (btnContinueSession) {
+  btnContinueSession.addEventListener('click', () => {
+    restoreSavedDraft();
+  });
+}
+
 useCaseProfile.addEventListener('change', () => {
   applyUseCaseProfile(useCaseProfile.value);
+  renderUseCaseHub();
+  updateSelectedUseCaseNote();
 });
 
 modelPack.addEventListener('change', () => {
@@ -1963,6 +2070,8 @@ applyTheme(themePreset.value);
 
 renderRuntimeGuide();
 renderInputRegistry();
+renderUseCaseHub();
+updateSelectedUseCaseNote();
 
 const savedDraft = safeGetDraft();
 if (savedDraft) {

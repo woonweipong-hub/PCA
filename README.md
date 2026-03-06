@@ -6,7 +6,7 @@ It helps teams frame decisions, run adaptive propose-critique-assess loops, appl
 
 PCA runs consistently across three primary operating surfaces: VS Code, Antigravity, and the Browser UI, so the same governed workflow can be used in chat-first, orchestration-first, or visual control-desk workflows.
 
-Product framing: the Browser UI can be treated as the platform, while PCA is the framework that shapes the roles, checkpoints, and process structure running on top of that platform. The point is not to force one rigid flow. The point is to flex the framework so lengthy conversations can be organized into clearer stages, resumed safely, and moved toward practical outcomes faster.
+Product framing: the Browser UI can be treated as the platform, while PCA is the framework that shapes the roles, checkpoints, and process structure running on top of that platform. The core purpose is disciplined human-machine collaboration and co-creation. Productization, reusable assets, and practical solutions can emerge from that collaboration, but they are outcomes of the method rather than its only purpose.
 
 "This project is independently developed. Any similarity to other systems reflects common industry patterns (for example proposer/critic/evaluator workflows) and does not imply code, prompt, or proprietary method reuse."
 
@@ -46,9 +46,9 @@ In normal one-pass long conversations, these weaknesses compound over time. Impo
 
 PCA is designed to solve that failure mode. It turns a long, fragile, one-pass interaction into a governed decision loop that can expose assumptions, challenge weak logic, check evidence, and produce an actionable outcome with explicit human control.
 
-In product terms, PCA is a decision-quality layer for human-machine work. It helps a team move from raw prompts and documents to a governed output that is easier to review, hand off, automate, and defend.
+In product terms, PCA is a decision-quality layer for human-machine work. It helps a team move from raw prompts and documents to governed collaboration that is easier to review, continue, hand off, automate, and defend.
 
-That can itself be the product. The value is not only the final answer or artifact. The value is the reusable working pattern: how human intent is captured, how evidence is scoped, how proposals are challenged, how pauses and resumptions are handled, how checkpoints are made explicit, and how the structured reasoning trail is documented for continuation, review, and action.
+That can itself be the product. The value is not only the final answer or artifact. The value is the reusable working pattern: how human intent is captured, how evidence is scoped, how proposals are challenged, how pauses and resumptions are handled, how checkpoints are made explicit, and how the structured reasoning trail is documented for continuation, review, action, and shared understanding.
 
 ## What PCA Can Do
 

@@ -181,6 +181,56 @@ body {
   gap: 1rem;
 }
 
+.use-case-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.use-case-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.85rem;
+  background: linear-gradient(180deg, var(--inner-surface-strong), var(--inner-surface));
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.use-case-card:hover,
+.use-case-card:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+  outline: none;
+}
+
+.use-case-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(15, 118, 110, 0.14), 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.use-case-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.98rem;
+}
+
+.use-case-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.use-case-meta,
+.selected-use-case-note {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.use-case-meta {
+  margin-top: 0.55rem;
+  font-family: var(--font-mono);
+}
+
 .card {
   min-width: 0;
   border: 1px solid var(--line);
@@ -377,6 +427,10 @@ textarea::placeholder {
 
 .draft-actions {
   margin-top: 0.55rem;
+}
+
+.advanced-panel {
+  margin-top: 0.9rem;
 }
 
 button {
@@ -705,7 +759,8 @@ pre.compact {
 @media (max-width: 1080px) {
   .grid-two,
   .guide-grid,
-  .theme-preview-grid {
+  .theme-preview-grid,
+  .use-case-grid {
     grid-template-columns: 1fr;
   }
 

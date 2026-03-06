@@ -13,9 +13,9 @@
   <div class="bg-layer"></div>
   <main class="shell wide">
     <header class="hero">
-      <p class="eyebrow">PCA FoC Browser UI</p>
-      <h1>Free and Open AI, Governed by PCA</h1>
-      <p class="subtitle">Use local or user-supplied AI models, then improve their output with PCA role separation, critique, assessment, evidence checks, and explicit HITL/HOTL routing.</p>
+      <p class="eyebrow">PCA Browser Platform</p>
+      <h1>Human-Machine Co-Creation, Grounded in Practice</h1>
+      <p class="subtitle">Start from discussion, ideation, and collaboration, then shape the work through PCA reasoning, critique, assessment, evidence checks, and explicit HITL/HOTL routing. Built from construction-industry realities, but centered on disciplined human-machine co-creation, continuity, and useful outcomes.</p>
     </header>
 
     <section class="panel">
@@ -30,7 +30,7 @@
         <div class="collapsible-content">
           <article class="card">
             <h2>Guide and Install</h2>
-            <p class="muted">FoC-first guidance for Ollama and user-provided model endpoints, plus PCA-governed CLI snippets based on your current runtime and role-model setup.</p>
+            <p class="muted">FoC-first guidance for Ollama and user-provided model endpoints, plus PCA-governed CLI snippets for a browser platform grounded in construction workflows and reusable in other evidence-heavy domains.</p>
             <div id="runtimeGuide" class="guide-grid"></div>
             <h3>CLI Snippets</h3>
             <pre id="cliSnippetsView">Select a runtime provider to generate snippets.</pre>
@@ -89,21 +89,36 @@
 
     <section class="panel">
       <article class="card">
+        <div class="card-head">
+          <div>
+            <h2>Use Case Paths</h2>
+            <p class="muted selected-use-case-note" id="selectedUseCaseNote">Choose a use case path to start fast, or continue an earlier session.</p>
+          </div>
+          <button id="btnContinueSession" class="ghost slim" type="button">Continue Latest Session</button>
+        </div>
+        <div id="useCaseHub" class="use-case-grid"></div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <article class="card">
         <h2>Quality and Evidence</h2>
-        <label>Use Case Profile</label>
-        <select id="useCaseProfile">
-          <option value="custom">Custom</option>
-          <option value="corenetx">Automated Pre-Submission (CORENET X)</option>
-          <option value="accessibility">Accessible Routes and Facilities</option>
-          <option value="buildability">Buildability/Constructability Optimiser</option>
-          <option value="mepcs">MEP and C&S Clash-Aware Design</option>
-          <option value="greenmark">Envelope and Systems Optimisation (GM)</option>
-          <option value="maintainability">Maintainability and FM Access Checks</option>
-          <option value="hschecks">HS Requirements vs Drawings</option>
-          <option value="costverify">Cost Verification (Specs vs Tender)</option>
-          <option value="specdraw">Specification vs Drawing Consistency</option>
-          <option value="bca_master">BCA Master Compliance Pre-Check</option>
-        </select>
+        <div class="hidden">
+          <label>Use Case Profile</label>
+          <select id="useCaseProfile">
+            <option value="custom">Custom</option>
+            <option value="corenetx">Automated Pre-Submission (CORENET X)</option>
+            <option value="accessibility">Accessible Routes and Facilities</option>
+            <option value="buildability">Buildability/Constructability Optimiser</option>
+            <option value="mepcs">MEP and C&S Clash-Aware Design</option>
+            <option value="greenmark">Envelope and Systems Optimisation (GM)</option>
+            <option value="maintainability">Maintainability and FM Access Checks</option>
+            <option value="hschecks">HS Requirements vs Drawings</option>
+            <option value="costverify">Cost Verification (Specs vs Tender)</option>
+            <option value="specdraw">Specification vs Drawing Consistency</option>
+            <option value="bca_master">BCA Master Compliance Pre-Check</option>
+          </select>
+        </div>
 
         <label>Objective</label>
         <input id="objective" value="Produce a defensible compliance interpretation." />
@@ -180,6 +195,16 @@ Side issues to revisit after main decision</textarea>
           <input id="activeSearchEnabled" type="checkbox" />
           Enable active AI search plan (query suggestions + task plan)
         </label>
+
+        <details class="collapsible-panel advanced-panel">
+          <summary class="collapsible-summary">
+            <span>
+              <strong>Advanced Configuration</strong>
+              <span class="muted summary-note">Runtime, models, debate depth, and formal checks.</span>
+            </span>
+            <span class="mono collapsible-state">Open / Close</span>
+          </summary>
+          <div class="collapsible-content">
 
         <div class="inline-grid">
           <div>
@@ -394,6 +419,8 @@ Side issues to revisit after main decision</textarea>
             <input id="minClaims" type="number" value="6" />
           </div>
         </div>
+          </div>
+        </details>
 
         <div class="actions">
           <button id="btnFramework" class="ghost">Propose Framework</button>

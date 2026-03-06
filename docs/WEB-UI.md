@@ -1,9 +1,12 @@
 # PCA Web UI
 
 PCA is an Evidence-Governed Adaptive Solver, and this Browser UI is its visual control-desk platform for governed human-machine work.
+It is grounded in construction-industry workflows, where regulation, coordination, safety, interpretation, and traceability matter, but the underlying reasoning and working method can transfer to other evidence-heavy domains.
 It supports adaptive debate depth, evidence checks, explicit `HITL/HOTL` routing, and optional Python package-backed symbolic checks (`z3-solver`) when formal constraints matter.
 
-PCA Web UI provides a browser-based platform for OCR, PDF conversion, quality gating, evidence checks, live governed runs, and artifact downloads.
+PCA Web UI provides a browser-based platform for discussion-led intake, OCR, PDF conversion, quality gating, evidence checks, live governed runs, and artifact downloads.
+
+Its primary purpose is human-machine collaboration and co-creation with continuity. Useful products, reusable assets, and practical solutions may emerge from that work, but they should be treated as downstream outcomes of a strong collaborative method rather than the sole purpose of the platform.
 
 It should also be understood as a continuous co-working platform. PCA sits as the framework layer around the user's task: it helps users frame the objective, define the decision, state expectations, surface research questions, tighten constraints, inspect evidence, and then iterate through propose, critique, assess, and govern loops.
 
