@@ -74,6 +74,13 @@ Web UI (local-first, downloadable artifacts, online deployment guidance): `docs/
 
 For live visibility, use the Web UI `Run Live Debate x3` action to stream proposer/critic/assessor events and a final human checkpoint.
 
+VS Code quick trial with Copilot runtime tags is available via tasks in `.vscode/tasks.json`:
+
+- `PCA: Start UI Server`
+- `PCA: Copilot Framework Proposal`
+- `PCA: Copilot Research Pack`
+- `PCA: Copilot Live Debate (1 cycle smoke)`
+
 Antigravity integration (CLI-only and hybrid UI workflows): `docs/ANTIGRAVITY-INTEGRATION.md`
 
 ### Free/Open Local Model Path

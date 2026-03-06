@@ -1,0 +1,49 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "PCA: Start UI Server",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "ui:start"
+      ],
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "PCA: Copilot Framework Proposal",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Invoke-RestMethod -Method Post -Uri 'http://localhost:4173/api/framework-proposal' -ContentType 'application/json' -Body '{\"runtimeProvider\":\"copilot\",\"mode\":\"discuss\",\"decision\":\"TRHS interpretation strategy\",\"objective\":\"Create objective-driven interpretation plan\",\"context\":\"Use public dataset evidence\",\"expectations\":\"Defensible recommendation\\nCoverage metrics\",\"constraints\":\"Public data only\",\"researchNeeds\":\"Find contradictory clauses\\nFind latest regulatory updates\",\"activeSearchEnabled\":true,\"sources\":\"data/public-pdf-text\",\"policy\":\"strict\",\"maxCycles\":3}' | ConvertTo-Json -Depth 8"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "PCA: Copilot Research Pack",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Invoke-RestMethod -Method Post -Uri 'http://localhost:4173/api/research-pack' -ContentType 'application/json' -Body '{\"runtimeProvider\":\"copilot\",\"mode\":\"verify\",\"decision\":\"TRHS interpretation strategy\",\"objective\":\"Create objective-driven interpretation plan\",\"context\":\"Use public dataset evidence\",\"researchNeeds\":\"Find contradictory clauses\\nFind latest regulatory updates\",\"activeSearchEnabled\":true,\"sources\":\"data/public-pdf-text\",\"policy\":\"strict\",\"maxFiles\":120}' | ConvertTo-Json -Depth 8"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "PCA: Copilot Live Debate (1 cycle smoke)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Invoke-WebRequest -Method Post -Uri 'http://localhost:4173/api/debate-live' -ContentType 'application/json' -Body '{\"runtimeProvider\":\"copilot\",\"mode\":\"verify\",\"decision\":\"TRHS interpretation strategy\",\"context\":\"Cross-document support and contradiction review\",\"sources\":\"data/public-pdf-text\",\"policy\":\"strict\",\"cycles\":1}' -UseBasicParsing | Select-Object -ExpandProperty StatusCode"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
