@@ -1,986 +1,139 @@
-<div align="center">
-
 # PCA
 
-**A fork-based quality extension of GSD with structured Propose -> Critique -> Assess decision loops for Claude Code, OpenCode, Gemini CLI, and Codex.**
+PCA (Propose-Critique-Assess) is a standalone quality workflow engine inspired by GSD standards.
 
-**Solves context rot — the quality degradation that happens as Claude fills its context window.**
-
-[![npm version](https://img.shields.io/npm/v/get-shit-done-cc?style=for-the-badge&logo=npm&logoColor=white&color=CB3837)](https://www.npmjs.com/package/get-shit-done-cc)
-[![npm downloads](https://img.shields.io/npm/dm/get-shit-done-cc?style=for-the-badge&logo=npm&logoColor=white&color=CB3837)](https://www.npmjs.com/package/get-shit-done-cc)
-[![Tests](https://img.shields.io/github/actions/workflow/status/glittercowboy/get-shit-done/test.yml?branch=main&style=for-the-badge&logo=github&label=Tests)](https://github.com/glittercowboy/get-shit-done/actions/workflows/test.yml)
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/gsd)
-[![X (Twitter)](https://img.shields.io/badge/X-@gsd__foundation-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/gsd_foundation)
-[![$GSD Token](https://img.shields.io/badge/$GSD-Dexscreener-1C1C1C?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzAwRkYwMCIvPjwvc3ZnPg==&logoColor=00FF00)](https://dexscreener.com/solana/dwudwjvan7bzkw9zwlbyv6kspdlvhwzrqy6ebk8xzxkv)
-[![GitHub stars](https://img.shields.io/github/stars/glittercowboy/get-shit-done?style=for-the-badge&logo=github&color=181717)](https://github.com/glittercowboy/get-shit-done)
-[![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
-
-<br>
-
-```bash
-npx get-shit-done-cc@latest
-```
-
-**Works on Mac, Windows, and Linux.**
-
-<br>
-
-![GSD Install](assets/terminal.svg)
-
-<br>
-
-*"If you know clearly what you want, this WILL build it for you. No bs."*
-
-*"I've done SpecKit, OpenSpec and Taskmaster — this has produced the best results for me."*
-
-*"By far the most powerful addition to my Claude Code. Nothing over-engineered. Literally just gets shit done."*
-
-<br>
-
-**Trusted by engineers at Amazon, Google, Shopify, and Webflow.**
-
-[Why I Built This](#why-i-built-this) · [How It Works](#how-it-works) · [Commands](#commands) · [Why It Works](#why-it-works) · [User Guide](docs/USER-GUIDE.md)
-
-</div>
-
----
-
-## Fork Notice (IP and Attribution)
-
-As of 2026-03-05, this repository is a fork-based extension of the upstream GSD project.
-
-- Upstream GSD concepts, naming, and baseline workflow remain attributed to their original authors/project.
-- This add-on work in PCA is an independent contribution developed out of curiosity and original ideas, using VS Code Copilot with GPT-5.3-Codex.
-- No separate direct approval request was made for this add-on; the fork and extension are made under the rights granted by the MIT license.
-- Under MIT, others may fork, modify, redistribute, and rebrand this work, provided the original copyright and license notice are retained.
-- This fork adds the PCA quality layer focused on structured Discuss/Verify improvements (Propose -> Critique -> Assess, HITL/HOTL routing, and transparent decision records).
-- Preserve upstream license terms and attribution when redistributing or modifying this fork.
-- If publishing externally, avoid implying official endorsement/partnership unless explicitly granted.
-
----
-
-## Why This Fork Exists
-
-This repository extends upstream GSD with a focused quality layer for decision-making in Discuss and Verify.
-
-What this fork adds:
-
-- Structured Propose -> Critique -> Assess loops in Discuss/Verify.
-- Distinct assessment frameworks for discussion and verification.
-- HITL/HOTL guidance for safer decision routing.
-- Transparent decision summaries with local internal trace logs.
-
-This keeps core GSD workflow strengths while improving decision quality, auditability, and cross-runtime consistency.
-
----
-
-Vibecoding has a bad reputation. You describe what you want, AI generates code, and you get inconsistent garbage that falls apart at scale.
-
-GSD fixes that. It's the context engineering layer that makes Claude Code reliable. Describe your idea, let the system extract everything it needs to know, and let Claude Code get to work.
-
----
-
-## Who This Is For
-
-People who want to describe what they want and have it built correctly — without pretending they're running a 50-person engineering org.
-
----
-
-## Getting Started
-
-```bash
-npx get-shit-done-cc@latest
-```
-
-> [!IMPORTANT]
-> `npx get-shit-done-cc@latest` installs the upstream npm package. To use this fork's latest PCA branding and behavior, install from this repository source:
->
-> ```bash
-> node bin/install.js --codex --global
-> # or
-> node bin/install.js --gemini --global
-> ```
-
-Windows example for user reference:
-
-- File path example: `C:\2026_gsd-pjc\bin\install.js`
-- Command example:
-
-```powershell
-node "C:\2026_gsd-pjc\bin\install.js" --gemini --global
-```
-
-After install, `node bin/install.js --help` should display the `PCA` banner/logo and version in the CLI header.
-
-The installer prompts you to choose:
-1. **Runtime** — Claude Code, OpenCode, Gemini, Codex, or all
-2. **Location** — Global (all projects) or local (current project only)
-
-Verify with:
-- Claude Code / Gemini: `/gsd:help`
-- OpenCode: `/gsd-help`
-- Codex: `$gsd-help`
-
-### VS Code Copilot + Google Antigravity Integration
-
-This fork supports both environments with different invocation styles:
-
-- **VS Code Copilot chat:** use natural-language orchestration (assistant-driven GSD flow).
-- **Google Antigravity (Gemini CLI):** use native GSD slash commands after install.
-
-Install from this fork (recommended):
-
-```bash
-# Gemini / Antigravity
-node bin/install.js --gemini --global
-
-# Codex skills (if also used)
-node bin/install.js --codex --global
-```
-
-Copilot chat usage pattern:
-
-- Ask: "Run discuss phase 1 with PCA and summarize Propose/Critique/Assess."
-- Ask: "Plan phase 1 in budget mode, max 2-3 tasks per plan."
-- Ask: "Verify phase 1 with PCA and apply HITL/HOTL guidance."
-
-Gemini/Antigravity usage pattern:
+It applies structured debate, quality checks, and explicit governance (`HITL`/`HOTL`) to improve decision quality before execution.
 
 ```text
-/gsd:new-project
-/gsd:discuss-phase 1 --pca
-/gsd:plan-phase 1
-/gsd:execute-phase 1
-/gsd:verify-work 1 --pca
+██████╗   ██████╗    █████╗
+██╔══██╗ ██╔════╝   ██╔══██╗
+██████╔╝ ██║        ███████║
+██╔═══╝  ██║        ██╔══██║
+██║      ╚██████╗   ██║  ██║
+╚═╝       ╚═════╝   ╚═╝  ╚═╝
 ```
 
-Integration note:
+## Why PCA
 
-- In Copilot chat, `/gsd:*` and `$gsd-*` are typically not native executable triggers; use assistant-orchestrated workflow prompts.
-- In Gemini/Antigravity runtime, native `/gsd:*` command flow is available after installation.
+- Independent workflow: use PCA in any project or stack.
+- Quality-first: force assumptions and risks into the open.
+- Traceable outputs: verdict + actions + risk flags.
+- Governance-ready: clear routing to `HITL` or `HOTL`.
 
-#### Antigravity Chatbox Quick Start (Common Pitfall)
-
-- Install once in terminal: `node bin/install.js --gemini --global`
-- Open your project in Antigravity/Gemini chat.
-- Run commands **inside the Antigravity chatbox/session**, not in PowerShell.
-
-Use this exact sequence in Antigravity chat:
+## Workflow Diagram
 
 ```text
-/gsd:help
-/gsd:new-project
-/gsd:discuss-phase 1 --pca
-/gsd:plan-phase 1
+Input decision/context
+	  |
+	  v
+  Propose (best recommendation)
+	  |
+	  v
+  Critique (stress-test assumptions)
+	  |
+	  v
+  Assess (final verdict + actions)
+	  |
+	  +--> accepted
+	  +--> accepted-with-conditions
+	  +--> needs-human-review
+			|
+			+--> HITL
+
+Residual risk but acceptable -> HOTL
 ```
 
-If commands are not recognized, restart the Antigravity/Gemini session after install.
+## Installation
 
-### Where to Run (Important)
-
-- Open your **actual app/project folder** in VS Code, then run GSD there.
-- Use an **empty folder** only for brand-new projects.
-- Keep this repository for framework development, not as your product workspace (unless you are changing GSD itself).
-
-### Why Use GSD If Copilot Already Executes Code?
-
-Copilot can execute tasks directly. GSD adds a repeatable system around that capability:
-
-- **Better context continuity:** persistent project memory in `.planning/*`.
-- **Higher decision quality:** optional Propose -> Critique -> Assess checks in Discuss/Verify.
-- **Safer delivery:** structured verification and explicit `HITL/HOTL` escalation.
-- **Lower rework:** phase-scoped planning before execution reduces backtracking.
-- **Cost control:** budget/quality profiles and conditional PCA usage instead of always-on heavy reasoning.
-
-In short: Copilot is the execution engine; GSD is the workflow/quality layer that improves reliability, predictability, and team handoff quality.
-
-> [!NOTE]
-> Codex installation uses skills (`skills/gsd-*/SKILL.md`) rather than custom prompts.
-
-### Staying Updated
-
-GSD evolves fast. Update periodically:
+### Local dev usage
 
 ```bash
-npx get-shit-done-cc@latest
+npm install
+node bin/pca.js prepare discuss --decision "API strategy" --context "Migrate safely"
 ```
 
-<details>
-<summary><strong>Non-interactive Install (Docker, CI, Scripts)</strong></summary>
+### Optional global CLI usage
 
 ```bash
-# Claude Code
-npx get-shit-done-cc --claude --global   # Install to ~/.claude/
-npx get-shit-done-cc --claude --local    # Install to ./.claude/
-
-# OpenCode (open source, free models)
-npx get-shit-done-cc --opencode --global # Install to ~/.config/opencode/
-
-# Gemini CLI
-npx get-shit-done-cc --gemini --global   # Install to ~/.gemini/
-
-# Codex (skills-first)
-npx get-shit-done-cc --codex --global    # Install to ~/.codex/
-npx get-shit-done-cc --codex --local     # Install to ./.codex/
-
-# All runtimes
-npx get-shit-done-cc --all --global      # Install to all directories
+npm install -g .
+pca prepare discuss --decision "Architecture framing" --context "Phase 1 migration"
 ```
 
-Use `--global` (`-g`) or `--local` (`-l`) to skip the location prompt.
-Use `--claude`, `--opencode`, `--gemini`, `--codex`, or `--all` to skip the runtime prompt.
+## Command Reference
 
-</details>
+| Command | Purpose | Output |
+|---|---|---|
+| `pca prepare <discuss|verify>` | Build PCA session contract (framework + prompts) | JSON session object |
+| `pca run <discuss|verify>` | Current alias of `prepare` for standalone MVP | JSON session object |
+| `pca route <discuss|verify>` | Compute governance routing from verdict/risk | JSON with `human_control` |
+| `pca assess <discuss|verify>` | Build final PCA assessment payload | JSON assessment object |
+| `pca persist <discuss|verify>` | Save assessment output to disk | JSON receipt + saved file |
 
-<details>
-<summary><strong>Development Installation</strong></summary>
-
-Clone the repository and run the installer locally:
+## Example Commands
 
 ```bash
-git clone https://github.com/glittercowboy/get-shit-done.git
-cd get-shit-done
-node bin/install.js --claude --local
+# Discuss framing
+node bin/pca.js prepare discuss --decision "service boundary" --context "latency and ownership"
+
+# Verify risk routing
+node bin/pca.js route verify --verdict "accepted-with-conditions" --risk-flags "partial coverage"
+
+# Build final assessment payload
+node bin/pca.js assess verify --verdict "accepted" --judgement "Evidence is reproducible"
+
+# Persist assessment to markdown
+node bin/pca.js persist verify --verdict "needs-human-review" --risk-flags "uncertain evidence" --output development/pca-assessment.md --format md
+
+# Force human decision
+node bin/pca.js route verify --verdict "needs-human-review" --needs-human-review true
 ```
 
-Installs to `./.claude/` for testing modifications before contributing.
+## Quality Standard (GSD-Inspired)
 
-</details>
+PCA follows the same quality discipline pattern that makes GSD reliable:
 
-### Recommended: Skip Permissions Mode
+- Explicit contracts for every command input/output.
+- Deterministic JSON responses for automation.
+- Mode-specific frameworks (`discuss`, `verify`) instead of generic scoring.
+- Governance-first escalation (`HITL`/`HOTL`) rather than implicit risk handling.
+- Test-backed behavior for core decision logic.
 
-GSD is designed for frictionless automation. Run Claude Code with:
+## Architecture
 
-```bash
-claude --dangerously-skip-permissions
-```
+- Core logic: `src/pca-core.js`
+- CLI: `bin/pca.js`
+- Tests: `tests/pca-core.test.js`
+- Design doc: `docs/PCA-ARCHITECTURE.md`
+- JSON contract: `SCHEMA.md`
+- Integration templates: `integrations/`
+- Contributing/redevelopment guide: `CONTRIBUTING.md`
 
-> [!TIP]
-> This is how GSD is intended to be used — stopping to approve `date` and `git commit` 50 times defeats the purpose.
+## Integrations
 
-<details>
-<summary><strong>Alternative: Granular Permissions</strong></summary>
+PCA is adapter-ready. Start with templates in:
 
-If you prefer not to use that flag, add this to your project's `.claude/settings.json`:
+- `integrations/copilot/`
+- `integrations/gemini-antigravity/`
 
-```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(date:*)",
-      "Bash(echo:*)",
-      "Bash(cat:*)",
-      "Bash(ls:*)",
-      "Bash(mkdir:*)",
-      "Bash(wc:*)",
-      "Bash(head:*)",
-      "Bash(tail:*)",
-      "Bash(sort:*)",
-      "Bash(grep:*)",
-      "Bash(tr:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git status:*)",
-      "Bash(git log:*)",
-      "Bash(git diff:*)",
-      "Bash(git tag:*)"
-    ]
-  }
-}
-```
+All integrations should consume the stable contract in `SCHEMA.md`.
 
-</details>
+## Public Redevelopment
 
----
+Anyone can fork and redevelop PCA under MIT.
 
-## How It Works
+Recommended fork pattern:
 
-> **Already have code?** Run `/gsd:map-codebase` first. It spawns parallel agents to analyze your stack, architecture, conventions, and concerns. Then `/gsd:new-project` knows your codebase — questions focus on what you're adding, and planning automatically loads your patterns.
+1. Keep `src/pca-core.js` contract-compatible.
+2. Build custom adapters under `integrations/`.
+3. Keep schema updates explicit in `SCHEMA.md`.
 
-### Full Project Lifecycle (with optional internal PCA)
+## Attribution
 
-```
-  ┌───────────────────────────────────────────────────────────────┐
-  │                        NEW PROJECT                            │
-  │ /gsd:new-project  ->  Questions -> Research -> Req -> Roadmap │
-  └──────────────────────────────┬────────────────────────────────┘
-                                 │
-                   ┌─────────────▼─────────────┐
-                   │       FOR EACH PHASE      │
-                   └─────────────┬─────────────┘
-                                 │
-          ┌──────────────────────▼──────────────────────┐
-          │ /gsd:discuss-phase [N] [--pca optional]     │
-          │ Capture implementation decisions            │
-          └───────────────┬─────────────────────────────┘
-                          │
-          if --pca or config(pcj.enabled + pcj.discuss)
-                          │
-        ┌─────────────────▼───────────────────┐
-        │ INTERNAL PCA (Discuss) [LOCAL ONLY] │
-        │ Proposer -> Critic -> Judge         │
-        │ writes development/PCA_*.txt        │
-        └─────────────────┬───────────────────┘
-                          │
-          ┌───────────────▼──────────────────────────────┐
-          │ /gsd:plan-phase [N]                          │
-          └───────────────┬──────────────────────────────┘
-                          │
-          ┌───────────────▼──────────────────────────────┐
-          │ /gsd:execute-phase [N]                       │
-          └───────────────┬──────────────────────────────┘
-                          │
-          ┌───────────────▼──────────────────────────────┐
-          │ /gsd:verify-work [N] [--pca optional]        │
-          │ UAT + diagnosis                              │
-          └───────────────┬──────────────────────────────┘
-                          │
-          if --pca or config(pcj.enabled + pcj.verify)
-                          │
-        ┌─────────────────▼────────────────────┐
-        │ INTERNAL PCA (Verify) [LOCAL ONLY]   │
-        │ Proposer -> Critic -> Judge          │
-        │ writes development/PCA_*.txt         │
-        └─────────────────┬────────────────────┘
-                          │
-          Curated outputs only -> .planning/* (no raw PCA logs)
-                          │
-                    Next phase? ── Yes ──┐
-                          │ No            │
-  ┌───────────────────────▼───────────────▼──────────────────────┐
-  │ /gsd:audit-milestone -> /gsd:complete-milestone -> next vX   │
-  └──────────────────────────────────────────────────────────────┘
-```
+PCA is inspired by GSD's structured workflow discipline and extends it as an independent quality-first decision engine.
 
-This workflow is generic and can be applied worldwide across domains (software, policy interpretation, process design, documentation, and other structured problem-solving tasks).
+## Contact and Q&A
 
-### PCA Improvement Notes (vs base GSD)
+- Submit a query: https://forms.gle/Qdk6xzGDchnk9h2u7
+- Browse past Q&A: https://docs.google.com/spreadsheets/d/1AbtKfvaiZCV3Fq6FoAEopUGhehiDHHaapCwKvlKnKNU/edit?usp=sharing
 
-This fork keeps the core GSD flow, but adds an optional internal PCA quality loop in Discuss and Verify.
-
-- Base GSD: Discuss captures preferences directly; Verify relies on UAT/diagnosis outputs.
-- This fork: Discuss/Verify can run Proposer → Critic → Judge before finalizing decisions.
-- Quality intent: reduce blind spots, challenge weak assumptions, and produce clearer final judgements for downstream planning/execution.
-- Scope intent: improve decision quality only in Discuss and Verify; Plan/Execute logic remains unchanged by default.
-- Privacy intent: raw PCA reasoning stays local in `development/` (gitignored; legacy `development_process/` supported); curated outcomes only go to `.planning/*` docs.
-
-**Why this is constructive (not extra overhead):**
-
-- These controls are conditional, not always-on.
-- For low-risk work, run normal flow without PCA for maximum speed/cost efficiency.
-- For ambiguous or high-impact work, PCA + HITL/HOTL reduces blind spots, rework, and release risk.
-- Net effect: small targeted overhead in risky moments, lower total lifecycle cost overall.
-
-### PCA UI (Transparent Decision Flow)
-
-This fork supports a practical PCA UI pattern for chat-based workflows: users see concise role summaries and final control guidance, while raw internal logs remain local.
-
-#### Structured Assessment Framework
-
-PCA uses different assessment dimensions for Discuss vs Verify so quality checks match intent.
-
-| Mode | Framework | Core Questions | Primary Goal |
-|------|-----------|----------------|--------------|
-| Discuss | `discussion-decision-framework` | Is scope aligned? Is strategy clear? Are assumptions explicit? Is execution ready? | Improve planning inputs before implementation |
-| Verify | `verification-risk-framework` | Is evidence reproducible? What is user impact? What is failure scope? Is release safe? | Improve release/readiness judgement |
-
-Each PCA pass follows: **Propose -> Critique -> Assess**.
-
-**What users see in chat:**
-- Proposal summary (what is being proposed)
-- Critic summary (what assumptions/risks are challenged)
-- Assess summary (final verdict + actions)
-- Human-control recommendation: `HOTL` (human oversight) or `HITL` (explicit human decision required)
-
-#### HITL/HOTL Routing
-
-| Condition | Control Mode | Why |
-|-----------|--------------|-----|
-| `verdict = needs-human-review` or unresolved high risk | `HITL` | Explicit human approval required before high-impact action |
-| `accepted-with-conditions` with bounded risk | `HOTL` | Proceed with oversight while conditions are monitored |
-| `accepted` with low residual risk | `HOTL` | Fast flow with lightweight oversight |
-
-**What is saved for traceability:**
-- Timestamped internal log: `development/PCA_YYYYMMDDTHHMMSSZ.txt`
-- Curated verdict entries in `.planning/*` docs (Discuss/Verify state)
-
-#### Recorded Thinking Process and Outputs
-
-PCA records **structured decision artifacts** (not unrestricted hidden reasoning dumps):
-
-- Role summaries shown in chat (Propose/Critique/Assess)
-- Assess verdict + actions + human-control recommendation
-- Internal timestamped trail in `development/PCA_*.txt`
-- Curated project-state updates in `.planning/*`
-
-This balances transparency, governance, and practical token usage.
-
-Example chat-style UI output:
-
-```text
-PCA Discuss — Phase 03
-
-Proposal:
-- Use adapter-first strategy to reduce migration risk.
-
-Critic:
-- Missing rollback criteria; boundary conditions not explicit.
-
-Judge:
-- Verdict: accepted-with-conditions
-- Actions: add rollback trigger, lock invariants, define fallback path
-- Human Control: HOTL (monitor conditions during execution)
-```
-
-For high-risk verification outcomes:
-
-```text
-PCA Verify — Phase 03
-- Verdict: needs-human-review
-- Human Control: HITL (release decision requires explicit human approval)
-```
-
-### 1. Initialize Project
-
-```
-/gsd:new-project
-```
-
-One command, one flow. The system:
-
-1. **Questions** — Asks until it understands your idea completely (goals, constraints, tech preferences, edge cases)
-2. **Research** — Spawns parallel agents to investigate the domain (optional but recommended)
-3. **Requirements** — Extracts what's v1, v2, and out of scope
-4. **Roadmap** — Creates phases mapped to requirements
-
-You approve the roadmap. Now you're ready to build.
-
-**Creates:** `PROJECT.md`, `REQUIREMENTS.md`, `ROADMAP.md`, `STATE.md`, `.planning/research/`
-
----
-
-### 2. Discuss Phase
-
-```
-/gsd:discuss-phase 1
-```
-
-Optional PCA loop for key framing decisions:
-
-```
-/gsd:discuss-phase 1 --pca
-```
-
-**This is where you shape the implementation.**
-
-Your roadmap has a sentence or two per phase. That's not enough context to build something the way *you* imagine it. This step captures your preferences before anything gets researched or planned.
-
-The system analyzes the phase and identifies gray areas based on what's being built:
-
-- **Visual features** → Layout, density, interactions, empty states
-- **APIs/CLIs** → Response format, flags, error handling, verbosity
-- **Content systems** → Structure, tone, depth, flow
-- **Organization tasks** → Grouping criteria, naming, duplicates, exceptions
-
-For each area you select, it asks until you're satisfied. The output — `CONTEXT.md` — feeds directly into the next two steps:
-
-1. **Researcher reads it** — Knows what patterns to investigate ("user wants card layout" → research card component libraries)
-2. **Planner reads it** — Knows what decisions are locked ("infinite scroll decided" → plan includes scroll handling)
-
-The deeper you go here, the more the system builds what you actually want. Skip it and you get reasonable defaults. Use it and you get *your* vision.
-
-With `--pca`, Discuss runs a Propose → Critique → Assess pass on scope/strategy/assumptions and writes the Assess output back to ACI/generic project-state docs.
-
-**Quality intent in Discuss:**
-- Improve framing quality before planning starts.
-- Force assumptions and tradeoffs to be explicit.
-- Produce judge-backed decision notes planners can execute without re-asking.
-
-**Creates:** `{phase_num}-CONTEXT.md`
-
----
-
-### 3. Plan Phase
-
-```
-/gsd:plan-phase 1
-```
-
-The system:
-
-1. **Researches** — Investigates how to implement this phase, guided by your CONTEXT.md decisions
-2. **Plans** — Creates 2-3 atomic task plans with XML structure
-3. **Verifies** — Checks plans against requirements, loops until they pass
-
-Each plan is small enough to execute in a fresh context window. No degradation, no "I'll be more concise now."
-
-**Creates:** `{phase_num}-RESEARCH.md`, `{phase_num}-{N}-PLAN.md`
-
----
-
-### 4. Execute Phase
-
-```
-/gsd:execute-phase 1
-```
-
-The system:
-
-1. **Runs plans in waves** — Parallel where possible, sequential when dependent
-2. **Fresh context per plan** — 200k tokens purely for implementation, zero accumulated garbage
-3. **Commits per task** — Every task gets its own atomic commit
-4. **Verifies against goals** — Checks the codebase delivers what the phase promised
-
-Walk away, come back to completed work with clean git history.
-
-**How Wave Execution Works:**
-
-Plans are grouped into "waves" based on dependencies. Within each wave, plans run in parallel. Waves run sequentially.
-
-```
-┌────────────────────────────────────────────────────────────────────┐
-│  PHASE EXECUTION                                                   │
-├────────────────────────────────────────────────────────────────────┤
-│                                                                    │
-│  WAVE 1 (parallel)          WAVE 2 (parallel)          WAVE 3      │
-│  ┌─────────┐ ┌─────────┐    ┌─────────┐ ┌─────────┐    ┌─────────┐ │
-│  │ Plan 01 │ │ Plan 02 │ →  │ Plan 03 │ │ Plan 04 │ →  │ Plan 05 │ │
-│  │         │ │         │    │         │ │         │    │         │ │
-│  │ User    │ │ Product │    │ Orders  │ │ Cart    │    │ Checkout│ │
-│  │ Model   │ │ Model   │    │ API     │ │ API     │    │ UI      │ │
-│  └─────────┘ └─────────┘    └─────────┘ └─────────┘    └─────────┘ │
-│       │           │              ↑           ↑              ↑      │
-│       └───────────┴──────────────┴───────────┘              │      │
-│              Dependencies: Plan 03 needs Plan 01            │      │
-│                          Plan 04 needs Plan 02              │      │
-│                          Plan 05 needs Plans 03 + 04        │      │
-│                                                                    │
-└────────────────────────────────────────────────────────────────────┘
-```
-
-**Why waves matter:**
-- Independent plans → Same wave → Run in parallel
-- Dependent plans → Later wave → Wait for dependencies
-- File conflicts → Sequential plans or same plan
-
-This is why "vertical slices" (Plan 01: User feature end-to-end) parallelize better than "horizontal layers" (Plan 01: All models, Plan 02: All APIs).
-
-**Creates:** `{phase_num}-{N}-SUMMARY.md`, `{phase_num}-VERIFICATION.md`
-
----
-
-### 5. Verify Work
-
-```
-/gsd:verify-work 1
-```
-
-Optional high-stakes PCA verification checkpoint:
-
-```
-/gsd:verify-work 1 --pca
-```
-
-**This is where you confirm it actually works.**
-
-Automated verification checks that code exists and tests pass. But does the feature *work* the way you expected? This is your chance to use it.
-
-The system:
-
-1. **Extracts testable deliverables** — What you should be able to do now
-2. **Walks you through one at a time** — "Can you log in with email?" Yes/no, or describe what's wrong
-3. **Diagnoses failures automatically** — Spawns debug agents to find root causes
-4. **Creates verified fix plans** — Ready for immediate re-execution
-
-If everything passes, you move on. If something's broken, you don't manually debug — you just run `/gsd:execute-phase` again with the fix plans it created.
-
-With `--pca`, Verify can run Propose → Critique → Assess for interpretation/risk checks and persist a final verdict, including `needs_human_review`, into verification/state docs.
-
-**Quality intent in Verify:**
-- Improve confidence of release/readiness interpretation.
-- Surface unresolved risks earlier via Critic challenges.
-- Escalate ambiguous high-risk outcomes via `needs_human_review` instead of overconfident acceptance.
-
-**Creates:** `{phase_num}-UAT.md`, fix plans if issues found
-
----
-
-### 6. Repeat → Complete → Next Milestone
-
-```
-/gsd:discuss-phase 2
-/gsd:plan-phase 2
-/gsd:execute-phase 2
-/gsd:verify-work 2
-...
-/gsd:complete-milestone
-/gsd:new-milestone
-```
-
-Loop **discuss → plan → execute → verify** until milestone complete.
-
-Each phase gets your input (discuss), proper research (plan), clean execution (execute), and human verification (verify). Context stays fresh. Quality stays high.
-
-When all phases are done, `/gsd:complete-milestone` archives the milestone and tags the release.
-
-Then `/gsd:new-milestone` starts the next version — same flow as `new-project` but for your existing codebase. You describe what you want to build next, the system researches the domain, you scope requirements, and it creates a fresh roadmap. Each milestone is a clean cycle: define → build → ship.
-
----
-
-### Quick Mode
-
-```
-/gsd:quick
-```
-
-**For ad-hoc tasks that don't need full planning.**
-
-Quick mode gives you GSD guarantees (atomic commits, state tracking) with a faster path:
-
-- **Same agents** — Planner + executor, same quality
-- **Skips optional steps** — No research, no plan checker, no verifier
-- **Separate tracking** — Lives in `.planning/quick/`, not phases
-
-Use for: bug fixes, small features, config changes, one-off tasks.
-
-```
-/gsd:quick
-> What do you want to do? "Add dark mode toggle to settings"
-```
-
-**Creates:** `.planning/quick/001-add-dark-mode-toggle/PLAN.md`, `SUMMARY.md`
-
----
-
-## Why It Works
-
-### Context Engineering
-
-Claude Code is incredibly powerful *if* you give it the context it needs. Most people don't.
-
-GSD handles it for you:
-
-| File | What it does |
-|------|--------------|
-| `PROJECT.md` | Project vision, always loaded |
-| `research/` | Ecosystem knowledge (stack, features, architecture, pitfalls) |
-| `REQUIREMENTS.md` | Scoped v1/v2 requirements with phase traceability |
-| `ROADMAP.md` | Where you're going, what's done |
-| `STATE.md` | Decisions, blockers, position — memory across sessions |
-| `PLAN.md` | Atomic task with XML structure, verification steps |
-| `SUMMARY.md` | What happened, what changed, committed to history |
-| `todos/` | Captured ideas and tasks for later work |
-
-Size limits based on where Claude's quality degrades. Stay under, get consistent excellence.
-
-### XML Prompt Formatting
-
-Every plan is structured XML optimized for Claude:
-
-```xml
-<task type="auto">
-  <name>Create login endpoint</name>
-  <files>src/app/api/auth/login/route.ts</files>
-  <action>
-    Use jose for JWT (not jsonwebtoken - CommonJS issues).
-    Validate credentials against users table.
-    Return httpOnly cookie on success.
-  </action>
-  <verify>curl -X POST localhost:3000/api/auth/login returns 200 + Set-Cookie</verify>
-  <done>Valid credentials return cookie, invalid return 401</done>
-</task>
-```
-
-Precise instructions. No guessing. Verification built in.
-
-### Multi-Agent Orchestration
-
-Every stage uses the same pattern: a thin orchestrator spawns specialized agents, collects results, and routes to the next step.
-
-| Stage | Orchestrator does | Agents do |
-|-------|------------------|-----------|
-| Research | Coordinates, presents findings | 4 parallel researchers investigate stack, features, architecture, pitfalls |
-| Planning | Validates, manages iteration | Planner creates plans, checker verifies, loop until pass |
-| Execution | Groups into waves, tracks progress | Executors implement in parallel, each with fresh 200k context |
-| Verification | Presents results, routes next | Verifier checks codebase against goals, debuggers diagnose failures |
-
-The orchestrator never does heavy lifting. It spawns agents, waits, integrates results.
-
-**The result:** You can run an entire phase — deep research, multiple plans created and verified, thousands of lines of code written across parallel executors, automated verification against goals — and your main context window stays at 30-40%. The work happens in fresh subagent contexts. Your session stays fast and responsive.
-
-### Atomic Git Commits
-
-Each task gets its own commit immediately after completion:
-
-```bash
-abc123f docs(08-02): complete user registration plan
-def456g feat(08-02): add email confirmation flow
-hij789k feat(08-02): implement password hashing
-lmn012o feat(08-02): create registration endpoint
-```
-
-> [!NOTE]
-> **Benefits:** Git bisect finds exact failing task. Each task independently revertable. Clear history for Claude in future sessions. Better observability in AI-automated workflow.
-
-Every commit is surgical, traceable, and meaningful.
-
-### Modular by Design
-
-- Add phases to current milestone
-- Insert urgent work between phases
-- Complete milestones and start fresh
-- Adjust plans without rebuilding everything
-
-You're never locked in. The system adapts.
-
----
-
-## Commands
-
-### Core Workflow
-
-| Command | What it does |
-|---------|--------------|
-| `/gsd:new-project [--auto]` | Full initialization: questions → research → requirements → roadmap |
-| `/gsd:discuss-phase [N] [--auto] [--pca]` | Capture implementation decisions before planning (optional Propose→Critique→Assess) |
-| `/gsd:plan-phase [N] [--auto]` | Research + plan + verify for a phase |
-| `/gsd:execute-phase <N>` | Execute all plans in parallel waves, verify when complete |
-| `/gsd:verify-work [N] [--pca]` | Manual user acceptance testing ¹ (optional Propose→Critique→Assess) |
-| `/gsd:audit-milestone` | Verify milestone achieved its definition of done |
-| `/gsd:complete-milestone` | Archive milestone, tag release |
-| `/gsd:new-milestone [name]` | Start next version: questions → research → requirements → roadmap |
-
-### Navigation
-
-| Command | What it does |
-|---------|--------------|
-| `/gsd:progress` | Where am I? What's next? |
-| `/gsd:help` | Show all commands and usage guide |
-| `/gsd:update` | Update GSD with changelog preview |
-| `/gsd:join-discord` | Join the GSD Discord community |
-
-### Brownfield
-
-| Command | What it does |
-|---------|--------------|
-| `/gsd:map-codebase` | Analyze existing codebase before new-project |
-
-### Phase Management
-
-| Command | What it does |
-|---------|--------------|
-| `/gsd:add-phase` | Append phase to roadmap |
-| `/gsd:insert-phase [N]` | Insert urgent work between phases |
-| `/gsd:remove-phase [N]` | Remove future phase, renumber |
-| `/gsd:list-phase-assumptions [N]` | See Claude's intended approach before planning |
-| `/gsd:plan-milestone-gaps` | Create phases to close gaps from audit |
-
-### Session
-
-| Command | What it does |
-|---------|--------------|
-| `/gsd:pause-work` | Create handoff when stopping mid-phase |
-| `/gsd:resume-work` | Restore from last session |
-
-### Utilities
-
-| Command | What it does |
-|---------|--------------|
-| `/gsd:settings` | Configure model profile and workflow agents |
-| `/gsd:set-profile <profile>` | Switch model profile (quality/balanced/budget) |
-| `/gsd:add-todo [desc]` | Capture idea for later |
-| `/gsd:check-todos` | List pending todos |
-| `/gsd:debug [desc]` | Systematic debugging with persistent state |
-| `/gsd:quick [--full] [--discuss]` | Execute ad-hoc task with GSD guarantees (`--full` adds plan-checking and verification, `--discuss` gathers context first) |
-| `/gsd:health [--repair]` | Validate `.planning/` directory integrity, auto-repair with `--repair` |
-
-<sup>¹ Contributed by reddit user OracleGreyBeard</sup>
-
----
-
-## Configuration
-
-GSD stores project settings in `.planning/config.json`. Configure during `/gsd:new-project` or update later with `/gsd:settings`. For the full config schema, workflow toggles, git branching options, and per-agent model breakdown, see the [User Guide](docs/USER-GUIDE.md#configuration-reference).
-
-### Core Settings
-
-| Setting | Options | Default | What it controls |
-|---------|---------|---------|------------------|
-| `mode` | `yolo`, `interactive` | `interactive` | Auto-approve vs confirm at each step |
-| `granularity` | `coarse`, `standard`, `fine` | `standard` | Phase granularity — how finely scope is sliced (phases × plans) |
-
-### Model Profiles
-
-Control which Claude model each agent uses. Balance quality vs token spend.
-
-| Profile | Planning | Execution | Verification |
-|---------|----------|-----------|--------------|
-| `quality` | Opus | Opus | Sonnet |
-| `balanced` (default) | Opus | Sonnet | Sonnet |
-| `budget` | Sonnet | Sonnet | Haiku |
-
-Switch profiles:
-```
-/gsd:set-profile budget
-```
-
-Or configure via `/gsd:settings`.
-
-### Workflow Agents
-
-These spawn additional agents during planning/execution. They improve quality but add tokens and time.
-
-| Setting | Default | What it does |
-|---------|---------|--------------|
-| `workflow.research` | `true` | Researches domain before planning each phase |
-| `workflow.plan_check` | `true` | Verifies plans achieve phase goals before execution |
-| `workflow.verifier` | `true` | Confirms must-haves were delivered after execution |
-| `workflow.auto_advance` | `false` | Auto-chain discuss → plan → execute without stopping |
-
-Use `/gsd:settings` to toggle these, or override per-invocation:
-- `/gsd:plan-phase --skip-research`
-- `/gsd:plan-phase --skip-verify`
-
-### Execution
-
-| Setting | Default | What it controls |
-|---------|---------|------------------|
-| `parallelization.enabled` | `true` | Run independent plans simultaneously |
-| `planning.commit_docs` | `true` | Track `.planning/` in git |
-
-### Git Branching
-
-Control how GSD handles branches during execution.
-
-| Setting | Options | Default | What it does |
-|---------|---------|---------|--------------|
-| `git.branching_strategy` | `none`, `phase`, `milestone` | `none` | Branch creation strategy |
-| `git.phase_branch_template` | string | `gsd/phase-{phase}-{slug}` | Template for phase branches |
-| `git.milestone_branch_template` | string | `gsd/{milestone}-{slug}` | Template for milestone branches |
-
-**Strategies:**
-- **`none`** — Commits to current branch (default GSD behavior)
-- **`phase`** — Creates a branch per phase, merges at phase completion
-- **`milestone`** — Creates one branch for entire milestone, merges at completion
-
-At milestone completion, GSD offers squash merge (recommended) or merge with history.
-
----
-
-## Security
-
-### Protecting Sensitive Files
-
-GSD's codebase mapping and analysis commands read files to understand your project. **Protect files containing secrets** by adding them to Claude Code's deny list:
-
-1. Open Claude Code settings (`.claude/settings.json` or global)
-2. Add sensitive file patterns to the deny list:
-
-```json
-{
-  "permissions": {
-    "deny": [
-      "Read(.env)",
-      "Read(.env.*)",
-      "Read(**/secrets/*)",
-      "Read(**/*credential*)",
-      "Read(**/*.pem)",
-      "Read(**/*.key)"
-    ]
-  }
-}
-```
-
-This prevents Claude from reading these files entirely, regardless of what commands you run.
-
-> [!IMPORTANT]
-> GSD includes built-in protections against committing secrets, but defense-in-depth is best practice. Deny read access to sensitive files as a first line of defense.
-
----
-
-## Troubleshooting
-
-**Commands not found after install?**
-- Restart your runtime to reload commands/skills
-- Verify files exist in `~/.claude/commands/gsd/` (global) or `./.claude/commands/gsd/` (local)
-- For Codex, verify skills exist in `~/.codex/skills/gsd-*/SKILL.md` (global) or `./.codex/skills/gsd-*/SKILL.md` (local)
-
-**Commands not working as expected?**
-- Run `/gsd:help` to verify installation
-- Re-run `npx get-shit-done-cc` to reinstall
-
-**Updating to the latest version?**
-```bash
-npx get-shit-done-cc@latest
-```
-
-**Using Docker or containerized environments?**
-
-If file reads fail with tilde paths (`~/.claude/...`), set `CLAUDE_CONFIG_DIR` before installing:
-```bash
-CLAUDE_CONFIG_DIR=/home/youruser/.claude npx get-shit-done-cc --global
-```
-This ensures absolute paths are used instead of `~` which may not expand correctly in containers.
-
-### Uninstalling
-
-To remove GSD completely:
-
-```bash
-# Global installs
-npx get-shit-done-cc --claude --global --uninstall
-npx get-shit-done-cc --opencode --global --uninstall
-npx get-shit-done-cc --codex --global --uninstall
-
-# Local installs (current project)
-npx get-shit-done-cc --claude --local --uninstall
-npx get-shit-done-cc --opencode --local --uninstall
-npx get-shit-done-cc --codex --local --uninstall
-```
-
-This removes all GSD commands, agents, hooks, and settings while preserving your other configurations.
-
----
-
-## Community Ports
-
-OpenCode, Gemini CLI, and Codex are now natively supported via `npx get-shit-done-cc`.
-
-These community ports pioneered multi-runtime support:
-
-| Project | Platform | Description |
-|---------|----------|-------------|
-| [gsd-opencode](https://github.com/rokicool/gsd-opencode) | OpenCode | Original OpenCode adaptation |
-| gsd-gemini (archived) | Gemini CLI | Original Gemini adaptation by uberfuzzy |
-
----
-
-## Star History
-
-<a href="https://star-history.com/#glittercowboy/get-shit-done&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=glittercowboy/get-shit-done&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=glittercowboy/get-shit-done&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=glittercowboy/get-shit-done&type=Date" />
- </picture>
-</a>
-
----
-
-## Acknowledgements
-
-- [Woon Wei PONG](https://integrations.space)
-
----
-
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
-
----
-
-<div align="center">
-
-**Claude Code is powerful. GSD makes it reliable.**
-
-</div>
+Do not submit confidential data.
