@@ -72,6 +72,7 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--font-sans);
+  font-size: 15px;
   color: var(--ink);
   background: var(--bg);
 }
@@ -97,7 +98,7 @@ body {
 
 .hero h1 {
   margin: 0.2rem 0 0.5rem;
-  font-size: clamp(1.5rem, 3.6vw, 2.8rem);
+  font-size: clamp(1.35rem, 3.2vw, 2.45rem);
   line-height: 1.1;
 }
 
@@ -116,6 +117,7 @@ body {
 
 .subtitle {
   max-width: 64ch;
+  font-size: 0.95rem;
 }
 
 .field-hint {
@@ -227,7 +229,7 @@ body {
 
 .continuous-input-status {
   margin: 0.45rem 0 0;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
 }
 
 .section-block {
@@ -274,19 +276,19 @@ body {
 
 .use-case-card h3 {
   margin: 0 0 0.35rem;
-  font-size: 0.98rem;
+  font-size: 0.94rem;
 }
 
 .use-case-card p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: 0.84rem;
 }
 
 .use-case-meta,
 .selected-use-case-note {
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: 0.8rem;
 }
 
 .use-case-meta {
@@ -308,17 +310,19 @@ body {
 .card h2 {
   margin-top: 0;
   margin-bottom: 0.45rem;
+  font-size: 1.08rem;
 }
 
 .card h3 {
   margin: 0;
+  font-size: 0.98rem;
 }
 
 .card label {
   display: block;
   margin: 0.5rem 0 0.2rem;
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: 0.84rem;
 }
 
 .card-head {
@@ -449,6 +453,7 @@ textarea,
 select {
   width: 100%;
   padding: 0.55rem 0.65rem;
+  font-size: 0.94rem;
   border: 1px solid var(--line);
   border-radius: 9px;
   background: var(--inner-surface);
@@ -506,6 +511,7 @@ button {
   border: none;
   border-radius: 10px;
   padding: 0.55rem 0.9rem;
+  font-size: 0.92rem;
   background: var(--accent);
   color: #fff;
   cursor: pointer;
@@ -603,7 +609,7 @@ pre {
   background: rgba(17, 24, 39, 0.78);
   color: #d1fae5;
   font-family: var(--font-mono);
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   backdrop-filter: blur(14px) saturate(120%);
   -webkit-backdrop-filter: blur(14px) saturate(120%);
 }
@@ -689,13 +695,13 @@ pre.compact {
   color: var(--accent);
   text-decoration: none;
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 0.76rem;
 }
 
 .mono {
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 0.76rem;
 }
 
 .timeline-list {
@@ -721,13 +727,13 @@ pre.compact {
 
 .guide-item h4 {
   margin: 0 0 0.35rem;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .guide-item p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: 0.84rem;
 }
 
 .workflow-map {
@@ -743,7 +749,7 @@ pre.compact {
   border-radius: 999px;
   background: var(--inner-surface);
   white-space: nowrap;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
 }
 
 .wf-arrow {
