@@ -104,6 +104,56 @@ This matters for human-machine co-working because it lets a human see how the wo
 
 ## Installation
 
+### VS Code Quick Start
+
+If you are installing PCA to use inside VS Code, start with this sequence:
+
+1. Open the PCA project folder in VS Code.
+2. Open the integrated terminal.
+3. Install dependencies:
+
+```bash
+npm install
+```
+
+4. Confirm the CLI is working:
+
+```bash
+node bin/pca.js help
+```
+
+5. Start the local PCA UI and API service:
+
+```bash
+npm run ui:start
+```
+
+6. Open:
+
+- `http://localhost:4173`
+
+7. Run your first PCA workflow, for example:
+
+```bash
+node bin/pca.js prepare discuss --decision "API strategy" --context "Migrate safely"
+node bin/pca.js quality-check --sources "data/public-pdf-text"
+```
+
+8. If you want a quick VS Code trial without typing long commands, use the built-in tasks in `.vscode/tasks.json`:
+
+- `PCA: Start UI Server`
+- `PCA: Copilot Framework Proposal`
+- `PCA: Copilot Research Pack`
+- `PCA: Copilot Live Debate (1 cycle smoke)`
+
+9. If you want to validate the runtime path end-to-end, run:
+
+```bash
+npm run smoke:copilot
+```
+
+For more step-by-step usage patterns, see `docs/VS-CODE-CLI-CHEATSHEET.md`.
+
 ```bash
 npm install
 ```

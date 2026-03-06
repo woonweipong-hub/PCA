@@ -289,6 +289,8 @@ Detailed workflow, swimlanes, and agent topology: `docs/WORKFLOW.md`
 
 ## Installation
 
+If you are using PCA in VS Code, start with the `VS Code Quick Start` section in `docs/USER-GUIDE.md`.
+
 ### Local dev usage
 
 ```bash
