@@ -107,8 +107,8 @@ Operational rule: move forward only when qualitative assessment, symbolic feasib
 ```text
   ┌──────────────────────────────────────────────────────────┐
   │                     PCA DECISION RUN                     │
-  │ Intake + Corpus + Objectives + Constraints + Policy     │
-  │ + Risk Profile                                          │
+  │ Intake + Corpus + Objectives + Constraints + Policy      │
+  │ + Risk Profile                                           │
   └─────────────────────────────┬────────────────────────────┘
                                 │
                 ┌───────────────▼────────────────┐
@@ -126,27 +126,25 @@ Operational rule: move forward only when qualitative assessment, symbolic feasib
   │ GOVERNANCE GATE                                          │
   │ Evidence checks + policy thresholds + optional Z3        │
   └─────────────────────────────┬────────────────────────────┘
-          gate fail <--┘
-                │
-                │
-              gate pass
-                ▼
-  ┌──────────────────────────────────────────────────────────┐
+                   gate fail <--┘
+                                │
+                                │
+                            gate pass
+  ┌─────────────────────────────▼────────────────────────────┐
   │ ACTION PACKAGE                                           │
-  │ Recommendation + contract + owner + due + rollback      │
+  │ Recommendation + contract + owner + due + rollback       │
   └─────────────────────────────┬────────────────────────────┘
                                 │
                 ┌───────────────▼────────────────┐
                 │ ROUTING + READINESS CHECK      │
                 │ HITL / HOTL + implementation   │
                 └───────────────┬────────────────┘
-                    blocked <--┘
+                     blocked <--┘
                                 │
                                 │
                               ready
-                                ▼
-  ┌──────────────────────────────────────────────────────────┐
-  │ EXECUTE -> OBSERVE -> CAPTURE -> LEARN -> RE-INGEST     │
+  ┌─────────────────────────────▼────────────────────────────┐
+  │ EXECUTE -> OBSERVE -> CAPTURE -> LEARN -> RE-INGEST      │
   └──────────────────────────────────────────────────────────┘
 ```
 
@@ -154,11 +152,11 @@ Operational rule: move forward only when qualitative assessment, symbolic feasib
 
 ```text
   ┌──────────────────────────────────────────────────────────┐
-  │              PCA PARALLEL ORCHESTRATION VIEW            │
+  │              PCA PARALLEL ORCHESTRATION VIEW             │
   ├──────────────────────────────────────────────────────────┤
   │                                                          │
   │ STREAM A            STREAM B            STREAM C         │
-  │ evidence            reasoning           action            │
+  │ evidence            reasoning           action           │
   │                                                          │
   │ ┌──────────────┐    ┌──────────────┐    ┌──────────────┐ │
   │ │ Collect Docs │    │ Propose      │    │ Draft Action │ │
@@ -166,18 +164,17 @@ Operational rule: move forward only when qualitative assessment, symbolic feasib
   │ └──────┬───────┘    │ Assess       │    └──────┬───────┘ │
   │        │            └──────┬───────┘           │         │
   │        │                   │                   │         │
-  │        └──────────┬────────▼────────┬──────────┘         │
-  │                   │ Governance Merge │                    │
-  │                   │ evidence policy  │                    │
-  │                   │ and Z3 checks    │                    │
-  │                   └────────┬─────────┘                    │
-  │                            │                              │
-  │                 fail loop  │  pass route readiness        │
-  │                            ▼                              │
-  │                   ┌──────────────────────┐                │
-  │                   │ Execute and Monitor  │                │
-  │                   │ Feed next cycle      │                │
-  │                   └──────────────────────┘                │
+  │        └──────────┬────────▼─────────┬─────────┘         │
+  │                   │ Governance Merge │                   │
+  │                   │ evidence policy  │                   │
+  │                   │ and Z3 checks    │                   │
+  │                   └────────┬─────────┘                   │
+  │                            │                             │
+  │                 fail loop  │  pass route readiness       │
+  │                   ┌────────▼─────────────┐               │
+  │                   │ Execute and Monitor  │               │
+  │                   │ Feed next cycle      │               │
+  │                   └──────────────────────┘               │
   │                                                          │
   └──────────────────────────────────────────────────────────┘
 ```
