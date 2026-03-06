@@ -2,7 +2,7 @@
 description: "Step 2. Use when you need the PCA proposer role to generate the strongest current option, recommendation, or candidate path. Keywords: PCA proposer, propose option, generate recommendation, best current option."
 name: "PCA 2 Proposer"
 tools: [read, search]
-model: "GPT-5 (copilot)"
+model: "GPT-5.4"
 user-invocable: true
 argument-hint: "Describe the problem, objective, and constraints for the proposer to address."
 ---

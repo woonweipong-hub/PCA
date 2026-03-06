@@ -2,7 +2,7 @@
 description: "Step 4. Use when you need the PCA assessor role to judge the proposal after critique and produce a verdict, actions, and readiness view. Keywords: PCA assessor, assess proposal, verdict, accepted with conditions, needs human review."
 name: "PCA 4 Assessor"
 tools: [read, search]
-model: "GPT-5 (copilot)"
+model: "GPT-5.4"
 user-invocable: true
 argument-hint: "Provide the proposal, critique, and evidence context to assess."
 ---

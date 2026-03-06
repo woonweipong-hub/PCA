@@ -2,7 +2,7 @@
 description: "Step 5. Use when you need PCA governance, verify gates, human-control routing, or action readiness judgement. Keywords: PCA governor, governance gate, HITL, HOTL, route recommendation, action readiness."
 name: "PCA 5 Governor"
 tools: [read, search]
-model: "GPT-5 (copilot)"
+model: "GPT-5.4"
 user-invocable: true
 argument-hint: "Provide the assessment, evidence status, and risk posture to route."
 ---

@@ -2,7 +2,7 @@
 description: "Step 3. Use when you need the PCA critic role to challenge assumptions, expose contradictions, surface risks, or test a proposal. Keywords: PCA critic, challenge proposal, find contradictions, identify risks, critique option."
 name: "PCA 3 Critic"
 tools: [read, search]
-model: "GPT-5 (copilot)"
+model: "GPT-5.4"
 user-invocable: true
 argument-hint: "Provide the proposal or current plan that should be challenged."
 ---

@@ -2,8 +2,8 @@
 description: "Step 1. Use when you need PCA orchestration, decision framing, workflow selection, or a human-machine co-working plan. Keywords: PCA orchestrator, frame problem, run PCA workflow, choose between propose critique assess, evidence check, route HITL HOTL."
 name: "PCA 1 Orchestrator"
 tools: [read, search, edit, execute, todo, agent]
-agents: [pca-proposer, pca-critic, pca-assessor, pca-governor]
-model: "GPT-5 (copilot)"
+agents: ["PCA 2 Proposer", "PCA 3 Critic", "PCA 4 Assessor", "PCA 5 Governor"]
+model: "GPT-5.4"
 user-invocable: true
 argument-hint: "Describe the decision, task, or problem to frame and route through PCA."
 ---
