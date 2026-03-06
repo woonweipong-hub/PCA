@@ -6,6 +6,8 @@ It supports adaptive debate depth, evidence checks, explicit `HITL/HOTL` routing
 
 PCA Web UI provides a browser-based platform for discussion-led intake, OCR, PDF conversion, quality gating, evidence checks, live governed runs, and artifact downloads.
 
+The current UI is intentionally output-first and low-friction. Latest result, collaboration summary, and role timeline sit near the top of the page, while setup, data, PCA roles, models, and tools remain visible in plain sections instead of being buried behind nested reveal patterns.
+
 Its primary purpose is human-machine collaboration and co-creation with continuity. Useful products, reusable assets, and practical solutions may emerge from that work, but they should be treated as downstream outcomes of a strong collaborative method rather than the sole purpose of the platform.
 
 It should also be understood as a continuous co-working platform. PCA sits as the framework layer around the user's task: it helps users frame the objective, define the decision, state expectations, surface research questions, tighten constraints, inspect evidence, and then iterate through propose, critique, assess, and govern loops.
@@ -33,7 +35,7 @@ This collaboration does not need to be one-shot or perfectly linear. A PCA sessi
 - Build objective-driven framework proposals from user intent, expectations, constraints, and research needs.
 - Start quickly with built-in use-case profiles (CORENET X, accessibility, buildability, MEP/C&S, Green Mark, FM, HS, cost/spec checks, and BCA master compliance pre-check).
 - Select per-role models (`proposal`, `critique`, `assess`) and runtime notes for traceable runs.
-- Use the built-in Guide and Install panel for runtime-specific setup and generated CLI snippets.
+- Use the always-visible setup guide for runtime-specific setup and generated CLI snippets.
 - View a workflow map in the UI showing objective -> research -> debate -> verification -> artifact flow.
 - Download JSON artifacts from each run.
 
@@ -41,6 +43,7 @@ This collaboration does not need to be one-shot or perfectly linear. A PCA sessi
 
 The UI is designed to make PCA runs inspectable and reviewable.
 
+- Latest result and collaboration summary are placed first so users can react immediately.
 - Input evidence register shows references and datasets used for the run.
 - Corpus preview lets users inspect source content before analysis.
 - Live debate view exposes stage-by-stage proposer, critic, assessor, and governance events.

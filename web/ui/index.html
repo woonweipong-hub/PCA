@@ -15,28 +15,53 @@
     <header class="hero">
       <p class="eyebrow">PCA Browser Platform</p>
       <h1>Human-Machine Co-Creation, Grounded in Practice</h1>
-      <p class="subtitle">Start from discussion, ideation, and collaboration, then shape the work through PCA reasoning, critique, assessment, evidence checks, and explicit HITL/HOTL routing. Built from construction-industry realities, but centered on disciplined human-machine co-creation, continuity, and useful outcomes.</p>
+      <p class="subtitle">Output stays visible first. Setup, data, PCA roles, models, and tools stay on the page in plain view so collaboration can continue without hunting through hidden layers.</p>
     </header>
 
     <section class="panel">
-      <details class="collapsible-panel">
-        <summary class="collapsible-summary">
-          <span>
-            <strong>User Info and Guide</strong>
-            <span class="muted summary-note">Install notes, runtime guidance, and generated CLI snippets.</span>
-          </span>
-          <span class="mono collapsible-state">Open / Close</span>
-        </summary>
-        <div class="collapsible-content">
-          <article class="card">
-            <h2>Guide and Install</h2>
-            <p class="muted">FoC-first guidance for Ollama and user-provided model endpoints, plus PCA-governed CLI snippets for a browser platform grounded in construction workflows and reusable in other evidence-heavy domains.</p>
-            <div id="runtimeGuide" class="guide-grid"></div>
-            <h3>CLI Snippets</h3>
-            <pre id="cliSnippetsView">Select a runtime provider to generate snippets.</pre>
-          </article>
+      <div class="grid-two output-grid">
+        <article class="card primary-output-card">
+          <div class="card-head">
+            <h2>Latest Result</h2>
+            <span class="mono">output first</span>
+          </div>
+          <p class="muted">Every run writes here first so the user can stay in the flow and react immediately.</p>
+          <pre id="resultView">No run yet.</pre>
+        </article>
+        <article class="card secondary-output-card">
+          <h2>Collaborative Throughput Snapshot</h2>
+          <p class="muted">Condensed view of what changed, what remains open, and the most practical next move.</p>
+          <pre id="outcomeSummaryView">No collaborative throughput snapshot yet.</pre>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <article class="card">
+        <div class="card-head">
+          <h2>Live Debate Timeline</h2>
+          <span class="mono" id="debateState">Not started</span>
         </div>
-      </details>
+        <p class="muted">PCA role activity stays visible as an explicit trail instead of disappearing into hidden answers.</p>
+        <ul id="debateTimeline" class="timeline-list">
+          <li class="timeline-empty">No debate run yet.</li>
+        </ul>
+        <div id="humanCheckpoint" class="checkpoint-card hidden">
+          <h3>Human Checkpoint</h3>
+          <p id="checkpointDecision"></p>
+          <p id="checkpointReason" class="muted"></p>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <article class="card">
+        <h2>Models, Tools, and Setup Guide</h2>
+        <p class="muted">Runtime guidance, visible model/tool setup, and generated CLI snippets stay in the open for quick adjustment during continuous collaboration.</p>
+        <div id="runtimeGuide" class="guide-grid"></div>
+        <h3>CLI Snippets</h3>
+        <pre id="cliSnippetsView">Select a runtime provider to generate snippets.</pre>
+      </article>
     </section>
 
     <section class="panel">
@@ -196,15 +221,12 @@ Side issues to revisit after main decision</textarea>
           Enable active AI search plan (query suggestions + task plan)
         </label>
 
-        <details class="collapsible-panel advanced-panel">
-          <summary class="collapsible-summary">
-            <span>
-              <strong>Advanced Configuration</strong>
-              <span class="muted summary-note">Runtime, models, debate depth, and formal checks.</span>
-            </span>
-            <span class="mono collapsible-state">Open / Close</span>
-          </summary>
-          <div class="collapsible-content">
+        <div class="section-block section-block-spacious">
+          <div class="card-head compact-head">
+            <h3>PCA Roles, Models, Tools, and Setup</h3>
+            <span class="mono badge">always visible</span>
+          </div>
+          <p class="muted section-intro">Runtime choice, role separation, model pack, evidence thresholds, and formal checks stay on-page so users can understand what the system is using without extra clicks.</p>
 
         <div class="inline-grid">
           <div>
@@ -419,8 +441,7 @@ Side issues to revisit after main decision</textarea>
             <input id="minClaims" type="number" value="6" />
           </div>
         </div>
-          </div>
-        </details>
+        </div>
 
         <div class="actions">
           <button id="btnFramework" class="ghost">Propose Framework</button>
@@ -429,23 +450,6 @@ Side issues to revisit after main decision</textarea>
           <button id="btnEvidence">Run Evidence Check</button>
           <button id="btnPipeline" class="accent">Run Full Pipeline</button>
           <button id="btnLiveDebate" class="accent">Run Live Debate x3</button>
-        </div>
-      </article>
-    </section>
-
-    <section class="panel">
-      <article class="card">
-        <div class="card-head">
-          <h2>Live Debate Timeline</h2>
-          <span class="mono" id="debateState">Not started</span>
-        </div>
-        <ul id="debateTimeline" class="timeline-list">
-          <li class="timeline-empty">No debate run yet.</li>
-        </ul>
-        <div id="humanCheckpoint" class="checkpoint-card hidden">
-          <h3>Human Checkpoint</h3>
-          <p id="checkpointDecision"></p>
-          <p id="checkpointReason" class="muted"></p>
         </div>
       </article>
     </section>
@@ -503,21 +507,6 @@ Side issues to revisit after main decision</textarea>
       <article class="card">
         <h2>Scoring Snapshot</h2>
         <pre id="scoringView">Scoring not loaded yet.</pre>
-      </article>
-    </section>
-
-    <section class="panel">
-      <article class="card">
-        <h2>Collaborative Throughput Snapshot</h2>
-        <p class="muted">Condensed view of where the human-machine collaboration stands, what remains open, and the most practical next moves.</p>
-        <pre id="outcomeSummaryView">No collaborative throughput snapshot yet.</pre>
-      </article>
-    </section>
-
-    <section class="panel">
-      <article class="card">
-        <h2>Latest Result</h2>
-        <pre id="resultView">No run yet.</pre>
       </article>
     </section>
 

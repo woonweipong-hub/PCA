@@ -1057,6 +1057,22 @@ function buildOutcomeSummary(label, payload) {
 function showResult(label, payload) {
   outcomeSummaryView.textContent = buildOutcomeSummary(label, payload);
   resultView.textContent = `${label}\n\n${JSON.stringify(payload, null, 2)}`;
+  focusOutputSurface();
+}
+
+function focusOutputSurface() {
+  const outputCards = [resultView.closest('.card'), outcomeSummaryView.closest('.card')].filter(Boolean);
+  outputCards.forEach((card) => {
+    card.classList.remove('fresh-output');
+    void card.offsetWidth;
+    card.classList.add('fresh-output');
+  });
+
+  resultView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  window.setTimeout(() => {
+    outputCards.forEach((card) => card.classList.remove('fresh-output'));
+  }, 1600);
 }
 
 function summarizeCorpusPreview(payload) {
