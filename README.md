@@ -66,25 +66,25 @@ Prior art and acknowledgement log: `docs/PRIOR-ART.md`.
 
 ```mermaid
 flowchart TD
-  A[Input: Data -> Requirements -> Objectives] --> B[Process: Organize]
-  B --> C[Process: Propose]
-  C --> D[Process: Critique]
-  D --> E[Process: Assess]
+  A[Input Data Requirements Objectives] --> B[Organize]
+  B --> C[Propose]
+  C --> D[Critique]
+  D --> E[Assess]
 
-  Q["Qualitative Rubrics: Interpretation, trade-offs, confidence"] -. feeds .-> C
-  Q -. critiques .-> D
-  Q -. scoring context .-> E
+  Q[Qualitative Rubrics] -.-> C
+  Q -.-> D
+  Q -.-> E
 
-  S["Symbolic Checks Z3: feasible or infeasible constraints"] --> V{Verify Gates Passed?}
+  S[Symbolic Checks Z3] --> V{Verify Gates Passed}
   E --> V
 
-  X["Adaptive Depth: low risk 1 pass, medium risk 2 passes, high risk 3 passes"] -. controls .-> C
+  X[Adaptive Depth by Risk] -.-> C
 
   V -- No --> C
-  V -- Yes --> G[Output: Recommend]
-  G --> AC["Action Contract: owner, due, success metric, rollback trigger"]
-  AC --> R{Route HITL/HOTL}
-  R -- HITL --> H[Human Approval Checkpoint]
+  V -- Yes --> G[Recommend]
+  G --> AC[Action Contract]
+  AC --> R{Route HITL HOTL}
+  R -- HITL --> H[Human Approval]
   R -- HOTL --> M[Monitored Progression]
 
   H --> ER{Execution Readiness}
@@ -92,12 +92,12 @@ flowchart TD
   ER -- Ready --> I[Implement]
   ER -- Blocked --> C
 
-  I --> D1[Document Decision and Evidence]
+  I --> D1[Document Evidence]
   D1 --> O[Observe Outcomes]
-  O --> L[Learn and Update Corpus]
-  L --> N{Drift or New Risk?}
+  O --> L[Learn Update Corpus]
+  L --> N{Drift or New Risk}
   N -- Yes --> B
-  N -- No --> Z[Concrete Outcome Delivered]
+  N -- No --> Z[Outcome Delivered]
 ```
 
 Operational rule: move forward only when qualitative assessment, symbolic feasibility, and execution readiness are all satisfied; otherwise loop back through `Propose -> Critique -> Assess` with updated evidence and constraints.
@@ -105,74 +105,81 @@ Operational rule: move forward only when qualitative assessment, symbolic feasib
 ### Lifecycle (PCA Native ASCII)
 
 ```text
-  ┌────────────────────────────────────────────────────────────────────────┐
-  │                             PCA DECISION RUN                           │
-  │  Intake + Corpus + Objectives + Constraints + Policy + Risk Profile   │
-  └──────────────────────────────────────┬─────────────────────────────────┘
-                                         │
-                     ┌───────────────────▼───────────────────┐
-                     │ ADAPTIVE DEPTH PLANNER (1/2/3 PASSES) │
-                     └───────────────────┬───────────────────┘
-                                         │
-         ┌───────────────────────────────▼────────────────────────────────┐
-         │ PASS LOOP                                                      │
-         │ Organize -> Propose -> Critique -> Assess                      │
-         │ score confidence/coverage/risk and update assumptions           │
-         └───────────────────────────────┬────────────────────────────────┘
-                                         │
-         ┌───────────────────────────────▼────────────────────────────────┐
-         │ GOVERNANCE GATE                                                │
-         │ evidence checks + policy thresholds + optional Z3 sat/unsat    │
-         └───────────────────────────────┬────────────────────────────────┘
-                                         │
-                    Gate fail ───────────┘
-                                         │
-                                Gate pass ▼
-         ┌────────────────────────────────────────────────────────────────┐
-         │ ACTION PACKAGE                                                 │
-         │ recommendation + action contract + owner + due + rollback      │
-         └───────────────────────────────┬────────────────────────────────┘
-                                         │
-                         ┌───────────────▼───────────────┐
-                         │ ROUTING + READINESS CHECK      │
-                         │ HITL/HOTL + implementation go  │
-                         └───────────────┬───────────────┘
-                                         │
-                   blocked ──────────────┘
-                                         │
-                                    ready ▼
-         ┌────────────────────────────────────────────────────────────────┐
-         │ EXECUTE -> OBSERVE -> CAPTURE OUTCOME -> LEARN -> RE-INGEST   │
-         └────────────────────────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────────────────┐
+  │                     PCA DECISION RUN                     │
+  │ Intake + Corpus + Objectives + Constraints + Policy     │
+  │ + Risk Profile                                          │
+  └─────────────────────────────┬────────────────────────────┘
+                                │
+                ┌───────────────▼────────────────┐
+                │ ADAPTIVE DEPTH PLANNER         │
+                │ 1 pass / 2 passes / 3 passes   │
+                └───────────────┬────────────────┘
+                                │
+  ┌─────────────────────────────▼────────────────────────────┐
+  │ PASS LOOP                                                │
+  │ Organize -> Propose -> Critique -> Assess                │
+  │ Update confidence, coverage, risk, assumptions           │
+  └─────────────────────────────┬────────────────────────────┘
+                                │
+  ┌─────────────────────────────▼────────────────────────────┐
+  │ GOVERNANCE GATE                                          │
+  │ Evidence checks + policy thresholds + optional Z3        │
+  └─────────────────────────────┬────────────────────────────┘
+          gate fail <--┘
+                │
+                │
+              gate pass
+                ▼
+  ┌──────────────────────────────────────────────────────────┐
+  │ ACTION PACKAGE                                           │
+  │ Recommendation + contract + owner + due + rollback      │
+  └─────────────────────────────┬────────────────────────────┘
+                                │
+                ┌───────────────▼────────────────┐
+                │ ROUTING + READINESS CHECK      │
+                │ HITL / HOTL + implementation   │
+                └───────────────┬────────────────┘
+                    blocked <--┘
+                                │
+                                │
+                              ready
+                                ▼
+  ┌──────────────────────────────────────────────────────────┐
+  │ EXECUTE -> OBSERVE -> CAPTURE -> LEARN -> RE-INGEST     │
+  └──────────────────────────────────────────────────────────┘
 ```
 
 ### Execution Orchestration (PCA Native ASCII)
 
 ```text
-  ┌────────────────────────────────────────────────────────────────────────┐
-  │                    PCA PARALLEL ORCHESTRATION VIEW                    │
-  ├────────────────────────────────────────────────────────────────────────┤
-  │                                                                        │
-  │  STREAM A (evidence)          STREAM B (reasoning)      STREAM C (acts)│
-  │  ┌──────────────┐             ┌──────────────┐          ┌─────────────┐ │
-  │  │ Collect Docs │             │ Propose      │          │ Draft Action│ │
-  │  │ Normalize Ref│             │ Critique     │          │ Contract    │ │
-  │  └──────┬───────┘             │ Assess       │          └──────┬──────┘ │
-  │         │                     └──────┬───────┘                 │        │
-  │         │                            │                         │        │
-  │         │               ┌────────────▼────────────┐            │        │
-  │         └──────────────►│ Governance Merge Point   │◄───────────┘        │
-  │                         │ evidence + policy + Z3   │                     │
-  │                         └────────────┬────────────┘                     │
-  │                                      │                                   │
-  │                    fail -> loop back │ pass -> route + readiness          │
-  │                                      ▼                                   │
-  │                         ┌──────────────────────────────┐                 │
-  │                         │ Execute + Monitor Outcome    │                 │
-  │                         │ Feed lessons into next cycle │                 │
-  │                         └──────────────────────────────┘                 │
-  │                                                                        │
-  └────────────────────────────────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────────────────┐
+  │              PCA PARALLEL ORCHESTRATION VIEW            │
+  ├──────────────────────────────────────────────────────────┤
+  │                                                          │
+  │ STREAM A            STREAM B            STREAM C         │
+  │ evidence            reasoning           action            │
+  │                                                          │
+  │ ┌──────────────┐    ┌──────────────┐    ┌──────────────┐ │
+  │ │ Collect Docs │    │ Propose      │    │ Draft Action │ │
+  │ │ Normalize Ref│    │ Critique     │    │ Contract     │ │
+  │ └──────┬───────┘    │ Assess       │    └──────┬───────┘ │
+  │        │            └──────┬───────┘           │         │
+  │        │                   │                   │         │
+  │        └──────────┬────────▼────────┬──────────┘         │
+  │                   │ Governance Merge │                    │
+  │                   │ evidence policy  │                    │
+  │                   │ and Z3 checks    │                    │
+  │                   └────────┬─────────┘                    │
+  │                            │                              │
+  │                 fail loop  │  pass route readiness        │
+  │                            ▼                              │
+  │                   ┌──────────────────────┐                │
+  │                   │ Execute and Monitor  │                │
+  │                   │ Feed next cycle      │                │
+  │                   └──────────────────────┘                │
+  │                                                          │
+  └──────────────────────────────────────────────────────────┘
 ```
 
 ## Role and Agent Showcase
@@ -235,6 +242,8 @@ Antigravity integration guide (CLI-only and hybrid UI workflows): `docs/ANTIGRAV
 | `pca help` | Show CLI usage and examples | Plain text reference |
 
 Detailed per-command reference: `docs/COMMAND-REFERENCE.md`
+
+VS Code terminal and runtime quick guide: `docs/VS-CODE-CLI-CHEATSHEET.md`
 
 TRHS PDF workflow (URA/BCA/SCDF, including confidential-file exclusion): `docs/USER-GUIDE.md#trhs-workflow-ura-bca-scdf`
 

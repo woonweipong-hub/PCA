@@ -88,6 +88,8 @@ npm install -g .
 
 Web UI (local-first, downloadable artifacts, online deployment guidance): `docs/WEB-UI.md`
 
+VS Code CLI quick guide (Copilot, Antigravity, pure terminal): `docs/VS-CODE-CLI-CHEATSHEET.md`
+
 For live visibility, use the Web UI `Run Live Debate x3` action to stream proposer/critic/assessor events and a final human checkpoint.
 
 VS Code quick trial with Copilot runtime tags is available via tasks in `.vscode/tasks.json`:

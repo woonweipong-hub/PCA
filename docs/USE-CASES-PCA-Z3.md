@@ -42,15 +42,15 @@ flowchart LR
 		P3[Critique]
 		P4[Assess]
 		P5[Evidence and Policy Gates]
-		P6["Z3 Symbolic Feasibility: optional Python package"]
+		P6[Z3 Symbolic Feasibility]
 		P1 --> P2 --> P3 --> P4 --> P5
 		P6 --> P5
 	end
 
 	subgraph OUT[Output Phase]
 		O1[Recommend Actions]
-		O2["Action Contract: owner due metric rollback"]
-		O3{"Route: HITL or HOTL"}
+		O2[Action Contract]
+		O3{Route HITL HOTL}
 		O4{Execution Readiness}
 		O5[Implement]
 		O6[Document Artifacts]
@@ -60,14 +60,13 @@ flowchart LR
 	end
 
 	IN --> PR --> OUT
-	P5 -- gate fail --> P2
-	O3 -- HITL --> O4
-	O3 -- HOTL --> O4
-	O4 -- blocked --> P2
-	O8 -- drift or new risk --> P1
+	P5 --> P2
+	O3 --> O4
+	O4 --> P2
+	O8 --> P1
 
-	AD["Adaptive Depth: low 1 pass, medium 2 passes, high 3 passes"]
-	AD -. controls .-> P2
+	AD[Adaptive Depth by Risk]
+	AD -.-> P2
 ```
 
 Reading note:
