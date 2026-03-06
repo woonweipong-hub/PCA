@@ -1,7 +1,7 @@
 ---
 name: gsd:discuss-phase
 description: Gather phase context through adaptive questioning before planning
-argument-hint: "<phase> [--auto] [--pcj]"
+argument-hint: "<phase> [--auto] [--pca]"
 allowed-tools:
   - Read
   - Write
@@ -50,9 +50,9 @@ Context files are resolved in-workflow using `init phase-op` and roadmap/state t
 8. **Write CONTEXT.md** — Sections match areas discussed + code_context section
 9. Offer next steps (research or plan)
 
-**Optional PCJ mode (`--pcj`):**
-- Run Proposal → Critic → Judge on key framing decisions (scope, strategy, assumptions)
-- Persist Judge output into ACI/generic project-state docs via `gsd-tools pcj persist discuss`
+**Optional PCA mode (`--pca`):**
+- Run Propose → Critique → Assess on key framing decisions (scope, strategy, assumptions)
+- Persist Assess output into ACI/generic project-state docs via `gsd-tools pca persist discuss`
 
 **CRITICAL: Scope guardrail**
 - Phase boundary from ROADMAP.md is FIXED
@@ -82,8 +82,8 @@ Generate 3-4 **phase-specific** gray areas, not generic categories.
 - Performance concerns
 - Scope expansion
 
-**PCJ boundary:**
-- PCJ is optional and only augments Discuss and Verify.
+**PCA boundary:**
+- PCA is optional and only augments Discuss and Verify.
 - Plan and Execute behavior remains unchanged.
 </process>
 

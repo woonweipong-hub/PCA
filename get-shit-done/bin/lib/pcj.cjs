@@ -1,5 +1,5 @@
 /**
- * PCJ — Proposal/Critic/Judge helper utilities
+ * PCA — Propose/Critique/Assess helper utilities
  */
 
 const fs = require('fs');
@@ -48,7 +48,7 @@ function ensureGitignoreEntry(cwd, entry) {
 
 function resolveLogFile(options) {
   if (options.log_file) return options.log_file;
-  return `${DEV_LOG_DIR}/PCJ_${timestampId()}.txt`;
+  return `${DEV_LOG_DIR}/PCA_${timestampId()}.txt`;
 }
 
 function summarizeForChat(content) {
@@ -172,8 +172,8 @@ function frameworkToPromptBlock(framework) {
 function buildProposalPrompt(mode, decision, context) {
   const framework = getAssessmentFramework(mode);
   const base = mode === 'verify'
-    ? 'You are the Proposal role in a PCJ loop for verification. Propose the strongest plausible interpretation of the current results.'
-    : 'You are the Proposal role in a PCJ loop for discuss-phase framing. Propose a concrete recommendation.';
+    ? 'You are the Proposer role in a PCA loop for verification. Propose the strongest plausible interpretation of the current results.'
+    : 'You are the Proposer role in a PCA loop for discuss-phase framing. Propose a concrete recommendation.';
 
   return [
     base,
@@ -189,8 +189,8 @@ function buildProposalPrompt(mode, decision, context) {
 function buildCriticPrompt(mode, decision, proposalText, context) {
   const framework = getAssessmentFramework(mode);
   const base = mode === 'verify'
-    ? 'You are the Critic role in a PCJ verification loop. Stress-test the proposal against evidence quality and risk.'
-    : 'You are the Critic role in a PCJ discuss loop. Challenge assumptions and identify blind spots.';
+    ? 'You are the Critic role in a PCA verification loop. Stress-test the proposal against evidence quality and risk.'
+    : 'You are the Critic role in a PCA discuss loop. Challenge assumptions and identify blind spots.';
 
   return [
     base,
@@ -210,7 +210,7 @@ function buildJudgePrompt(mode, decision, proposalText, criticText, context) {
     : 'Decide a final direction for the team to use in planning.';
 
   return [
-    `You are the Judge role in a PCJ ${mode} loop.`,
+    `You are the Assessor role in a PCA ${mode} loop.`,
     outcomeLine,
     `Decision focus: ${decision || 'unspecified'}`,
     context ? `Context: ${context}` : 'Context: (none provided)',
@@ -233,7 +233,7 @@ function buildJudgePrompt(mode, decision, proposalText, criticText, context) {
 
 function cmdPcjPrepare(cwd, mode, options, raw) {
   if (!mode || !['discuss', 'verify'].includes(mode)) {
-    error('pcj prepare requires mode: discuss|verify');
+    error('pca/pcj prepare requires mode: discuss|verify');
   }
 
   const dirs = ensureDevelopmentDirs(cwd);
@@ -247,7 +247,7 @@ function cmdPcjPrepare(cwd, mode, options, raw) {
   const logFile = resolveLogFile(options);
   const framework = getAssessmentFramework(mode);
 
-  appendLogBlock(cwd, logFile, '# PCJ Session', [
+  appendLogBlock(cwd, logFile, '# PCA Session', [
     `timestamp: ${new Date().toISOString()}`,
     `mode: ${mode}`,
     `phase: ${phase || '?'}`,
@@ -273,9 +273,9 @@ function cmdPcjPrepare(cwd, mode, options, raw) {
       internal_only: true,
     },
     models: {
-      proposal: resolveModelInternal(cwd, 'gsd-pcj-proposal'),
-      critic: resolveModelInternal(cwd, 'gsd-pcj-critic'),
-      judge: resolveModelInternal(cwd, 'gsd-pcj-judge'),
+      proposal: resolveModelInternal(cwd, 'pca-proposal'),
+      critic: resolveModelInternal(cwd, 'pca-critic'),
+      judge: resolveModelInternal(cwd, 'pca-assess'),
     },
     prompts: {
       proposal: buildProposalPrompt(mode, decision, context),
@@ -289,12 +289,12 @@ function cmdPcjPrepare(cwd, mode, options, raw) {
 
 function cmdPcjSave(cwd, mode, options, raw) {
   if (!mode || !['discuss', 'verify'].includes(mode)) {
-    error('pcj save requires mode: discuss|verify');
+    error('pca/pcj save requires mode: discuss|verify');
   }
 
   const role = (options.role || '').toLowerCase();
-  if (!['proposer', 'critic', 'judge'].includes(role)) {
-    error('pcj save requires --role proposer|critic|judge');
+  if (!['proposer', 'critic', 'judge', 'assessor'].includes(role)) {
+    error('pca/pcj save requires --role proposer|critic|assessor|judge');
   }
 
   ensureDevelopmentDirs(cwd);
@@ -309,7 +309,8 @@ function cmdPcjSave(cwd, mode, options, raw) {
   const logFile = resolveLogFile(options);
   const chatSummary = summarizeForChat(content);
 
-  appendLogBlock(cwd, logFile, `## ${role.toUpperCase()} Output`, [
+  const normalizedRole = role === 'assessor' ? 'judge' : role;
+  appendLogBlock(cwd, logFile, `## ${normalizedRole.toUpperCase()} Output`, [
     `timestamp: ${new Date().toISOString()}`,
     `mode: ${mode}`,
     `phase: ${phase || '?'}`,
@@ -323,7 +324,7 @@ function cmdPcjSave(cwd, mode, options, raw) {
   output({
     saved: true,
     mode,
-    role,
+    role: normalizedRole,
     phase,
     task,
     decision,
@@ -332,7 +333,7 @@ function cmdPcjSave(cwd, mode, options, raw) {
     gitignore_updated: gitignorePrimary.updated || gitignoreLegacy.updated,
     transparency: {
       visible_summary: chatSummary,
-      role,
+      role: normalizedRole,
       internal_reasoning_exposed: false,
     },
   }, raw, logFile);
@@ -393,7 +394,7 @@ function appendPcjEntry(content, heading, entry) {
 
 function cmdPcjPersist(cwd, mode, options, raw) {
   if (!mode || !['discuss', 'verify'].includes(mode)) {
-    error('pcj persist requires mode: discuss|verify');
+    error('pca/pcj persist requires mode: discuss|verify');
   }
 
   ensureDevelopmentDirs(cwd);
@@ -421,7 +422,7 @@ function cmdPcjPersist(cwd, mode, options, raw) {
   const existing = fs.existsSync(fullPath) ? fs.readFileSync(fullPath, 'utf-8') : '# Session State\n';
   const timestamp = new Date().toISOString();
 
-  const heading = mode === 'verify' ? 'PCJ Verify Judgements' : 'PCJ Discuss Decisions';
+  const heading = mode === 'verify' ? 'PCA Verify Assessments' : 'PCA Discuss Decisions';
   const entryLines = [
     `- ${timestamp} | phase: ${phase || '?'} | decision: ${decision}`,
     `  - framework: ${framework.name}`,
@@ -437,7 +438,7 @@ function cmdPcjPersist(cwd, mode, options, raw) {
   const updated = appendPcjEntry(existing, heading, entryLines.join('\n'));
   fs.writeFileSync(fullPath, updated, 'utf-8');
 
-  appendLogBlock(cwd, logFile, '## JUDGE Final', [
+  appendLogBlock(cwd, logFile, '## ASSESS Final', [
     `timestamp: ${timestamp}`,
     `mode: ${mode}`,
     `phase: ${phase || '?'}`,
@@ -451,7 +452,7 @@ function cmdPcjPersist(cwd, mode, options, raw) {
     `risk_flags: ${riskFlags || '[]'}`,
     `human_control: ${control.recommended_mode}`,
     `human_control_reason: ${control.reason}`,
-    'summary_recommendation: Curated judgement written to project/state docs; raw PCJ trail remains internal in development/ (legacy compatibility with development_process/).',
+    'summary_recommendation: Curated assessment written to project/state docs; raw PCA trail remains internal in development/ (legacy compatibility with development_process/).',
   ]);
 
   output({

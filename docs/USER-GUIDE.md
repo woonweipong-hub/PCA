@@ -1,4 +1,4 @@
-# GSD User Guide
+# PCA User Guide
 
 A detailed reference for workflows, troubleshooting, and configuration. For quick-start setup, see the [README](../README.md).
 
@@ -11,7 +11,7 @@ A detailed reference for workflows, troubleshooting, and configuration. For quic
 - [Command Reference](#command-reference)
 - [Integration (Copilot + Antigravity)](#integration-copilot--antigravity)
 - [Copilot Chat Usage (No Context Switching)](#copilot-chat-usage-no-context-switching)
-- [PCJ Extension](#pcj-extension)
+- [PCA Extension](#pca-extension)
 - [Cost-Aware Quality Policy](#cost-aware-quality-policy)
 - [Configuration Reference](#configuration-reference)
 - [Usage Examples](#usage-examples)
@@ -25,10 +25,10 @@ A detailed reference for workflows, troubleshooting, and configuration. For quic
 As of 2026-03-05, this repository is a fork-based extension of the upstream GSD project.
 
 - Upstream GSD concepts, naming, and baseline workflow remain attributed to their original authors/project.
-- This add-on work in GSD-PCJ is an independent contribution developed out of curiosity and original ideas, using VS Code Copilot with GPT-5.3-Codex.
+- This add-on work in PCA is an independent contribution developed out of curiosity and original ideas, using VS Code Copilot with GPT-5.3-Codex.
 - No separate direct approval request was made for this add-on; the fork and extension are made under the rights granted by the MIT license.
 - Under MIT, others may fork, modify, redistribute, and rebrand this work, provided the original copyright and license notice are retained.
-- This fork adds the GSD-PCJ quality layer focused on structured Discuss/Verify improvements (Proposal -> Critic -> Judge, HITL/HOTL routing, and transparent decision records).
+- This fork adds the PCA quality layer focused on structured Discuss/Verify improvements (Propose -> Critique -> Assess, HITL/HOTL routing, and transparent decision records).
 - Preserve upstream license terms and attribution when redistributing or modifying this fork.
 - If publishing externally, avoid implying official endorsement/partnership unless explicitly granted.
 
@@ -49,16 +49,16 @@ As of 2026-03-05, this repository is a fork-based extension of the upstream GSD 
                    └─────────────┬─────────────┘
                                  │
           ┌──────────────────────▼──────────────────────┐
-          │ /gsd:discuss-phase [N] [--pcj optional]     │
+          │ /gsd:discuss-phase [N] [--pca optional]     │
           │ Capture implementation decisions            │
           └───────────────┬─────────────────────────────┘
                           │
-          if --pcj or config(pcj.enabled + pcj.discuss)
+          if --pca or config(pcj.enabled + pcj.discuss)
                           │
         ┌─────────────────▼────────────────────┐
-        │ INTERNAL PCJ (Discuss) [LOCAL ONLY]  │
+        │ INTERNAL PCA (Discuss) [LOCAL ONLY]  │
         │ Proposer -> Critic -> Judge          │
-        │ writes development/PCJ_*.txt         │
+        │ writes development/PCA_*.txt         │
         └─────────────────┬────────────────────┘
                           │
           ┌───────────────▼──────────────────────────────┐
@@ -70,19 +70,19 @@ As of 2026-03-05, this repository is a fork-based extension of the upstream GSD 
           └───────────────┬──────────────────────────────┘
                           │
           ┌───────────────▼──────────────────────────────┐
-          │ /gsd:verify-work [N] [--pcj optional]        │
+          │ /gsd:verify-work [N] [--pca optional]        │
           │ UAT + diagnosis                              │
           └───────────────┬──────────────────────────────┘
                           │
-          if --pcj or config(pcj.enabled + pcj.verify)
+          if --pca or config(pcj.enabled + pcj.verify)
                           │
         ┌─────────────────▼────────────────────┐
-        │ INTERNAL PCJ (Verify) [LOCAL ONLY]   │
+        │ INTERNAL PCA (Verify) [LOCAL ONLY]   │
         │ Proposer -> Critic -> Judge          │
-        │ writes development/PCJ_*.txt         │
+        │ writes development/PCA_*.txt         │
         └─────────────────┬────────────────────┘
                           │
-          Curated outputs only -> .planning/* (no raw PCJ logs)
+          Curated outputs only -> .planning/* (no raw PCA logs)
                           │
                     Next phase? ── Yes ──┐
                           │ No            │
@@ -222,10 +222,10 @@ enabled, or after `/gsd:audit-milestone` surfaces Nyquist compliance gaps.
 |---------|---------|-------------|
 | `/gsd:new-project` | Full project init: questions, research, requirements, roadmap | Start of a new project |
 | `/gsd:new-project --auto @idea.md` | Automated init from document | Have a PRD or idea doc ready |
-| `/gsd:discuss-phase [N] [--pcj]` | Capture implementation decisions (optional Proposal→Critic→Judge) | Before planning, to shape how it gets built |
+| `/gsd:discuss-phase [N] [--pca]` | Capture implementation decisions (optional Propose→Critique→Assess) | Before planning, to shape how it gets built |
 | `/gsd:plan-phase [N]` | Research + plan + verify | Before executing a phase |
 | `/gsd:execute-phase <N>` | Execute all plans in parallel waves | After planning is complete |
-| `/gsd:verify-work [N] [--pcj]` | Manual UAT with auto-diagnosis (optional Proposal→Critic→Judge) | After execution completes |
+| `/gsd:verify-work [N] [--pca]` | Manual UAT with auto-diagnosis (optional Propose→Critique→Assess) | After execution completes |
 | `/gsd:audit-milestone` | Verify milestone met its definition of done | Before completing milestone |
 | `/gsd:complete-milestone` | Archive milestone, tag release | All phases verified |
 | `/gsd:new-milestone [name]` | Start next version cycle | After completing a milestone |
@@ -269,7 +269,7 @@ enabled, or after `/gsd:audit-milestone` surfaces Nyquist compliance gaps.
 
 ## Integration (Copilot + Antigravity)
 
-GSD-PCJ can be used in both VS Code Copilot chat and Google Antigravity (Gemini CLI), with slightly different invocation modes.
+PCA can be used in both VS Code Copilot chat and Google Antigravity (Gemini CLI), with slightly different invocation modes.
 
 ### VS Code Copilot Chat
 
@@ -278,9 +278,9 @@ GSD-PCJ can be used in both VS Code Copilot chat and Google Antigravity (Gemini 
 
 Example prompts:
 
-- "Initialize this repo with GSD flow, then discuss phase 1 with PCJ."
+- "Initialize this repo with GSD flow, then discuss phase 1 with PCA."
 - "Plan phase 1 in budget mode and keep plans atomic."
-- "Verify phase 1 with PCJ and use HITL if verdict is needs-human-review."
+- "Verify phase 1 with PCA and use HITL if verdict is needs-human-review."
 
 ### Google Antigravity (Gemini CLI)
 
@@ -294,33 +294,33 @@ Use native runtime commands:
 
 ```text
 /gsd:new-project
-/gsd:discuss-phase 1 --pcj
+/gsd:discuss-phase 1 --pca
 /gsd:plan-phase 1
 /gsd:execute-phase 1
-/gsd:verify-work 1 --pcj
+/gsd:verify-work 1 --pca
 ```
 
 ### Cross-runtime consistency
 
-- Discuss and Verify use the same PCJ framework logic across runtimes.
+- Discuss and Verify use the same PCA framework logic across runtimes.
 - Transparent role summaries and HITL/HOTL guidance are preserved.
-- Internal logs remain local in `development/PCJ_*.txt`; curated outcomes persist into `.planning/*`.
+- Internal logs remain local in `development/PCA_*.txt`; curated outcomes persist into `.planning/*`.
 
 ### Where to run
 
 - Open your actual application/project folder in VS Code before running GSD workflow.
 - Use an empty folder only for a brand-new project.
-- Keep the `gsd-pcj` repository for framework development unless your goal is to modify GSD itself.
+- Keep this repository for framework development unless your goal is to modify GSD itself.
 
 ### Why use GSD if Copilot already executes code?
 
 Copilot can execute tasks directly; GSD adds workflow discipline and quality controls around that capability:
 
 - Persistent project memory in `.planning/*` for continuity and handoff.
-- Structured decision quality checks in Discuss/Verify (Proposal -> Critic -> Judge).
+- Structured decision quality checks in Discuss/Verify (Propose -> Critique -> Assess).
 - Explicit safety routing via `HITL/HOTL` guidance.
 - Phase-scoped planning that reduces rework and drift.
-- Cost controls via profile selection and conditional PCJ usage.
+- Cost controls via profile selection and conditional PCA usage.
 
 In short: Copilot is the execution engine; GSD is the reliability layer.
 
@@ -336,17 +336,17 @@ If you want to stay in GitHub Copilot chat, use GSD as an orchestration pattern 
 Recommended starter prompts in Copilot chat:
 
 - "Initialize this repo using GSD flow (map codebase first if needed)."
-- "Run discuss for phase 1 with PCJ, then summarize decisions in state docs."
+- "Run discuss for phase 1 with PCA, then summarize decisions in state docs."
 - "Plan phase 1, keep it budget-oriented, max 2-3 tasks per plan file."
-- "Execute phase 1 and then verify phase 1 with PCJ only if risks are high."
+- "Execute phase 1 and then verify phase 1 with PCA only if risks are high."
 
 This keeps your development in one conversation while preserving the GSD workflow discipline.
 
 ---
 
-## PCJ Extension
+## PCA Extension
 
-PCJ is an optional inner loop used only in Discuss and Verify:
+PCA is an optional inner loop used only in Discuss and Verify:
 
 - Proposal: generates a concrete recommendation for a key decision.
 - Critic: stress-tests assumptions, risks, and missing evidence.
@@ -361,7 +361,7 @@ Scope in this fork:
 Improvement notes compared with base GSD:
 
 - Base GSD already has strong discuss and verify phases; this fork adds an optional internal adversarial review layer.
-- PCJ’s intent is quality uplift, not workflow replacement: better assumptions in Discuss, better risk interpretation in Verify.
+- PCA's intent is quality uplift, not workflow replacement: better assumptions in Discuss, better risk interpretation in Verify.
 - The output path is split: internal raw reasoning stays local, curated judgement is written back into project/verification state.
 
 Assessment frameworks are intentionally different:
@@ -388,34 +388,34 @@ Persistence behavior:
 
 - Discuss verdicts are written to ACI-aware or generic project/state docs.
 - Verify verdicts are written to verification/state docs, including `needs_human_review`.
-- Raw Proposal/Critic/Judge logs are written to `development/PCJ_*.txt` for internal development only.
+- Raw Propose/Critique/Assess logs are written to `development/PCA_*.txt` for internal development only.
 - `development/` is auto-added to `.gitignore` so internal reasoning logs are not committed.
 - Legacy compatibility: existing `development_process/PCJ_*.txt` paths are still supported.
 
 Recorded process and outputs:
 
-- Chat-visible summaries: concise Proposal/Critic/Judge summaries for user transparency.
-- Control output: final Judge verdict plus suggested `HITL`/`HOTL` mode.
-- Internal trace: timestamped `development/PCJ_*.txt` records for audits and handoffs.
+- Chat-visible summaries: concise Propose/Critique/Assess summaries for user transparency.
+- Control output: final Assess verdict plus suggested `HITL`/`HOTL` mode.
+- Internal trace: timestamped `development/PCA_*.txt` records for audits and handoffs.
 - Curated state: project-facing decisions persisted into `.planning/*` docs.
 
 VS Code trigger examples:
 
 ```bash
-/gsd:discuss-phase 3 --pcj
-/gsd:verify-work 3 --pcj
+/gsd:discuss-phase 3 --pca
+/gsd:verify-work 3 --pca
 ```
 
 Programmatic helper commands used by workflows:
 
 ```bash
-node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj prepare discuss --phase 3 --decision "scope, strategy, assumptions"
-node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj save discuss --role proposer --phase 3 --task "Task T" --decision "scope, strategy, assumptions" --content "..." --log-file "development/PCJ_20260305T090000Z.txt"
-node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj save discuss --role critic --phase 3 --task "Task T" --decision "scope, strategy, assumptions" --content "..." --log-file "development/PCJ_20260305T090000Z.txt"
-node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj persist discuss --phase 3 --decision "scope, strategy, assumptions" --verdict "accepted-with-conditions" --judgement "..." --actions "..."
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs pca prepare discuss --phase 3 --decision "scope, strategy, assumptions"
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs pca save discuss --role proposer --phase 3 --task "Task T" --decision "scope, strategy, assumptions" --content "..." --log-file "development/PCA_20260305T090000Z.txt"
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs pca save discuss --role critic --phase 3 --task "Task T" --decision "scope, strategy, assumptions" --content "..." --log-file "development/PCA_20260305T090000Z.txt"
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs pca persist discuss --phase 3 --decision "scope, strategy, assumptions" --verdict "accepted-with-conditions" --judgement "..." --actions "..."
 
-node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj prepare verify --phase 3 --decision "verification interpretation and release risk"
-node ~/.claude/get-shit-done/bin/gsd-tools.cjs pcj persist verify --phase 3 --decision "verification interpretation and release risk" --verdict "needs-human-review" --judgement "..." --actions "..." --needs-human-review true
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs pca prepare verify --phase 3 --decision "verification interpretation and release risk"
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs pca persist verify --phase 3 --decision "verification interpretation and release risk" --verdict "needs-human-review" --judgement "..." --actions "..." --needs-human-review true
 ```
 
 ---
@@ -428,16 +428,16 @@ Default operating mode:
 
 - Keep normal flow: Discuss (optional) -> Plan -> Execute -> Verify.
 - Use lower-cost profile by default (`budget` or `balanced`).
-- Keep PCJ off unless risk is meaningful.
+- Keep PCA off unless risk is meaningful.
 
 Escalation policy (automatable):
 
-- Step 1 (default): no PCJ.
-- Step 2 (if decision is ambiguous/high-impact): enable PCJ for Discuss or Verify only.
+- Step 1 (default): no PCA.
+- Step 2 (if decision is ambiguous/high-impact): enable PCA for Discuss or Verify only.
 - Step 3 (if verify fails once): escalate model profile for Critic/Judge roles.
 - Step 4 (if verify fails twice): require human review decision before release.
 
-Suggested model role split for PCJ:
+Suggested model role split for PCA:
 
 - Proposal: fastest/cheapest capable model.
 - Critic: stronger reasoning model.
@@ -447,10 +447,10 @@ Token and cost impact (typical ranges):
 
 | Mode | Relative Token Use | Typical Use Case |
 |------|--------------------|------------------|
-| No PCJ | 1.0x | Routine implementation/verification |
-| PCJ in Discuss only | 1.2x-1.6x | Architecture or scope decisions |
-| PCJ in Verify only | 1.2x-1.8x | Release-risk interpretation |
-| PCJ in Discuss + Verify | 1.5x-2.5x | High-stakes phases |
+| No PCA | 1.0x | Routine implementation/verification |
+| PCA in Discuss only | 1.2x-1.6x | Architecture or scope decisions |
+| PCA in Verify only | 1.2x-1.8x | Release-risk interpretation |
+| PCA in Discuss + Verify | 1.5x-2.5x | High-stakes phases |
 
 Practical cost controls:
 
@@ -523,13 +523,13 @@ GSD stores project settings in `.planning/config.json`. Configure during `/gsd:n
 
 Disable these to speed up phases in familiar domains or when conserving tokens.
 
-### PCJ Toggles
+### PCA Toggles
 
 | Setting | Options | Default | What it Controls |
 |---------|---------|---------|------------------|
-| `pcj.enabled` | `true`, `false` | `false` | Master toggle for PCJ availability |
-| `pcj.discuss` | `true`, `false` | `false` | Allow PCJ loop in `/gsd:discuss-phase` |
-| `pcj.verify` | `true`, `false` | `false` | Allow PCJ loop in `/gsd:verify-work` |
+| `pcj.enabled` | `true`, `false` | `false` | Master toggle for PCA availability |
+| `pcj.discuss` | `true`, `false` | `false` | Allow PCA loop in `/gsd:discuss-phase` |
+| `pcj.verify` | `true`, `false` | `false` | Allow PCA loop in `/gsd:verify-work` |
 
 ### Git Branching
 
@@ -564,9 +564,9 @@ Disable these to speed up phases in familiar domains or when conserving tokens.
 | gsd-verifier | Sonnet | Sonnet | Haiku |
 | gsd-plan-checker | Sonnet | Sonnet | Haiku |
 | gsd-integration-checker | Sonnet | Sonnet | Haiku |
-| gsd-pcj-proposal | Opus | Sonnet | Haiku |
-| gsd-pcj-critic | Sonnet | Sonnet | Haiku |
-| gsd-pcj-judge | Opus | Sonnet | Haiku |
+| pca-proposal | Opus | Sonnet | Haiku |
+| pca-critic | Sonnet | Sonnet | Haiku |
+| pca-assess | Opus | Sonnet | Haiku |
 
 **Profile philosophy:**
 - **quality** -- Opus for all decision-making agents, Sonnet for read-only verification. Use when quota is available and the work is critical.

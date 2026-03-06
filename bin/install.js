@@ -185,7 +185,7 @@ const banner = '\n' +
   '  ║   ╚═════╝ ╚══════╝╚═════╝         ╚═╝      ╚═════╝ ╚════╝    ║\n' +
   '  ╚══════════════════════════════════════════════════════════════╝' + reset + '\n' +
   '\n' +
-  '  GSD-PCJ ' + dim + 'v' + pkg.version + reset + '\n' +
+  '  PCA ' + dim + 'v' + pkg.version + reset + '\n' +
   '  A meta-prompting, context engineering and spec-driven\n' +
   '  development fork for Claude Code, OpenCode, Gemini, and Codex.\n';
 

@@ -32,12 +32,12 @@ describe('pcj command', () => {
     assert.strictEqual(output.framework.name, 'discussion-decision-framework');
     assert.strictEqual(output.storage.development_dir, 'development');
     assert.strictEqual(output.storage.development_process_dir_legacy, 'development_process');
-    assert.ok(output.storage.log_file.startsWith('development/PCJ_'));
+    assert.ok(output.storage.log_file.startsWith('development/PCA_'));
     assert.ok(Array.isArray(output.framework.criteria));
     assert.ok(output.framework.criteria.some(c => c.key === 'scope_alignment'));
-    assert.ok(output.prompts.proposal.includes('Proposal role'));
+    assert.ok(output.prompts.proposal.includes('Proposer role'));
     assert.ok(output.prompts.critic.includes('Critic role'));
-    assert.ok(output.prompts.judge.includes('Judge role'));
+    assert.ok(output.prompts.judge.includes('Assessor role'));
   });
 
   test('pcj prepare verify uses a different assessment framework than discuss', () => {
@@ -63,7 +63,7 @@ describe('pcj command', () => {
 
     const statePath = path.join(tmpDir, '.planning', 'STATE.md');
     const content = fs.readFileSync(statePath, 'utf-8');
-    assert.ok(content.includes('## PCJ Discuss Decisions'));
+    assert.ok(content.includes('## PCA Discuss Decisions'));
     assert.ok(content.includes('framework: discussion-decision-framework'));
     assert.ok(content.includes('decision: strategy'));
     assert.ok(content.includes('verdict: accepted'));
@@ -90,7 +90,7 @@ describe('pcj command', () => {
     assert.strictEqual(output.transparency.human_control.recommended_mode, 'HITL');
 
     const content = fs.readFileSync(path.join(phaseDir, '01-VERIFICATION.md'), 'utf-8');
-    assert.ok(content.includes('## PCJ Verify Judgements'));
+    assert.ok(content.includes('## PCA Verify Assessments'));
     assert.ok(content.includes('framework: verification-risk-framework'));
     assert.ok(content.includes('needs_human_review: true'));
   });
@@ -124,7 +124,7 @@ describe('pcj command', () => {
     assert.ok(saveC.success, `Save critic failed: ${saveC.error}`);
 
     const absLog = path.join(tmpDir, logFile);
-    assert.ok(fs.existsSync(absLog), 'PCJ log file should exist');
+    assert.ok(fs.existsSync(absLog), 'PCA log file should exist');
     const content = fs.readFileSync(absLog, 'utf-8');
     assert.ok(content.includes('## PROPOSER Output'));
     assert.ok(content.includes('Proposer output body'));

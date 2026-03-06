@@ -309,36 +309,36 @@ Commit the UAT file:
 node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" commit "test({phase_num}): complete UAT - {passed} passed, {issues} issues" --files ".planning/phases/XX-name/{phase_num}-UAT.md"
 ```
 
-**Optional high-stakes PCJ verification checkpoint (Verify-only):**
+**Optional high-stakes PCA verification checkpoint (Verify-only):**
 
 Run this when either is true:
-- User passed `--pcj`, OR
+- User passed `--pca`, OR
 - `pcj_enabled` and `pcj_verify_enabled` are true in config, OR
 - There are blocker/major issues that require interpretation judgment.
 
-1) Build role-separated prompts for Proposal → Critic → Judge:
+1) Build role-separated prompts for Propose → Critique → Assess:
 ```bash
-node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pcj prepare verify --phase "${phase_number}" --decision "verification interpretation and release risk"
+node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pca prepare verify --phase "${phase_number}" --decision "verification interpretation and release risk"
 ```
 
 Capture `storage.log_file` from prepare output. This file is under `development/` (legacy `development_process/` still supported) and is internal-only.
 
-2) Execute Proposal/Critic/Judge (using `pcj_proposal_model`, `pcj_critic_model`, `pcj_judge_model`) over current UAT outcomes and diagnosis context.
+2) Execute Propose/Critique/Assess (using `pcj_proposal_model`, `pcj_critic_model`, `pcj_judge_model`) over current UAT outcomes and diagnosis context.
 Use the `verification-risk-framework` scorecard to determine release risk and `needs_human_review`.
 
 After Proposal and Critic, append raw outputs to the same internal log file:
 
 ```bash
-node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pcj save verify --role proposer --phase "${phase_number}" --task "${TASK}" --decision "verification interpretation and release risk" --content "${PROPOSER_OUTPUT}" --log-file "${PCJ_LOG_FILE}"
-node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pcj save verify --role critic --phase "${phase_number}" --task "${TASK}" --decision "verification interpretation and release risk" --content "${CRITIC_OUTPUT}" --log-file "${PCJ_LOG_FILE}"
+node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pca save verify --role proposer --phase "${phase_number}" --task "${TASK}" --decision "verification interpretation and release risk" --content "${PROPOSER_OUTPUT}" --log-file "${PCJ_LOG_FILE}"
+node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pca save verify --role critic --phase "${phase_number}" --task "${TASK}" --decision "verification interpretation and release risk" --content "${CRITIC_OUTPUT}" --log-file "${PCJ_LOG_FILE}"
 ```
 
-3) Persist Judge verdict (including `needs_human_review`) into verification/state docs:
+3) Persist Assess verdict (including `needs_human_review`) into verification/state docs:
 ```bash
-node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pcj persist verify --phase "${phase_number}" --task "${TASK}" --decision "verification interpretation and release risk" --verdict "${JUDGE_VERDICT}" --judgement "${JUDGE_JUDGEMENT}" --actions "${JUDGE_ACTIONS}" --needs-human-review "${NEEDS_HUMAN_REVIEW}" --risk-flags "${JUDGE_RISK_FLAGS}" --log-file "${PCJ_LOG_FILE}"
+node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" pca persist verify --phase "${phase_number}" --task "${TASK}" --decision "verification interpretation and release risk" --verdict "${JUDGE_VERDICT}" --judgement "${JUDGE_JUDGEMENT}" --actions "${JUDGE_ACTIONS}" --needs-human-review "${NEEDS_HUMAN_REVIEW}" --risk-flags "${JUDGE_RISK_FLAGS}" --log-file "${PCJ_LOG_FILE}"
 ```
 
-Raw PCJ trail remains in `development/` (legacy `development_process/` supported); curated Judge output writes to phase verification doc when available, otherwise to ACI/generic state docs.
+Raw PCA trail remains in `development/` (legacy `development_process/` supported); curated Assess output writes to phase verification doc when available, otherwise to ACI/generic state docs.
 
 Present summary:
 ```

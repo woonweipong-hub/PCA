@@ -1,7 +1,7 @@
 ---
 name: gsd:verify-work
 description: Validate built features through conversational UAT
-argument-hint: "[phase number, e.g., '4'] [--pcj]"
+argument-hint: "[phase number, e.g., '4'] [--pca]"
 allowed-tools:
   - Read
   - Bash
@@ -36,5 +36,5 @@ Context files are resolved inside the workflow (`init verify-work`) and delegate
 Execute the verify-work workflow from @~/.claude/get-shit-done/workflows/verify-work.md end-to-end.
 Preserve all workflow gates (session management, test presentation, diagnosis, fix planning, routing).
 
-Optional with `--pcj`: run Proposal → Critic → Judge on high-stakes verification interpretations and persist Judge verdict (including `needs_human_review`) into verification/state docs via `gsd-tools pcj persist verify`.
+Optional with `--pca`: run Propose → Critique → Assess on high-stakes verification interpretations and persist Assess verdict (including `needs_human_review`) into verification/state docs via `gsd-tools pca persist verify`.
 </process>

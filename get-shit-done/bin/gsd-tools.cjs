@@ -29,12 +29,12 @@
  *   phase-plan-index <phase>           Index plans with waves and status
  *   websearch <query>                  Search web via Brave API (if configured)
  *     [--limit N] [--freshness day|week|month]
- *   pcj prepare <discuss|verify>       Build Proposal/Critic/Judge prompt pack
+ *   pca prepare <discuss|verify>       Build Propose/Critique/Assess prompt pack
  *     [--phase N] [--task "..."] [--decision "..."] [--context "..."] [--log-file path]
- *   pcj save <discuss|verify>          Append Proposer/Critic/Judge raw output to internal log
- *     --role proposer|critic|judge [--phase N] [--task "..."] [--decision "..."]
+ *   pca save <discuss|verify>          Append Proposer/Critic/Assessor raw output to internal log
+ *     --role proposer|critic|assessor|judge [--phase N] [--task "..."] [--decision "..."]
  *     --content "..." [--log-file path]
- *   pcj persist <discuss|verify>       Persist Judge output into docs
+ *   pca persist <discuss|verify>       Persist Assess output into docs
  *     [--phase N] [--task "..."] [--decision "..."] [--verdict "..."]
  *     [--judgement "..."] [--actions "..."]
  *     [--needs-human-review true|false] [--risk-flags "..."] [--target path] [--log-file path]
@@ -182,7 +182,7 @@ async function main() {
   const command = args[0];
 
   if (!command) {
-    error('Usage: gsd-tools <command> [args] [--raw] [--cwd <path>]\nCommands: state, resolve-model, find-phase, commit, verify-summary, verify, frontmatter, template, generate-slug, current-timestamp, list-todos, verify-path-exists, config-ensure-section, init, pcj');
+    error('Usage: gsd-tools <command> [args] [--raw] [--cwd <path>]\nCommands: state, resolve-model, find-phase, commit, verify-summary, verify, frontmatter, template, generate-slug, current-timestamp, list-todos, verify-path-exists, config-ensure-section, init, pcj, pca');
   }
 
   switch (command) {
@@ -594,7 +594,8 @@ async function main() {
       break;
     }
 
-    case 'pcj': {
+    case 'pcj':
+    case 'pca': {
       const subcommand = args[1];
       const mode = args[2];
       const getArg = (flag) => {
@@ -624,7 +625,7 @@ async function main() {
       } else if (subcommand === 'persist') {
         pcj.cmdPcjPersist(cwd, mode, options, raw);
       } else {
-        error('Unknown pcj subcommand. Available: prepare, save, persist');
+        error('Unknown pca/pcj subcommand. Available: prepare, save, persist');
       }
       break;
     }

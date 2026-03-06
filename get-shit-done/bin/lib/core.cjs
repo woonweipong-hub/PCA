@@ -28,9 +28,12 @@ const MODEL_PROFILES = {
   'gsd-plan-checker':         { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
   'gsd-integration-checker':  { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
   'gsd-nyquist-auditor':      { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
-  'gsd-pcj-proposal':         { quality: 'opus', balanced: 'sonnet', budget: 'haiku' },
-  'gsd-pcj-critic':           { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
-  'gsd-pcj-judge':            { quality: 'opus', balanced: 'sonnet', budget: 'haiku' },
+  'pcj-proposal':             { quality: 'opus', balanced: 'sonnet', budget: 'haiku' },
+  'pcj-critic':               { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
+  'pcj-judge':                { quality: 'opus', balanced: 'sonnet', budget: 'haiku' },
+  'pca-proposal':             { quality: 'opus', balanced: 'sonnet', budget: 'haiku' },
+  'pca-critic':               { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
+  'pca-assess':               { quality: 'opus', balanced: 'sonnet', budget: 'haiku' },
 };
 
 // ─── Output helpers ───────────────────────────────────────────────────────────
