@@ -14,7 +14,20 @@ PCA is not just a chat prompt. In VS Code it works as:
 
 - a CLI: `node bin/pca.js ...`
 - a local web service/UI: `npm run ui:start`
+- a set of custom PCA agents in `.github/agents/`
 - a governance layer around decision quality, evidence checks, and `HITL/HOTL` routing
+
+## PCA Agent Picker Modes
+
+This workspace includes PCA-native agent modes for the VS Code agent picker:
+
+- `PCA Orchestrator`
+- `PCA Proposer`
+- `PCA Critic`
+- `PCA Assessor`
+- `PCA Governor`
+
+Use them when you want PCA to behave like a first-class working method in chat, not just a terminal workflow.
 
 ## Quick Start
 

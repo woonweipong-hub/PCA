@@ -154,6 +154,28 @@ npm run smoke:copilot
 
 For more step-by-step usage patterns, see `docs/VS-CODE-CLI-CHEATSHEET.md`.
 
+### PCA Agent Modes in VS Code
+
+This workspace now includes PCA-native custom agents in `.github/agents/` so PCA can appear as a first-class workflow in the VS Code agent picker.
+
+Available agent modes:
+
+- `PCA Orchestrator`
+- `PCA Proposer`
+- `PCA Critic`
+- `PCA Assessor`
+- `PCA Governor`
+
+Use these when you want PCA to feel like a selectable working method rather than only a CLI or browser tool.
+
+Recommended usage:
+
+- `PCA Orchestrator` for framing, sequencing, and overall PCA flow
+- `PCA Proposer` for best-current-option generation
+- `PCA Critic` for challenge, contradiction, and risk surfacing
+- `PCA Assessor` for verdict and action requirements
+- `PCA Governor` for `HITL/HOTL` and readiness routing
+
 ```bash
 npm install
 ```
@@ -178,6 +200,81 @@ VS Code quick trial with Copilot runtime tags is available via tasks in `.vscode
 - `PCA: Copilot Live Debate (1 cycle smoke)`
 
 Antigravity integration (CLI-only and hybrid UI workflows): `docs/ANTIGRAVITY-INTEGRATION.md`
+
+### Antigravity Quick Start
+
+Use this mode when Antigravity is your orchestration/runtime layer and PCA is your decision-quality and governance layer.
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Prepare a text corpus if your sources are PDFs:
+
+```bash
+npm run convert:pdf -- --input-dir "C:\path\to\public-pdfs" --output-dir "data/public-pdf-text" --recursive true
+```
+
+3. Run PCA quality and evidence checks:
+
+```bash
+node bin/pca.js quality-check --sources "data/public-pdf-text" --min-sources 2 --min-total-claims 6 --min-avg-claims-per-doc 2
+node bin/pca.js evidence-check verify --decision "Interpret requirements" --context "Cross-document consistency check" --sources "data/public-pdf-text" --policy strict --max-files 200 --prioritize-requirements true
+```
+
+4. Persist the result for action handoff:
+
+```bash
+node bin/pca.js persist verify --verdict "accepted-with-conditions" --judgement "Proceed with tracked conditions" --actions "Assign owners and due dates" --policy strict --output outputs/antigravity-decision.json --format json
+```
+
+5. If you want to validate the runtime path end-to-end:
+
+```bash
+npm run smoke:antigravity
+```
+
+For hybrid use, start the PCA UI with `npm run ui:start` and use the browser for live visibility while Antigravity drives the steps.
+
+### Browser UI Quick Start
+
+Use this mode when you want a browser-based control desk for evidence review, live debate, governance checks, and artifact downloads.
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Start the local PCA UI and API service:
+
+```bash
+npm run ui:start
+```
+
+3. Open:
+
+- `http://localhost:4173`
+
+4. Typical browser-first flow:
+
+- preview corpus and references
+- run framework proposal
+- run research pack
+- run live debate or full pipeline
+- inspect verify gates and route recommendation
+- download artifacts
+
+Use this mode when the user needs stronger visibility, traceability, and human review support during the run.
+
+### Which Mode To Choose
+
+- Use VS Code CLI when you want the fastest terminal-driven workflow and direct use with Copilot.
+- Use Antigravity when you want an external orchestration/runtime layer and PCA to govern quality and routing.
+- Use Browser UI when you want a visual control desk, live timeline, source preview, and downloadable artifacts.
+- Use the hybrid pattern when you want Antigravity or Copilot to drive execution while PCA UI provides transparency and governance visibility.
 
 ### Free/Open Local Model Path
 

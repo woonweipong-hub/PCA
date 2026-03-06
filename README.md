@@ -54,6 +54,7 @@ PCA can be used as a general-purpose human-machine decision system for any domai
 - Add optional symbolic validation with Z3 for hard constraints and feasibility checks.
 - Produce audit-friendly artifacts for handoff, review, and repeatable execution.
 - Work across Copilot, Antigravity, local terminal workflows, BYOM, Ollama, and browser-based UI/API usage.
+- Expose PCA-native agent modes in VS Code for orchestrator, proposer, critic, assessor, and governor workflows.
 
 ## Human-Machine Co-Working Method
 
@@ -290,6 +291,10 @@ Detailed workflow, swimlanes, and agent topology: `docs/WORKFLOW.md`
 ## Installation
 
 If you are using PCA in VS Code, start with the `VS Code Quick Start` section in `docs/USER-GUIDE.md`.
+
+The same User Guide also includes `Antigravity Quick Start`, `Browser UI Quick Start`, and `Which Mode To Choose` for different user needs.
+
+Workspace-level PCA custom agents are also available under `.github/agents/` for the VS Code agent picker.
 
 ### Local dev usage
 
