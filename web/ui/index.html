@@ -37,6 +37,27 @@
     </section>
 
     <section class="panel">
+      <article class="card continuous-input-card">
+        <div class="card-head continuous-input-head">
+          <div>
+            <h2>Continuous Input Bar</h2>
+            <p class="muted">Add the next instruction, correction, or side question without leaving the visible output context.</p>
+          </div>
+          <span class="mono badge">continuous co-work</span>
+        </div>
+        <div class="continuous-input-row">
+          <textarea id="quickInputBar" class="continuous-input-text" placeholder="Type the next instruction, clarification, correction, or follow-up question here."></textarea>
+          <div class="continuous-input-actions">
+            <button id="btnQueueRequest" class="ghost" type="button">Add To Request</button>
+            <button id="btnQueueTopic" class="ghost" type="button">Add Open Topic</button>
+            <button id="btnRunFromBar" class="accent" type="button">Continue With Pipeline</button>
+          </div>
+        </div>
+        <p id="quickInputStatus" class="muted continuous-input-status">The bar feeds the active collaboration fields and autosaves with the rest of the session.</p>
+      </article>
+    </section>
+
+    <section class="panel">
       <article class="card">
         <div class="card-head">
           <h2>Live Debate Timeline</h2>

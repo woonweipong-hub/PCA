@@ -5,6 +5,8 @@ const artifactList = document.getElementById('artifactList');
 const draftStatus = document.getElementById('draftStatus');
 const useCaseHub = document.getElementById('useCaseHub');
 const selectedUseCaseNote = document.getElementById('selectedUseCaseNote');
+const quickInputBar = document.getElementById('quickInputBar');
+const quickInputStatus = document.getElementById('quickInputStatus');
 
 const inputDir = document.getElementById('inputDir');
 const ocrDir = document.getElementById('ocrDir');
@@ -74,6 +76,9 @@ const btnSaveDraft = document.getElementById('btnSaveDraft');
 const btnRestoreDraft = document.getElementById('btnRestoreDraft');
 const btnClearDraft = document.getElementById('btnClearDraft');
 const btnContinueSession = document.getElementById('btnContinueSession');
+const btnQueueRequest = document.getElementById('btnQueueRequest');
+const btnQueueTopic = document.getElementById('btnQueueTopic');
+const btnRunFromBar = document.getElementById('btnRunFromBar');
 
 const debateState = document.getElementById('debateState');
 const debateTimeline = document.getElementById('debateTimeline');
@@ -832,6 +837,12 @@ function setDraftStatus(message) {
   }
 }
 
+function setQuickInputStatus(message) {
+  if (quickInputStatus) {
+    quickInputStatus.textContent = message;
+  }
+}
+
 function collectDraftState() {
   return {
     savedAt: new Date().toISOString(),
@@ -970,6 +981,31 @@ function restoreSavedDraft() {
 function clearSavedDraft() {
   const removed = safeRemoveDraft();
   setDraftStatus(removed ? 'Saved session cleared for this browser.' : 'Session clear unavailable in this browser.');
+}
+
+function consumeQuickInput() {
+  if (!quickInputBar) return '';
+  const value = quickInputBar.value.trim();
+  if (!value) {
+    setQuickInputStatus('Type a new instruction or follow-up first.');
+    return '';
+  }
+  return value;
+}
+
+function appendTextBlock(targetEl, text) {
+  if (!targetEl || !text) return;
+  const current = targetEl.value.trim();
+  targetEl.value = current ? `${current}\n${text}` : text;
+}
+
+function clearQuickInput(message) {
+  if (quickInputBar) {
+    quickInputBar.value = '';
+  }
+  setQuickInputStatus(message);
+  renderInputRegistry();
+  scheduleDraftSave();
 }
 
 function firstNonEmpty(...values) {
@@ -2022,6 +2058,42 @@ btnClearDraft.addEventListener('click', () => {
 if (btnContinueSession) {
   btnContinueSession.addEventListener('click', () => {
     restoreSavedDraft();
+  });
+}
+
+if (quickInputBar) {
+  quickInputBar.addEventListener('input', () => {
+    const value = quickInputBar.value.trim();
+    setQuickInputStatus(value ? 'Ready to add this into the live collaboration context.' : 'The bar feeds the active collaboration fields and autosaves with the rest of the session.');
+  });
+}
+
+if (btnQueueRequest) {
+  btnQueueRequest.addEventListener('click', () => {
+    const value = consumeQuickInput();
+    if (!value) return;
+    appendTextBlock(userRequests, value);
+    clearQuickInput('Added to User Requests and saved into the active session.');
+  });
+}
+
+if (btnQueueTopic) {
+  btnQueueTopic.addEventListener('click', () => {
+    const value = consumeQuickInput();
+    if (!value) return;
+    appendTextBlock(openTopics, value);
+    clearQuickInput('Added to Open Topics and saved into the active session.');
+  });
+}
+
+if (btnRunFromBar) {
+  btnRunFromBar.addEventListener('click', async () => {
+    const value = consumeQuickInput();
+    if (!value) return;
+    appendTextBlock(userRequests, value);
+    appendTextBlock(continuationNotes, `Continue from quick input: ${value}`);
+    clearQuickInput('Queued into the live request. Running the full pipeline now.');
+    await btnPipeline.click();
   });
 }
 

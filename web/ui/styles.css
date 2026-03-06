@@ -190,6 +190,46 @@ body {
   min-height: 100%;
 }
 
+.continuous-input-card {
+  padding-bottom: 1rem;
+}
+
+.continuous-input-head {
+  align-items: flex-start;
+}
+
+.continuous-input-head p {
+  margin: 0.25rem 0 0;
+}
+
+.continuous-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.9rem;
+  align-items: stretch;
+}
+
+.continuous-input-text {
+  min-height: 104px;
+  resize: vertical;
+}
+
+.continuous-input-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 220px;
+}
+
+.continuous-input-actions button {
+  width: 100%;
+}
+
+.continuous-input-status {
+  margin: 0.7rem 0 0;
+  font-size: 0.84rem;
+}
+
 .section-block {
   margin-top: 1.1rem;
   padding-top: 1rem;
@@ -842,7 +882,8 @@ pre.compact {
   }
 
   .inline-grid,
-  .theme-control-grid {
+  .theme-control-grid,
+  .continuous-input-row {
     grid-template-columns: 1fr;
   }
 
@@ -852,6 +893,10 @@ pre.compact {
 
   .actions {
     flex-direction: column;
+  }
+
+  .continuous-input-actions {
+    min-width: 0;
   }
 
   button {
