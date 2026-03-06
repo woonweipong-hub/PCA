@@ -1,15 +1,26 @@
 # PCA Web UI
 
+PCA is an Evidence-Governed Adaptive Solver, and this UI is the operational control desk for that workflow.
+It also supports optional Python package-backed symbolic checks (`z3-solver`) to strengthen verify gates when formal constraints are required.
+
 PCA Web UI provides a browser-based control desk for OCR, PDF conversion, quality gating, evidence checks, and artifact downloads.
 
 ## What You Can Do
 
 - Run OCR preprocess for scanned PDFs.
 - Convert PDF folders to text corpus.
+- Preview corpus content and registered references before analysis.
 - Run `quality-check` before evidence checks.
 - Run `evidence-check` and review structured output.
 - Run live debate cycles (`propose -> critique -> assess`) with timeline updates.
+- Select adaptive or fixed pass strategy with risk level (`low|medium|high`) to control debate depth.
+- Optionally enable Z3 geometry checks for symbolic constraint validation in verify gates.
+- See verify-gate outcomes and route recommendation (`HITL/HOTL`) in live debate events.
 - Build objective-driven framework proposals from user intent, expectations, constraints, and research needs.
+- Start quickly with built-in use-case profiles (CORENET X, accessibility, buildability, MEP/C&S, Green Mark, FM, HS, cost/spec checks, and BCA master compliance pre-check).
+- Select per-role models (`proposal`, `critique`, `assess`) and runtime notes for traceable runs.
+- Use the built-in Guide and Install panel for runtime-specific setup and generated CLI snippets.
+- View a workflow map in the UI showing objective -> research -> debate -> verification -> artifact flow.
 - Download JSON artifacts from each run.
 
 ## Start Locally
@@ -32,14 +43,22 @@ Environment overrides:
 
 - `POST /api/ocr-pdf`
 - `POST /api/convert-pdf`
+- `POST /api/corpus-preview`
 - `POST /api/quality-check`
 - `POST /api/evidence-check`
 - `POST /api/framework-proposal`
 - `POST /api/research-pack`
 - `POST /api/debate-live` (SSE stream for live timeline)
+- `POST /api/run-pipeline` (SSE stream for unified Input -> Process -> Output run)
 - `GET /api/artifacts`
 - `GET /api/download?file=<artifact>`
 - `GET /api/health`
+
+Optional symbolic dependency setup:
+
+```bash
+pip install -r requirements-z3.txt
+```
 
 ## Live Debate View
 
@@ -60,6 +79,8 @@ Live debate now also captures and displays:
 Each run saves a `live-debate` artifact in `outputs/ui/`.
 
 Use the `Runtime Provider` selector to tag runs as `copilot`, `antigravity`, `byom`, `ollama`, or `other` for traceability across mixed operating setups.
+
+Model labels are recorded for each run. For Copilot runtime, labels document selected strategy and governance context; direct backend model execution can be done via BYOM/Ollama adapters.
 
 ## Framework Proposal View
 

@@ -1,5 +1,7 @@
 # PCA User Guide
 
+PCA is an Evidence-Governed Adaptive Solver for high-stakes decision workflows.
+
 This guide defines PCA operational use, command behavior, governance routing, and quality standards.
 
 ## General Framework vs Specific Use Cases
@@ -32,17 +34,31 @@ Verdict set:
 
 ```mermaid
 flowchart TD
-	A[Decision + context] --> B[pca prepare or run]
-	B --> C[Proposer Agent]
-	C --> D[Critic Agent]
-	D --> E[Assessor Agent]
-	E --> F[pca assess]
-	F --> G[pca route]
-	G -->|HITL| H[Human approval required]
-	G -->|HOTL| I[Proceed with monitoring]
-	H --> J[pca persist]
-	I --> J[pca persist]
+	A[Input: Data, requirements, objectives] --> B[Process: Organize]
+	B --> C[Process: Propose]
+	C --> D[Process: Critique]
+	D --> E[Process: Assess]
+	E --> F[Process: Verify gates]
+	F --> G[Output: Recommend actions]
+	G --> H[Output: Action contract]
+	H --> I{Route HITL/HOTL}
+	I --> J{Execution readiness}
+	J -->|Ready| K[Implement]
+	J -->|Blocked| C
+	K --> L[Document artifacts and rationale]
+	L --> M[Observe outcomes]
+	M --> N[Learn and update corpus]
+	N --> O{Drift or new risk}
+	O -->|Yes| B
+	O -->|No| P[Concrete outcome delivered]
 ```
+
+Operational principle: `Input -> Process -> Output` loop throughout the run, with action contract and readiness checks before implementation.
+
+- Input: ingest datasets, references, requirements, and objectives.
+- Process: organize, propose, critique, assess, and verify with gates.
+- Output: produce action contract, route via HITL/HOTL, and execute when ready.
+- Learn: monitor outcomes and re-enter the cycle when needed.
 
 Detailed role swimlane and agent topology: `docs/WORKFLOW.md`
 
@@ -280,7 +296,7 @@ Default escalation cues:
 - unresolved high-risk flags.
 - conflicting evidence in verify mode.
 
-## Quality Standards (GSD-Inspired)
+## Quality Standards
 
 PCA adopts these standards:
 

@@ -1,6 +1,6 @@
 # PCA
 
-PCA (Propose-Critique-Assess) is a standalone quality workflow engine inspired by GSD standards.
+PCA (Propose-Critique-Assess) is an Evidence-Governed Adaptive Solver.
 
 It applies structured debate, quality checks, and explicit governance (`HITL`/`HOTL`) to improve decision quality before execution.
 
@@ -17,7 +17,7 @@ It applies structured debate, quality checks, and explicit governance (`HITL`/`H
 
 ## About The Author
 
-I am a trained building architect and a working public servant, not a professional coder. I use AI to work smarter and build practical tools for the building and construction industry. My work focuses on automating compliance checks, improving design workflows, and exploring multi-agent AI patterns that help practitioners deliver safer, higher-quality buildings with less manual effort.
+I am a trained building architect and a public servant, not a professional coder. I use AI to work smarter and build practical tools for the building and construction industry. My current work focuses on automating compliance checks, improving design workflows, and exploring multi-agent AI patterns that help practitioners deliver safer, higher-quality buildings with less manual effort.
 
 LinkedIn: `https://www.linkedin.com/in/woonwei/`
 
@@ -27,6 +27,11 @@ LinkedIn: `https://www.linkedin.com/in/woonwei/`
 - Quality-first: force assumptions and risks into the open.
 - Traceable outputs: verdict + actions + risk flags.
 - Governance-ready: clear routing to `HITL` or `HOTL`.
+
+## Robustness Acknowledgement
+
+PCA now includes optional Python symbolic verification support via `z3-solver` (`requirements-z3.txt`).
+This strengthens robustness by pairing qualitative reasoning (`Propose -> Critique -> Assess`) with formal feasibility checks (`sat/unsat`) inside verify gates and routing decisions.
 
 ## Intent and Outcomes
 
@@ -60,32 +65,114 @@ Prior art and acknowledgement log: `docs/PRIOR-ART.md`.
 ## Workflow Diagram
 
 ```mermaid
-sequenceDiagram
-	participant Req as Requester
-	participant Orch as Orchestrator Agent
-	participant Prop as Proposer Agent
-	participant Crit as Critic Agent
-	participant Assess as Assessor Agent
-	participant Human as Human Reviewer
+flowchart TD
+  A[Input: Data -> Requirements -> Objectives] --> B[Process: Organize]
+  B --> C[Process: Propose]
+  C --> D[Process: Critique]
+  D --> E[Process: Assess]
 
-	Req->>Orch: decision + context
-	Orch->>Orch: pca prepare <mode>
-	Orch->>Prop: proposal prompt
-	Prop-->>Orch: recommendation
-	Orch->>Crit: critic prompt + proposal
-	Crit-->>Orch: objections + risks
-	Orch->>Assess: assess prompt + debate record
-	Assess-->>Orch: verdict + actions + risk flags
-	Orch->>Orch: pca route <mode>
+  Q[Qualitative Rubrics\nInterpretation, trade-offs, confidence] -. feeds .-> C
+  Q -. critiques .-> D
+  Q -. scoring context .-> E
 
-	alt HITL
-		Orch->>Human: request approval
-		Human-->>Orch: approve / revise / reject
-	else HOTL
-		Orch->>Orch: proceed with monitoring
-	end
+  S[Symbolic Checks (Z3)\nFeasible or infeasible constraints] --> V{Verify Gates Passed?}
+  E --> V
 
-	Orch->>Orch: pca persist --output <path>
+  X[Adaptive Depth\nLow risk: 1 pass\nMedium risk: 2 passes\nHigh risk: 3 passes] -. controls .-> C
+
+  V -- No --> C
+  V -- Yes --> G[Output: Recommend]
+  G --> AC[Action Contract\nOwner, due, success metric, rollback trigger]
+  AC --> R{Route HITL/HOTL}
+  R -- HITL --> H[Human Approval Checkpoint]
+  R -- HOTL --> M[Monitored Progression]
+
+  H --> ER{Execution Readiness}
+  M --> ER
+  ER -- Ready --> I[Implement]
+  ER -- Blocked --> C
+
+  I --> D1[Document Decision and Evidence]
+  D1 --> O[Observe Outcomes]
+  O --> L[Learn and Update Corpus]
+  L --> N{Drift or New Risk?}
+  N -- Yes --> B
+  N -- No --> Z[Concrete Outcome Delivered]
+```
+
+Operational rule: move forward only when qualitative assessment, symbolic feasibility, and execution readiness are all satisfied; otherwise loop back through `Propose -> Critique -> Assess` with updated evidence and constraints.
+
+### Lifecycle (PCA Native ASCII)
+
+```text
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │                             PCA DECISION RUN                           │
+  │  Intake + Corpus + Objectives + Constraints + Policy + Risk Profile   │
+  └──────────────────────────────────────┬─────────────────────────────────┘
+                                         │
+                     ┌───────────────────▼───────────────────┐
+                     │ ADAPTIVE DEPTH PLANNER (1/2/3 PASSES) │
+                     └───────────────────┬───────────────────┘
+                                         │
+         ┌───────────────────────────────▼────────────────────────────────┐
+         │ PASS LOOP                                                      │
+         │ Organize -> Propose -> Critique -> Assess                      │
+         │ score confidence/coverage/risk and update assumptions           │
+         └───────────────────────────────┬────────────────────────────────┘
+                                         │
+         ┌───────────────────────────────▼────────────────────────────────┐
+         │ GOVERNANCE GATE                                                │
+         │ evidence checks + policy thresholds + optional Z3 sat/unsat    │
+         └───────────────────────────────┬────────────────────────────────┘
+                                         │
+                    Gate fail ───────────┘
+                                         │
+                                Gate pass ▼
+         ┌────────────────────────────────────────────────────────────────┐
+         │ ACTION PACKAGE                                                 │
+         │ recommendation + action contract + owner + due + rollback      │
+         └───────────────────────────────┬────────────────────────────────┘
+                                         │
+                         ┌───────────────▼───────────────┐
+                         │ ROUTING + READINESS CHECK      │
+                         │ HITL/HOTL + implementation go  │
+                         └───────────────┬───────────────┘
+                                         │
+                   blocked ──────────────┘
+                                         │
+                                    ready ▼
+         ┌────────────────────────────────────────────────────────────────┐
+         │ EXECUTE -> OBSERVE -> CAPTURE OUTCOME -> LEARN -> RE-INGEST   │
+         └────────────────────────────────────────────────────────────────┘
+```
+
+### Execution Orchestration (PCA Native ASCII)
+
+```text
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │                    PCA PARALLEL ORCHESTRATION VIEW                    │
+  ├────────────────────────────────────────────────────────────────────────┤
+  │                                                                        │
+  │  STREAM A (evidence)          STREAM B (reasoning)      STREAM C (acts)│
+  │  ┌──────────────┐             ┌──────────────┐          ┌─────────────┐ │
+  │  │ Collect Docs │             │ Propose      │          │ Draft Action│ │
+  │  │ Normalize Ref│             │ Critique     │          │ Contract    │ │
+  │  └──────┬───────┘             │ Assess       │          └──────┬──────┘ │
+  │         │                     └──────┬───────┘                 │        │
+  │         │                            │                         │        │
+  │         │               ┌────────────▼────────────┐            │        │
+  │         └──────────────►│ Governance Merge Point   │◄───────────┘        │
+  │                         │ evidence + policy + Z3   │                     │
+  │                         └────────────┬────────────┘                     │
+  │                                      │                                   │
+  │                    fail -> loop back │ pass -> route + readiness          │
+  │                                      ▼                                   │
+  │                         ┌──────────────────────────────┐                 │
+  │                         │ Execute + Monitor Outcome    │                 │
+  │                         │ Feed lessons into next cycle │                 │
+  │                         └──────────────────────────────┘                 │
+  │                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Role and Agent Showcase
@@ -200,9 +287,9 @@ node bin/pca.js evidence-check verify --decision "Interpret asset requirements" 
 
 Note: for charts/images/scanned PDFs, see `docs/USER-GUIDE.md#handling-tables-graphs-images-and-scanned-pdfs`.
 
-## Quality Standard (GSD-Inspired)
+## Quality Standards
 
-PCA follows the same quality discipline pattern that makes GSD reliable:
+PCA follows a quality-first discipline pattern:
 
 - Explicit contracts for every command input/output.
 - Deterministic JSON responses for automation.
@@ -229,19 +316,30 @@ PCA is adapter-ready. Start with templates in:
 - `integrations/gemini-antigravity/`
 - `integrations/ollama/` (free/open local models)
 - `integrations/byom/` (OpenAI-compatible bring-your-own-model setup)
-- `integrations/gsd/` (install PCA as GSD quality overlay)
+- `integrations/gsd/` (external executor integration example)
+- `integrations/z3/` (optional symbolic constraint solver checks)
 
 All integrations should consume the stable contract in `SCHEMA.md`.
 
 Model routing guide (single-model, split-role, hybrid): `docs/MODEL-ROUTING.md`
 
-GSD integration guide: `docs/GSD-INTEGRATION.md`
+Optional symbolic verification (Python + Z3):
+
+```bash
+pip install -r requirements-z3.txt
+npm test
+```
+
+When Z3 is available, `tests/z3-geometry.test.js` validates a geometric constraint satisfaction scenario and can support adaptive solver verification experiments.
+
+External executor integration guide (GSD example): `docs/GSD-INTEGRATION.md`
 
 Use-case library (optional examples built on PCA core):
 
 - Building compliance decision gate: `docs/USE-CASE-FIRE-EGRESS-COMPLIANCE.md`
 - TRHS interpretation workflow: `docs/USE-CASE-TRHS-INTERPRETATION.md`
 - Agentic TRHS pipeline: `docs/USE-CASE-AGENTIC-TRHS-PIPELINE.md`
+- Hybrid quantitative + qualitative guide: `docs/USE-CASES-PCA-Z3.md`
 
 Operational runbooks and release assurance:
 
@@ -262,7 +360,7 @@ Recommended fork pattern:
 
 ## Attribution
 
-PCA is inspired by GSD's structured workflow discipline and extends it as an independent quality-first decision engine.
+PCA is an independently developed quality-first decision engine.
 
 ## Contact and Q&A
 

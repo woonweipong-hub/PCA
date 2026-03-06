@@ -1,10 +1,10 @@
-# PCA + GSD Integration Guide
+# External Executor Integration Guide (GSD Example)
 
-Use PCA as a decision-quality layer on top of GSD.
+Use PCA as the decision-quality front layer, with an external execution backend (for example, GSD).
 
-## Why this pairing works
+## Why this pattern works
 
-- GSD drives structured execution.
+- External executors drive structured execution.
 - PCA enforces evidence quality, debate rigor, and governance checks.
 
 ## On-par process expectation
@@ -16,8 +16,18 @@ For each high-impact task:
 3. Run `research-pack` to verify data quality and synthesize contradictions/gaps.
 4. Run `debate-live` to iterate proposer/critic/assessor cycles.
 5. Apply verification verdict and `HITL/HOTL` routing before execution.
+6. Monitor execution outcomes and feed new evidence back into PCA.
 
-## API-first usage from GSD
+## Human-style operating loop
+
+Treat every high-impact run as:
+
+- See: collect and observe requirements, datasets, and public references.
+- Think: run PCA framework + debate + assessment cycles.
+- React/Do: route and execute through the selected backend with governance.
+- See again: monitor outcomes, then re-enter PCA when signals change.
+
+## API-first usage from an external executor
 
 Start PCA service:
 

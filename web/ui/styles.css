@@ -231,8 +231,61 @@ pre {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  max-height: 320px;
+  max-height: 460px;
   overflow: auto;
+}
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.guide-item {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.65rem;
+}
+
+.guide-item h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.guide-item p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.workflow-map {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.wf-step {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+.wf-arrow {
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+}
+
+pre.compact {
+  height: auto;
+  margin-top: 0.75rem;
+  max-height: none;
+  font-size: 0.8rem;
 }
 
 .timeline-empty {
@@ -325,6 +378,10 @@ pre {
 
   .tall {
     min-height: 300px;
+  }
+
+  .guide-grid {
+    grid-template-columns: 1fr;
   }
 
   pre {

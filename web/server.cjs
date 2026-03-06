@@ -82,6 +82,58 @@ function runNodeCommand(args) {
   });
 }
 
+function runPythonScript(args, stdinText = '') {
+  return new Promise((resolve) => {
+    const candidates = [
+      { cmd: process.env.PCA_PYTHON || 'python', prefix: [] },
+      { cmd: 'py', prefix: ['-3'] }
+    ];
+
+    function tryCandidate(index) {
+      if (index >= candidates.length) {
+        resolve({ code: 127, stdout: '', stderr: 'No Python runtime found for Z3 check.' });
+        return;
+      }
+
+      const candidate = candidates[index];
+      const child = spawn(candidate.cmd, [...candidate.prefix, ...args], {
+        cwd: PROJECT_ROOT,
+        windowsHide: true
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      child.stdout.on('data', (chunk) => {
+        stdout += chunk.toString();
+      });
+
+      child.stderr.on('data', (chunk) => {
+        stderr += chunk.toString();
+      });
+
+      child.on('error', () => {
+        tryCandidate(index + 1);
+      });
+
+      child.on('close', (code) => {
+        if (code === 9009 || (code !== 0 && /not recognized|not found/i.test(stderr))) {
+          tryCandidate(index + 1);
+          return;
+        }
+        resolve({ code, stdout, stderr });
+      });
+
+      if (stdinText) {
+        child.stdin.write(stdinText);
+      }
+      child.stdin.end();
+    }
+
+    tryCandidate(0);
+  });
+}
+
 function maybeParseJson(value) {
   try {
     return JSON.parse(value);
@@ -131,6 +183,202 @@ function normalizeModelSelection(value) {
   };
 }
 
+function normalizeRiskLevel(value) {
+  const normalized = String(value || 'medium').trim().toLowerCase();
+  if (normalized === 'low' || normalized === 'medium' || normalized === 'high') {
+    return normalized;
+  }
+  return 'medium';
+}
+
+function normalizePassStrategy(value) {
+  const normalized = String(value || 'adaptive').trim().toLowerCase();
+  if (normalized === 'fixed' || normalized === 'adaptive') {
+    return normalized;
+  }
+  return 'adaptive';
+}
+
+function getVerifyThresholds(policy) {
+  const normalizedPolicy = String(policy || 'balanced').trim().toLowerCase();
+  if (normalizedPolicy === 'fast') {
+    return {
+      min_weighted_score_100: 75,
+      min_coverage_ratio: 0.7,
+      max_unresolved_critical_risks: 0
+    };
+  }
+  if (normalizedPolicy === 'strict') {
+    return {
+      min_weighted_score_100: 85,
+      min_coverage_ratio: 0.9,
+      max_unresolved_critical_risks: 0
+    };
+  }
+  return {
+    min_weighted_score_100: 80,
+    min_coverage_ratio: 0.8,
+    max_unresolved_critical_risks: 0
+  };
+}
+
+function resolveDebateCyclePlan({ requestedCycles, policy, riskLevel, passStrategy }) {
+  const boundedRequested = Math.max(1, Math.min(Number(requestedCycles) || 3, 5));
+  const normalizedPolicy = String(policy || 'balanced').trim().toLowerCase();
+  const normalizedRisk = normalizeRiskLevel(riskLevel);
+  const normalizedStrategy = normalizePassStrategy(passStrategy);
+
+  if (normalizedStrategy === 'fixed') {
+    return {
+      strategy: 'fixed',
+      risk_level: normalizedRisk,
+      policy: normalizedPolicy,
+      requested_cycles: boundedRequested,
+      selected_cycles: boundedRequested,
+      reason: 'Fixed strategy selected by user.'
+    };
+  }
+
+  let selected = normalizedRisk === 'low' ? 1 : normalizedRisk === 'high' ? 3 : 2;
+  if (normalizedPolicy === 'strict') {
+    selected = Math.max(selected, 3);
+  } else if (normalizedPolicy === 'fast') {
+    selected = Math.min(selected, 2);
+  }
+
+  selected = Math.max(1, Math.min(selected, 5));
+  return {
+    strategy: 'adaptive',
+    risk_level: normalizedRisk,
+    policy: normalizedPolicy,
+    requested_cycles: boundedRequested,
+    selected_cycles: selected,
+    reason: 'Adaptive strategy selected cycles from policy + risk profile.'
+  };
+}
+
+function isCriticalRiskFlag(flag) {
+  return /critical|blocker|life[- ]safety|high-risk/.test(String(flag || '').toLowerCase());
+}
+
+function evaluateVerifyGates(assessment, policy, symbolicCheck) {
+  const thresholds = getVerifyThresholds(policy);
+  const scoreSummary = assessment && assessment.score_summary ? assessment.score_summary : null;
+  const weightedScore = scoreSummary ? scoreSummary.weighted_score_100 : null;
+  const coverageRatio = scoreSummary && scoreSummary.coverage ? scoreSummary.coverage.ratio : null;
+  const riskFlags = assessment && Array.isArray(assessment.risk_flags) ? assessment.risk_flags : [];
+  const unresolvedCriticalRisks = riskFlags.filter(isCriticalRiskFlag).length;
+
+  const checks = {
+    score_passed: typeof weightedScore === 'number' && weightedScore >= thresholds.min_weighted_score_100,
+    coverage_passed: typeof coverageRatio === 'number' && coverageRatio >= thresholds.min_coverage_ratio,
+    risk_passed: unresolvedCriticalRisks <= thresholds.max_unresolved_critical_risks,
+    symbolic_passed: symbolicCheck ? Boolean(symbolicCheck.passed) : true
+  };
+
+  return {
+    policy: String(policy || 'balanced').trim().toLowerCase(),
+    thresholds,
+    observed: {
+      weighted_score_100: weightedScore,
+      coverage_ratio: coverageRatio,
+      unresolved_critical_risks: unresolvedCriticalRisks,
+      symbolic_check: symbolicCheck || {
+        enabled: false,
+        passed: true,
+        status: 'not_requested'
+      }
+    },
+    checks,
+    all_passed: checks.score_passed && checks.coverage_passed && checks.risk_passed && checks.symbolic_passed
+  };
+}
+
+function buildRouteRecommendation(assessment, verifyGates) {
+  if (!assessment) {
+    return {
+      recommended_mode: 'HITL',
+      reason: 'No assessment available.'
+    };
+  }
+
+  if (!verifyGates || !verifyGates.all_passed) {
+    return {
+      recommended_mode: 'HITL',
+      reason: 'Verify gates did not pass. Human checkpoint required.'
+    };
+  }
+
+  const recommended = assessment.human_control && assessment.human_control.recommended_mode
+    ? assessment.human_control.recommended_mode
+    : 'HOTL';
+  return {
+    recommended_mode: recommended,
+    reason: assessment.human_control && assessment.human_control.reason
+      ? assessment.human_control.reason
+      : 'Verify gates passed. Proceed with monitored execution.'
+  };
+}
+
+function buildZ3GeometryPayload(body) {
+  const radius = Number(body.geometryRadius);
+  const roomXMax = Number(body.geometryRoomWidth);
+  const roomYMax = Number(body.geometryRoomHeight);
+  return {
+    room: {
+      x_min: 0,
+      x_max: Number.isFinite(roomXMax) && roomXMax > 0 ? roomXMax : 200,
+      y_min: 0,
+      y_max: Number.isFinite(roomYMax) && roomYMax > 0 ? roomYMax : 150
+    },
+    obstacle: {
+      x_min: Number.isFinite(Number(body.geometryObstacleXMin)) ? Number(body.geometryObstacleXMin) : 80,
+      x_max: Number.isFinite(Number(body.geometryObstacleXMax)) ? Number(body.geometryObstacleXMax) : 120,
+      y_min: Number.isFinite(Number(body.geometryObstacleYMin)) ? Number(body.geometryObstacleYMin) : 60,
+      y_max: Number.isFinite(Number(body.geometryObstacleYMax)) ? Number(body.geometryObstacleYMax) : 90
+    },
+    radius: Number.isFinite(radius) && radius > 0 ? radius : 30
+  };
+}
+
+async function runZ3GeometryCheck(body) {
+  const enabled = toBool(body.enableZ3GeometryCheck, false);
+  if (!enabled) {
+    return {
+      enabled: false,
+      passed: true,
+      status: 'not_requested'
+    };
+  }
+
+  const payload = buildZ3GeometryPayload(body);
+  const run = await runPythonScript(['integrations/z3/geometry_solver.py'], JSON.stringify(payload));
+  const parsed = maybeParseJson((run.stdout || '').trim());
+
+  if (run.code !== 0 || !parsed || parsed.ok === false) {
+    return {
+      enabled: true,
+      passed: false,
+      status: 'error',
+      error: parsed && parsed.message ? parsed.message : (run.stderr || 'Z3 solver invocation failed.')
+    };
+  }
+
+  return {
+    enabled: true,
+    passed: parsed.status === 'sat',
+    status: parsed.status,
+    center: parsed.center || null,
+    payload
+  };
+}
+
+function createRunId(prefix = 'run') {
+  const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '');
+  const random = Math.random().toString(36).slice(2, 8);
+  return `${prefix}-${stamp}-${random}`;
+}
+
 function sendSseEvent(res, eventName, payload) {
   res.write(`event: ${eventName}\n`);
   res.write(`data: ${JSON.stringify(payload)}\n\n`);
@@ -167,6 +415,106 @@ function parseLinesToList(value) {
     .split(/\r?\n|[;,]/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function parseSourceList(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+  if (value === undefined || value === null) return [];
+  return String(value)
+    .split(/\r?\n|[;,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function resolveSourcePath(rawPath) {
+  const trimmed = String(rawPath || '').trim();
+  if (!trimmed) return null;
+  if (path.isAbsolute(trimmed)) return path.normalize(trimmed);
+  return path.normalize(path.resolve(PROJECT_ROOT, trimmed));
+}
+
+function collectCorpusFiles(sourceInput, maxFiles = 12) {
+  const allowedExt = new Set(['.txt', '.md', '.markdown', '.json', '.csv', '.log']);
+  const queue = parseSourceList(sourceInput).map(resolveSourcePath).filter(Boolean);
+  const files = [];
+  const visitedDirs = new Set();
+
+  while (queue.length > 0 && files.length < maxFiles) {
+    const current = queue.shift();
+    if (!current || !fs.existsSync(current)) continue;
+
+    const stat = fs.statSync(current);
+    if (stat.isFile()) {
+      const ext = path.extname(current).toLowerCase();
+      if (allowedExt.has(ext)) {
+        files.push(current);
+      }
+      continue;
+    }
+
+    if (!stat.isDirectory()) continue;
+    if (visitedDirs.has(current)) continue;
+    visitedDirs.add(current);
+
+    const children = fs.readdirSync(current)
+      .map((name) => path.join(current, name))
+      .sort((a, b) => a.localeCompare(b));
+
+    children.forEach((child) => {
+      if (files.length + queue.length >= maxFiles * 10) return;
+      queue.push(child);
+    });
+  }
+
+  return files.slice(0, maxFiles);
+}
+
+function buildCorpusPreviewItem(filePath, maxChars = 1200) {
+  try {
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const trimmed = raw.trim();
+    const preview = trimmed.length > maxChars
+      ? `${trimmed.slice(0, maxChars)}...`
+      : trimmed;
+    return {
+      path: filePath,
+      size_bytes: Buffer.byteLength(raw, 'utf8'),
+      preview_text: preview || '[Empty file]'
+    };
+  } catch (error) {
+    return {
+      path: filePath,
+      size_bytes: null,
+      preview_text: '[Unable to read file content]',
+      error: error && error.message ? error.message : 'read_failed'
+    };
+  }
+}
+
+async function handleCorpusPreview(body) {
+  const maxFiles = Math.max(1, Math.min(Number(body.maxFiles) || 8, 20));
+  const maxChars = Math.max(200, Math.min(Number(body.maxChars) || 1200, 5000));
+  const sourceInput = body.sources || body.textDir || body.inputDir || '';
+  const files = collectCorpusFiles(sourceInput, maxFiles);
+  const previews = files.map((filePath) => buildCorpusPreviewItem(filePath, maxChars));
+
+  return {
+    source_input: sourceInput,
+    file_count: previews.length,
+    files: previews,
+    references: parseLinesToList(body.publicReferences),
+    dataset_register: parseLinesToList(body.datasetRegistry)
+  };
+}
+
+function buildInputRegistry(body) {
+  return {
+    public_references: parseLinesToList(body.publicReferences),
+    user_datasets: parseLinesToList(body.datasetRegistry),
+    sources: body.sources || null
+  };
 }
 
 function buildSearchQueries({ decision, context, researchNeeds }) {
@@ -236,6 +584,7 @@ async function handleFrameworkProposal(body) {
   const constraints = parseLinesToList(body.constraints);
   const researchNeeds = parseLinesToList(body.researchNeeds);
   const activeSearchEnabled = toBool(body.activeSearchEnabled, false);
+  const inputRegistry = buildInputRegistry(body);
 
   const prepareArgs = ['bin/pca.js', 'prepare', mode];
   pushFlag(prepareArgs, '--decision', decision);
@@ -271,6 +620,7 @@ async function handleFrameworkProposal(body) {
   const proposal = {
     runtime_provider: runtimeProvider,
     model_selection: modelSelection,
+    input_registry: inputRegistry,
     mode,
     request_contract: {
       objective,
@@ -345,6 +695,7 @@ async function handleFrameworkProposal(body) {
 async function handleResearchPack(body) {
   const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
   const modelSelection = normalizeModelSelection(body.modelSelection);
+  const inputRegistry = buildInputRegistry(body);
   const mode = body.mode || 'verify';
   const qualityArgs = ['bin/pca.js', 'quality-check'];
   pushFlag(qualityArgs, '--sources', body.sources);
@@ -380,6 +731,7 @@ async function handleResearchPack(body) {
   const result = {
     runtime_provider: runtimeProvider,
     model_selection: modelSelection,
+    input_registry: inputRegistry,
     mode,
     objective: body.objective || body.decision || null,
     decision: body.decision || null,
@@ -441,12 +793,20 @@ async function handleConvertPdf(body) {
   }
   const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
   const modelSelection = normalizeModelSelection(body.modelSelection);
+  const inputRegistry = buildInputRegistry(body);
   const artifact = saveArtifact('convert-pdf', {
     runtime_provider: runtimeProvider,
     model_selection: modelSelection,
+    input_registry: inputRegistry,
     result: parsed
   });
-  return { runtime_provider: runtimeProvider, model_selection: modelSelection, result: parsed, artifact };
+  return {
+    runtime_provider: runtimeProvider,
+    model_selection: modelSelection,
+    input_registry: inputRegistry,
+    result: parsed,
+    artifact
+  };
 }
 
 async function handleOcrPdf(body) {
@@ -466,12 +826,20 @@ async function handleOcrPdf(body) {
   }
   const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
   const modelSelection = normalizeModelSelection(body.modelSelection);
+  const inputRegistry = buildInputRegistry(body);
   const artifact = saveArtifact('ocr-pdf', {
     runtime_provider: runtimeProvider,
     model_selection: modelSelection,
+    input_registry: inputRegistry,
     result: parsed
   });
-  return { runtime_provider: runtimeProvider, model_selection: modelSelection, result: parsed, artifact };
+  return {
+    runtime_provider: runtimeProvider,
+    model_selection: modelSelection,
+    input_registry: inputRegistry,
+    result: parsed,
+    artifact
+  };
 }
 
 async function handleQualityCheck(body) {
@@ -491,12 +859,20 @@ async function handleQualityCheck(body) {
   }
   const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
   const modelSelection = normalizeModelSelection(body.modelSelection);
+  const inputRegistry = buildInputRegistry(body);
   const artifact = saveArtifact('quality-check', {
     runtime_provider: runtimeProvider,
     model_selection: modelSelection,
+    input_registry: inputRegistry,
     result: parsed
   });
-  return { runtime_provider: runtimeProvider, model_selection: modelSelection, result: parsed, artifact };
+  return {
+    runtime_provider: runtimeProvider,
+    model_selection: modelSelection,
+    input_registry: inputRegistry,
+    result: parsed,
+    artifact
+  };
 }
 
 async function handleEvidenceCheck(body) {
@@ -516,19 +892,43 @@ async function handleEvidenceCheck(body) {
   }
   const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
   const modelSelection = normalizeModelSelection(body.modelSelection);
+  const inputRegistry = buildInputRegistry(body);
+  const z3Geometry = await runZ3GeometryCheck(body);
+  const verifyGates = evaluateVerifyGates(parsed.assessment || null, body.policy || 'strict', z3Geometry);
+  const routeRecommendation = buildRouteRecommendation(parsed.assessment || null, verifyGates);
   const artifact = saveArtifact('evidence-check', {
     runtime_provider: runtimeProvider,
     model_selection: modelSelection,
+    input_registry: inputRegistry,
+    z3_geometry: z3Geometry,
+    verify_gates: verifyGates,
+    route_recommendation: routeRecommendation,
     result: parsed
   });
-  return { runtime_provider: runtimeProvider, model_selection: modelSelection, result: parsed, artifact };
+  return {
+    runtime_provider: runtimeProvider,
+    model_selection: modelSelection,
+    input_registry: inputRegistry,
+    z3_geometry: z3Geometry,
+    verify_gates: verifyGates,
+    route_recommendation: routeRecommendation,
+    result: parsed,
+    artifact
+  };
 }
 
 async function handleDebateLive(req, res, body) {
-  const cycles = Math.max(1, Math.min(Number(body.cycles) || 3, 5));
+  const cyclePlan = resolveDebateCyclePlan({
+    requestedCycles: body.cycles,
+    policy: body.policy || 'strict',
+    riskLevel: body.riskLevel,
+    passStrategy: body.passStrategy
+  });
+  const cycles = cyclePlan.selected_cycles;
   const mode = body.mode || 'verify';
   const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
   const modelSelection = normalizeModelSelection(body.modelSelection);
+  const inputRegistry = buildInputRegistry(body);
 
   res.writeHead(200, {
     'Content-Type': 'text/event-stream; charset=utf-8',
@@ -544,6 +944,8 @@ async function handleDebateLive(req, res, body) {
   const trace = {
     runtime_provider: runtimeProvider,
     model_selection: modelSelection,
+    input_registry: inputRegistry,
+    cycle_plan: cyclePlan,
     mode,
     cycles,
     decision: body.decision || null,
@@ -554,6 +956,7 @@ async function handleDebateLive(req, res, body) {
     scoring: {
       cycle_snapshots: []
     },
+    z3_geometry: null,
     steps: []
   };
 
@@ -561,6 +964,8 @@ async function handleDebateLive(req, res, body) {
     message: 'Live debate started.',
     runtime_provider: runtimeProvider,
     model_selection: modelSelection,
+    input_registry: inputRegistry,
+    cycle_plan: cyclePlan,
     mode,
     cycles,
     policy: trace.policy
@@ -572,6 +977,11 @@ async function handleDebateLive(req, res, body) {
   let datasetSelection = null;
 
   try {
+    const z3Geometry = await runZ3GeometryCheck(body);
+    trace.z3_geometry = z3Geometry;
+    sendSseEvent(res, 'z3-geometry', z3Geometry);
+
+    sendSseEvent(res, 'adaptive-plan', cyclePlan);
     sendSseEvent(res, 'model-selection', modelSelection);
 
     const prepareArgs = ['bin/pca.js', 'prepare', mode];
@@ -740,7 +1150,8 @@ async function handleDebateLive(req, res, body) {
             ? previousAssessment.score_summary.band
             : 'insufficient-data',
           delta_weighted_score_100: null
-        }
+        },
+        verify_gates: evaluateVerifyGates(previousAssessment, body.policy || 'strict', z3Geometry)
       };
 
       if (typeof assessEvent.scoring.weighted_score_100 === 'number') {
@@ -770,13 +1181,18 @@ async function handleDebateLive(req, res, body) {
 
     trace.completed_at = new Date().toISOString();
     const finalAssessment = previousAssessment || null;
+    const finalVerifyGates = evaluateVerifyGates(finalAssessment, body.policy || 'strict', trace.z3_geometry);
+    const finalRouteRecommendation = buildRouteRecommendation(finalAssessment, finalVerifyGates);
     const checkpointRequired = !finalAssessment
+      || !finalVerifyGates.all_passed
       || finalAssessment.needs_human_review
       || (finalAssessment.human_control && finalAssessment.human_control.recommended_mode === 'HITL');
 
     const finalPayload = {
       cycles_completed: cycles,
       model_selection: modelSelection,
+      input_registry: inputRegistry,
+      cycle_plan: cyclePlan,
       framework: trace.framework,
       dataset_selection: datasetSelection,
       scoring: {
@@ -796,12 +1212,15 @@ async function handleDebateLive(req, res, body) {
           : 'insufficient-data'
       },
       final_assessment: finalAssessment,
+      z3_geometry: trace.z3_geometry,
+      verify_gates: finalVerifyGates,
+      route_recommendation: finalRouteRecommendation,
       human_checkpoint: {
         required: checkpointRequired,
-        decision: checkpointRequired ? 'Further discussion needed' : 'Proceed with recommendations',
-        reason: finalAssessment && finalAssessment.human_control
-          ? finalAssessment.human_control.reason
-          : 'No final assessment available.'
+        decision: checkpointRequired
+          ? 'Further discussion needed'
+          : 'Proceed with recommendations',
+        reason: finalRouteRecommendation.reason
       }
     };
 
@@ -817,6 +1236,152 @@ async function handleDebateLive(req, res, body) {
   } catch (error) {
     sendSseEvent(res, 'error', {
       error: error && error.message ? error.message : 'live debate failed'
+    });
+    res.end();
+  }
+}
+
+async function handleRunPipeline(req, res, body) {
+  const runId = createRunId('pipeline');
+  const policy = body.policy || 'strict';
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive'
+  });
+
+  let closed = false;
+  req.on('close', () => {
+    closed = true;
+  });
+
+  const startedAt = new Date().toISOString();
+  const timeline = [];
+
+  function emitStage(stage, status, detail) {
+    const payload = {
+      run_id: runId,
+      stage,
+      status,
+      detail,
+      at: new Date().toISOString()
+    };
+    timeline.push(payload);
+    sendSseEvent(res, 'stage', payload);
+  }
+
+  try {
+    sendSseEvent(res, 'start', {
+      run_id: runId,
+      message: 'Pipeline run started.',
+      model_selection: normalizeModelSelection(body.modelSelection),
+      runtime_provider: normalizeRuntimeProvider(body.runtimeProvider)
+    });
+
+    if (closed) return;
+    emitStage('input', 'running', 'Capturing data, requirements, and objectives.');
+    const inputRegistry = buildInputRegistry(body);
+    const inputStage = {
+      data: {
+        sources: body.sources || null,
+        public_references: inputRegistry.public_references,
+        user_datasets: inputRegistry.user_datasets
+      },
+      requirements: parseLinesToList(body.expectations),
+      objectives: {
+        objective: body.objective || null,
+        decision: body.decision || null,
+        context: body.context || null,
+        constraints: parseLinesToList(body.constraints)
+      }
+    };
+    emitStage('input', 'completed', 'Input stage captured.');
+
+    if (closed) return;
+    emitStage('process.organize', 'running', 'Building framework proposal.');
+    const framework = await handleFrameworkProposal(body);
+    emitStage('process.organize', 'completed', 'Framework proposal completed.');
+
+    if (closed) return;
+    emitStage('process.test', 'running', 'Running research pack and critique synthesis.');
+    const research = await handleResearchPack(body);
+    emitStage('process.test', 'completed', 'Research pack completed.');
+
+    if (closed) return;
+    emitStage('process.verify', 'running', 'Running evidence check and verify gates.');
+    const evidence = await handleEvidenceCheck(body);
+    emitStage('process.verify', 'completed', 'Evidence verification completed.');
+
+    const assessment = evidence && evidence.result ? evidence.result.assessment || null : null;
+    const verifyGates = evidence ? evidence.verify_gates : evaluateVerifyGates(assessment, policy);
+    const routeRecommendation = evidence
+      ? evidence.route_recommendation
+      : buildRouteRecommendation(assessment, verifyGates);
+
+    if (closed) return;
+    emitStage('output.recommend', 'completed', 'Recommendation generated from verified assessment.');
+
+    const checkpointRequired = !verifyGates.all_passed || routeRecommendation.recommended_mode === 'HITL';
+    emitStage(
+      'output.route',
+      checkpointRequired ? 'blocked' : 'completed',
+      checkpointRequired
+        ? `Route ${routeRecommendation.recommended_mode}: human checkpoint required.`
+        : `Route ${routeRecommendation.recommended_mode}: proceed with monitored implementation.`
+    );
+
+    const implementation = checkpointRequired
+      ? {
+        status: 'pending-human-checkpoint',
+        note: 'Implementation is gated until HITL approval is complete.'
+      }
+      : {
+        status: 'ready-for-implementation',
+        note: 'Proceed with controlled implementation under HOTL monitoring.'
+      };
+
+    emitStage('output.implement', checkpointRequired ? 'pending' : 'ready', implementation.note);
+
+    const finalPayload = {
+      run_id: runId,
+      started_at: startedAt,
+      completed_at: new Date().toISOString(),
+      input: inputStage,
+      process: {
+        organize: framework.result,
+        test: research.result,
+        verify: evidence.result
+      },
+      output: {
+        recommend: {
+          assessment,
+          verify_gates: verifyGates
+        },
+        route: routeRecommendation,
+        implement: implementation,
+        document: {
+          generated: true,
+          timeline_steps: timeline.length
+        }
+      }
+    };
+
+    const artifact = saveArtifact('run-pipeline', finalPayload);
+    sendSseEvent(res, 'artifact', artifact);
+    sendSseEvent(res, 'final', {
+      ...finalPayload,
+      artifact
+    });
+    sendSseEvent(res, 'done', {
+      run_id: runId,
+      message: 'Pipeline run finished.'
+    });
+    res.end();
+  } catch (error) {
+    sendSseEvent(res, 'error', {
+      run_id: runId,
+      error: error && error.message ? error.message : 'pipeline run failed'
     });
     res.end();
   }
@@ -862,6 +1427,39 @@ function serveStatic(req, res, pathname) {
     'Content-Length': content.length
   });
   res.end(content);
+}
+
+function checkExistingServerHealth(host, port) {
+  return new Promise((resolve) => {
+    const request = http.get(
+      {
+        host: host === '0.0.0.0' ? '127.0.0.1' : host,
+        port,
+        path: '/api/health',
+        timeout: 1500
+      },
+      (response) => {
+        let raw = '';
+        response.setEncoding('utf8');
+        response.on('data', (chunk) => {
+          raw += chunk;
+        });
+        response.on('end', () => {
+          const parsed = maybeParseJson(raw.trim());
+          resolve(Boolean(parsed && parsed.ok));
+        });
+      }
+    );
+
+    request.on('timeout', () => {
+      request.destroy();
+      resolve(false);
+    });
+
+    request.on('error', () => {
+      resolve(false);
+    });
+  });
 }
 
 const server = http.createServer(async (req, res) => {
@@ -932,6 +1530,13 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === 'POST' && pathname === '/api/corpus-preview') {
+      const body = await parseBody(req);
+      const output = await handleCorpusPreview(body);
+      sendJson(res, 200, output);
+      return;
+    }
+
     if (req.method === 'POST' && pathname === '/api/research-pack') {
       const body = await parseBody(req);
       const output = await handleResearchPack(body);
@@ -942,6 +1547,12 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && pathname === '/api/debate-live') {
       const body = await parseBody(req);
       await handleDebateLive(req, res, body);
+      return;
+    }
+
+    if (req.method === 'POST' && pathname === '/api/run-pipeline') {
+      const body = await parseBody(req);
+      await handleRunPipeline(req, res, body);
       return;
     }
 
@@ -961,4 +1572,21 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   process.stdout.write(`PCA Web UI running at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}\n`);
+});
+
+server.on('error', async (error) => {
+  if (error && error.code === 'EADDRINUSE') {
+    const healthy = await checkExistingServerHealth(HOST, PORT);
+    if (healthy) {
+      process.stdout.write(`PCA Web UI already running at http://localhost:${PORT}\n`);
+      process.exit(0);
+      return;
+    }
+    process.stderr.write(`Port ${PORT} is in use and the existing process did not respond as PCA Web UI.\n`);
+    process.exit(1);
+    return;
+  }
+
+  process.stderr.write(`${error && error.message ? error.message : 'server error'}\n`);
+  process.exit(1);
 });

@@ -14,8 +14,8 @@
   <main class="shell wide">
     <header class="hero">
       <p class="eyebrow">PCA Web UI</p>
-      <h1>Control Desk for Evidence and Governance</h1>
-      <p class="subtitle">Run OCR, conversion, quality gates, and evidence checks from one place. Download machine-readable artifacts after every run.</p>
+      <h1>Evidence-Governed Adaptive Solver</h1>
+      <p class="subtitle">Run input-to-output decision loops with adaptive depth, verify gates, and explicit HITL/HOTL routing from one control desk.</p>
     </header>
 
     <section class="panel grid-two">
@@ -30,6 +30,15 @@
         <label>Text Output Folder</label>
         <input id="textDir" value="data/public-pdf-text" />
 
+        <label>Public References (one per line)</label>
+        <textarea id="publicReferences">BCA Act and Regulations
+      BCA Codes of Practice
+      CORENET X submission guides</textarea>
+
+        <label>User Dataset Register (one per line)</label>
+        <textarea id="datasetRegistry">data/public-pdf-text
+      User-uploaded BIM/spec extracts</textarea>
+
         <label>Conversion Include Prefixes (optional, comma-separated)</label>
         <input id="includePrefixes" value="" placeholder="BCA,URA,SCDF" />
 
@@ -39,11 +48,27 @@
         <div class="actions">
           <button id="btnOcr" class="ghost">Run OCR Preprocess</button>
           <button id="btnConvert">Convert PDF to TXT</button>
+          <button id="btnPreviewCorpus" class="ghost">Preview Corpus + References</button>
         </div>
       </article>
 
       <article class="card">
         <h2>Quality and Evidence</h2>
+        <label>Use Case Profile</label>
+        <select id="useCaseProfile">
+          <option value="custom">Custom</option>
+          <option value="corenetx">Automated Pre-Submission (CORENET X)</option>
+          <option value="accessibility">Accessible Routes and Facilities</option>
+          <option value="buildability">Buildability/Constructability Optimiser</option>
+          <option value="mepcs">MEP and C&S Clash-Aware Design</option>
+          <option value="greenmark">Envelope and Systems Optimisation (GM)</option>
+          <option value="maintainability">Maintainability and FM Access Checks</option>
+          <option value="hschecks">HS Requirements vs Drawings</option>
+          <option value="costverify">Cost Verification (Specs vs Tender)</option>
+          <option value="specdraw">Specification vs Drawing Consistency</option>
+          <option value="bca_master">BCA Master Compliance Pre-Check</option>
+        </select>
+
         <label>Objective</label>
         <input id="objective" value="Produce a defensible compliance interpretation." />
 
@@ -107,6 +132,62 @@
           </div>
         </div>
 
+        <div class="inline-grid">
+          <div>
+            <label>Pass Strategy</label>
+            <select id="passStrategy">
+              <option value="adaptive" selected>adaptive</option>
+              <option value="fixed">fixed</option>
+            </select>
+          </div>
+          <div>
+            <label>Risk Level</label>
+            <select id="riskLevel">
+              <option value="low">low</option>
+              <option value="medium" selected>medium</option>
+              <option value="high">high</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="inline-check">
+          <input id="enableZ3GeometryCheck" type="checkbox" />
+          Enable Z3 Geometry Check (symbolic constraint validation)
+        </label>
+
+        <div class="inline-grid">
+          <div>
+            <label>Room Width (in)</label>
+            <input id="geometryRoomWidth" type="number" value="200" />
+          </div>
+          <div>
+            <label>Room Height (in)</label>
+            <input id="geometryRoomHeight" type="number" value="150" />
+          </div>
+        </div>
+
+        <div class="inline-grid">
+          <div>
+            <label>Obstacle X Min / X Max</label>
+            <input id="geometryObstacleX" value="80,120" />
+          </div>
+          <div>
+            <label>Obstacle Y Min / Y Max</label>
+            <input id="geometryObstacleY" value="60,90" />
+          </div>
+        </div>
+
+        <div class="inline-grid">
+          <div>
+            <label>Circle Radius (in)</label>
+            <input id="geometryRadius" type="number" value="30" />
+          </div>
+          <div>
+            <label>Geometry Profile</label>
+            <input value="Wheelchair turning circle" disabled />
+          </div>
+        </div>
+
         <h3>Model Selection (By Role)</h3>
         <div class="inline-grid">
           <div>
@@ -166,6 +247,61 @@
           <p id="checkpointDecision"></p>
           <p id="checkpointReason" class="muted"></p>
         </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <article class="card">
+        <h2>Guide and Install</h2>
+        <p class="muted">How this works, how to run with Copilot/Antigravity/Ollama/BYOM/GSD, and ready-to-run CLI snippets based on your current selections.</p>
+        <div id="runtimeGuide" class="guide-grid"></div>
+        <h3>CLI Snippets</h3>
+        <pre id="cliSnippetsView">Select a runtime provider to generate snippets.</pre>
+      </article>
+    </section>
+
+    <section class="panel">
+      <article class="card">
+        <h2>Corpus Preview</h2>
+        <p class="muted">Review source file contents and registered references before running analysis.</p>
+        <pre id="corpusPreviewView">No corpus preview yet.</pre>
+      </article>
+    </section>
+
+    <section class="panel">
+      <article class="card">
+        <h2>Input Evidence Register</h2>
+        <p class="muted">Track public code/act/guideline references and user-provided datasets used for this run.</p>
+        <pre id="inputRegistryView">Input register not generated yet.</pre>
+      </article>
+    </section>
+
+    <section class="panel">
+      <article class="card">
+        <h2>Workflow Map (Governance-Enhanced)</h2>
+        <p class="muted">Input (Data -> Requirements -> Objectives) -> Process (Organize -> Test -> Verify) -> Output (Recommend -> Route HITL/HOTL -> Implement -> Document).</p>
+        <div class="workflow-map">
+          <div class="wf-step">1. Input: Data</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">2. Input: Requirements</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">3. Input: Objectives</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">4. Process: Organize</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">5. Process: Test</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">6. Process: Verify</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">7. Output: Recommend</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">8. Output: Route HITL/HOTL</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">9. Output: Implement</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">10. Output: Document</div>
+        </div>
+        <pre class="compact">Input (Data -> Requirements -> Objectives) -> Process (Organize -> Test -> Verify) -> Output (Recommend -> Route HITL/HOTL -> Implement -> Document).</pre>
       </article>
     </section>
 

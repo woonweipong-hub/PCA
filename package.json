@@ -1,7 +1,7 @@
 {
   "name": "pca-workflow",
   "version": "0.1.0",
-  "description": "PCA (Propose-Critique-Assess): a standalone quality workflow inspired by GSD",
+  "description": "PCA (Propose-Critique-Assess): an evidence-governed adaptive solver",
   "type": "commonjs",
   "bin": {
     "pca": "bin/pca.js"

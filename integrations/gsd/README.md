@@ -1,10 +1,10 @@
-# GSD Overlay Integration
+# External Executor Integration (GSD Example)
 
-This integration installs PCA as a quality overlay within GSD-style execution workflows.
+This integration shows how to run PCA as a quality layer with GSD as the execution backend.
 
 ## Goal
 
-Keep GSD for planning/execution, and use PCA for:
+Keep the executor focused on planning/execution, and use PCA for:
 
 - research quality gating
 - structured propose/critique/assess loops
@@ -30,7 +30,7 @@ Then invoke:
 npx pca prepare discuss --decision "..." --context "..."
 ```
 
-### 3) HTTP overlay mode (recommended)
+### 3) HTTP integration mode (recommended)
 
 Start PCA web server:
 
@@ -45,7 +45,7 @@ Use endpoints from GSD automation:
 - `POST /api/debate-live`
 - `POST /api/evidence-check`
 
-## GSD-Quality Flow Mapping
+## Quality Flow Mapping
 
 1. Objective + expectations + constraints input
 2. `framework-proposal` (build contract)
@@ -55,7 +55,7 @@ Use endpoints from GSD automation:
 
 ## Runtime Compatibility
 
-PCA overlay supports runtime tagging for:
+PCA supports runtime tagging for:
 
 - `copilot`
 - `antigravity`

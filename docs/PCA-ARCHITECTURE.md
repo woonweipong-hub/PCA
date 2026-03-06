@@ -45,7 +45,7 @@ Reference log for prior-art acknowledgement and independent-implementation notes
 - Serializes outputs as JSON for toolchain integration.
 
 3. Optional adapters (future)
-- GSD adapter, custom CI adapter, product-specific adapters.
+- External executor adapter (for example GSD), custom CI adapter, product-specific adapters.
 - Should map external state into `pca-core` contracts without changing core.
 
 ## Output Contract
