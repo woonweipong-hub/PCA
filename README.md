@@ -26,6 +26,33 @@ LinkedIn: `https://www.linkedin.com/in/woonwei/`
 - Traceable outputs: verdict + actions + risk flags.
 - Governance-ready: clear routing to `HITL` or `HOTL`.
 
+## Intent and Outcomes
+
+PCA is designed to convert ambiguous multi-source decisions into structured, auditable outputs.
+
+Intent:
+
+- Build evidence from local sources in a repeatable way.
+- Expose support and contradiction signals across documents.
+- Produce explicit governance routing instead of implicit judgement.
+- Preserve decision traceability for human review and automation.
+
+Primary outputs:
+
+- Evidence digest (`ingest`): source coverage, extracted claims, and corpus metrics.
+- Evidence assessment (`evidence-check`): cross-document links (`support`/`contradiction`) plus evidence metrics.
+- Governance decision (`route`/`assess`): verdict, risk flags, score summary, and `HITL`/`HOTL` recommendation.
+- Persisted artifact (`persist`): stable JSON/Markdown record for audit trails and handoff.
+
+Expected outcomes:
+
+- Faster interpretation of large datasets.
+- More consistent decision quality across runs and operators.
+- Clear escalation criteria when confidence, coverage, or risk posture is insufficient.
+- Better downstream execution safety via explicit human control gates.
+
+Contract details for all outputs are defined in `SCHEMA.md`.
+
 ## Workflow Diagram
 
 ```mermaid
@@ -98,10 +125,15 @@ pca prepare discuss --decision "Architecture framing" --context "Phase 1 migrati
 | `pca assess <discuss|verify>` | Build final PCA assessment payload | JSON assessment object |
 | `pca persist <discuss|verify>` | Save assessment output to disk | JSON receipt + saved file |
 | `pca ingest` | Ingest local sources into claim digest | JSON evidence digest |
+| `pca quality-check` | Validate corpus quality before evidence-check | JSON quality gate report |
 | `pca evidence-check <discuss|verify>` | Cross-document support/contradiction checks + assessment | JSON evidence + assessment |
 | `pca help` | Show CLI usage and examples | Plain text reference |
 
 Detailed per-command reference: `docs/COMMAND-REFERENCE.md`
+
+TRHS PDF workflow (URA/BCA/SCDF, including confidential-file exclusion): `docs/USER-GUIDE.md#trhs-workflow-ura-bca-scdf`
+
+Framework positioning note: PCA is domain-agnostic. TRHS, fire-egress, and agentic pipeline documents are optional use-case implementations on top of the same core framework.
 
 ## Example Commands
 
@@ -128,9 +160,27 @@ node bin/pca.js route verify --verdict "needs-human-review" --needs-human-review
 # Ingest local documents/datasets (local server path)
 node bin/pca.js ingest --sources "reports/a.md,reports/b.json,reports/c.csv"
 
+# Batch convert any PDF folder to text for ingestion
+npm run convert:pdf -- --input-dir "C:\\path\\to\\public-pdfs" --output-dir "data/public-pdf-text" --recursive true
+
+# Optional OCR pre-step for scanned/image-only PDFs
+npm run ocr:pdf -- --input-dir "C:\\path\\to\\public-pdfs" --output-dir "data/public-pdf-ocr" --recursive true --language eng
+npm run convert:pdf -- --input-dir "data/public-pdf-ocr" --output-dir "data/public-pdf-text" --recursive true
+
+# Batch convert URA/BCA/SCDF PDFs to text (excludes confidential correspondence by default)
+npm run convert:trhs
+
+# Quality gate before running evidence checks
+node bin/pca.js quality-check --sources "data/public-pdf-text" --min-sources 2 --min-total-claims 6
+
 # Cross-document evidence check with strict governance
 node bin/pca.js evidence-check verify --decision "release gate" --sources "reports/a.md,reports/b.md" --policy strict
+
+# Interpret converted large asset folder (requirements-prioritized)
+node bin/pca.js evidence-check verify --decision "Interpret asset requirements" --sources "data/public-pdf-text" --max-files 120 --prioritize-requirements true --policy strict
 ```
+
+Note: for charts/images/scanned PDFs, see `docs/USER-GUIDE.md#handling-tables-graphs-images-and-scanned-pdfs`.
 
 ## Quality Standard (GSD-Inspired)
 
@@ -164,6 +214,19 @@ PCA is adapter-ready. Start with templates in:
 All integrations should consume the stable contract in `SCHEMA.md`.
 
 Model routing guide (single-model, split-role, hybrid): `docs/MODEL-ROUTING.md`
+
+Use-case library (optional examples built on PCA core):
+
+- Building compliance decision gate: `docs/USE-CASE-FIRE-EGRESS-COMPLIANCE.md`
+- TRHS interpretation workflow: `docs/USE-CASE-TRHS-INTERPRETATION.md`
+- Agentic TRHS pipeline: `docs/USE-CASE-AGENTIC-TRHS-PIPELINE.md`
+
+Operational runbooks and release assurance:
+
+- PDF parsing pipeline runbook: `docs/RUNBOOK-PDF-PIPELINE.md`
+- OCR failure runbook: `docs/RUNBOOK-OCR-FAILURES.md`
+- HITL escalation runbook: `docs/RUNBOOK-HITL-ESCALATION.md`
+- Release quality checklist: `docs/RELEASE-CHECKLIST.md`
 
 ## Public Redevelopment
 

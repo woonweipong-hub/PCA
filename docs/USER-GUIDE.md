@@ -2,6 +2,18 @@
 
 This guide defines PCA operational use, command behavior, governance routing, and quality standards.
 
+## General Framework vs Specific Use Cases
+
+PCA is a general decision-quality framework. The core commands and governance model are domain-agnostic.
+
+Specific use-case documents (for example TRHS or fire-egress) are optional implementation patterns that reuse the same PCA core:
+
+- `prepare|run` for session framing
+- `propose|critique` for structured debate
+- `quality-check` for corpus readiness gating
+- `ingest|evidence-check` for evidence synthesis
+- `assess|route|persist` for verdict, governance, and audit artifacts
+
 ## Core Lifecycle
 
 PCA decision lifecycle:
@@ -144,6 +156,14 @@ Build local claim digest from files (`.md`, `.txt`, `.json`, `.csv`) without sen
 node bin/pca.js ingest --sources "reports/a.md,reports/b.csv"
 ```
 
+### `quality-check`
+
+Validate source quality before cross-document evidence checks.
+
+```bash
+node bin/pca.js quality-check --sources "data/public-pdf-text" --min-sources 2 --min-total-claims 6 --min-avg-claims-per-doc 2
+```
+
 ### `evidence-check`
 
 Run cross-document checks (support vs contradiction) and generate PCA assessment.
@@ -151,6 +171,90 @@ Run cross-document checks (support vs contradiction) and generate PCA assessment
 ```bash
 node bin/pca.js evidence-check verify --decision "release gate" --sources "reports/a.md,reports/b.md" --policy strict
 ```
+
+For extensive datasets where the directory already contains supported files (`.md`, `.txt`, `.json`, `.csv`), pass the directory directly and cap file selection:
+
+```bash
+node bin/pca.js evidence-check verify --decision "Interpret requirements from normalized asset library" --context "Cross-check requirements consistency and contradictions" --sources "data/public-pdf-text" --max-files 120 --prioritize-requirements true --policy strict
+```
+
+## Specific Use Case: TRHS Workflow (URA, BCA, SCDF)
+
+Use this flow when your regulatory source library is mostly PDF files.
+
+Important:
+
+- PCA ingest currently supports `.md`, `.txt`, `.json`, `.csv` directly.
+- Convert PDF files to `.txt` first, then run PCA on the converted folder.
+- Exclude confidential correspondence files from conversion and ingestion.
+
+General batch conversion (any public-user PDF folder):
+
+```bash
+npm run convert:pdf -- --input-dir "C:\\path\\to\\public-pdfs" --output-dir "data/public-pdf-text" --recursive true
+```
+
+### Step 1: Convert public regulator PDFs to text
+
+Example for your local dataset in `C:\2026_Research\Assets`:
+
+One command (recommended):
+
+```bash
+npm run convert:trhs
+```
+
+Equivalent manual command:
+
+```powershell
+New-Item -ItemType Directory -Force -Path "data\trhs-text" | Out-Null
+Get-ChildItem -Path "C:\2026_Research\Assets" -File |
+	Where-Object { $_.Extension -ieq ".pdf" -and $_.Name -match '^(BCA|URA|SCDF)_' -and $_.Name -ne 'BCA_HS_Checks_Scope.pdf' } |
+	ForEach-Object {
+		$out = Join-Path "data\trhs-text" ($_.BaseName + ".txt")
+		& "C:\poppler\Library\bin\pdftotext.exe" -layout -enc UTF-8 $_.FullName $out
+	}
+```
+
+### Step 2: Build evidence digest
+
+```bash
+node bin/pca.js ingest --sources "data/trhs-text" --max-files 120 --prioritize-requirements true
+```
+
+### Step 3: Run strict cross-agency evidence-check
+
+```bash
+node bin/pca.js evidence-check verify --decision "TRHS interpretation for household shelter compliance (URA/BCA/SCDF)" --context "Cross-agency technical requirements, constraints, and contradiction checks" --sources "data/trhs-text" --max-files 120 --prioritize-requirements true --policy strict
+```
+
+### Step 4: Persist final decision artifact
+
+```bash
+node bin/pca.js persist verify --verdict "accepted-with-conditions" --judgement "Proceed with tracked clarifications and authority validation" --actions "1) confirm TRHS slab/setback conditions; 2) validate SCDF fire resistance and access implications; 3) confirm URA lodgment applicability with QP" --policy strict --output outputs/trhs-decision.json --format json
+```
+
+### Expected outcome pattern
+
+- Structured evidence links across BCA/SCDF/URA sources.
+- Explicit governance routing (`HITL`/`HOTL`) from policy and evidence quality.
+- Reusable JSON output for review meetings and project records.
+
+### Handling tables, graphs, images, and scanned PDFs
+
+- Tables: `pdftotext -layout` preserves rough structure, but complex merged cells may degrade. For critical tables, export table data to CSV and ingest both `.txt` and `.csv`.
+- Graphs/charts: chart visuals are not converted into reliable numeric text. Add a short analyst summary `.md` describing key values/thresholds and ingest that alongside converted text.
+- Embedded images/diagrams: pure image content is not captured by `pdftotext`. Add manual captions/notes in `.md` for decision-relevant details.
+- Scanned PDFs (image-only): run OCR first, then convert OCR output to text for PCA ingestion.
+- Optional built-in OCR preprocessor command:
+
+```bash
+npm run ocr:pdf -- --input-dir "C:\\path\\to\\public-pdfs" --output-dir "data/public-pdf-ocr" --recursive true --language eng
+npm run convert:pdf -- --input-dir "data/public-pdf-ocr" --output-dir "data/public-pdf-text" --recursive true
+```
+
+- If OCRmyPDF is not in PATH, set `--ocrmypdf-path` or env `OCRMYPDF_PATH`.
+- Quality gate recommendation: sample 5 to 10 converted files and verify key clauses survived conversion before full evidence-check.
 
 ## Governance Model
 
@@ -185,6 +289,19 @@ Skip PCA when:
 
 - tasks are low-risk and mechanical
 - decision is already constrained and obvious
+
+Practical end-to-end example (building compliance): `docs/USE-CASE-FIRE-EGRESS-COMPLIANCE.md`
+
+Specific TRHS interpretation example: `docs/USE-CASE-TRHS-INTERPRETATION.md`
+
+Optional agentic orchestration example (TRHS pipeline): `docs/USE-CASE-AGENTIC-TRHS-PIPELINE.md`
+
+Operational runbooks and release assurance:
+
+- `docs/RUNBOOK-PDF-PIPELINE.md`
+- `docs/RUNBOOK-OCR-FAILURES.md`
+- `docs/RUNBOOK-HITL-ESCALATION.md`
+- `docs/RELEASE-CHECKLIST.md`
 
 ## Troubleshooting
 

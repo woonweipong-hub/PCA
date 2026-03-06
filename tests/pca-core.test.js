@@ -12,6 +12,7 @@ const {
   buildProposalResult,
   buildCritiqueResult,
   ingestSources,
+  buildDataQualityCheck,
   buildEvidenceCheck,
   getGovernancePolicy,
   getTopologyConfig,
@@ -163,4 +164,38 @@ test('propose/critique builders return role payloads', () => {
   });
   assert.strictEqual(critique.role, 'critic');
   assert.ok(Array.isArray(critique.extracted_risk_flags));
+});
+
+test('ingestSources supports directory input and max-files limit', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pca-dir-'));
+  const subDir = path.join(tmpDir, 'assets');
+  fs.mkdirSync(subDir, { recursive: true });
+
+  fs.writeFileSync(path.join(subDir, 'requirements-core.md'), 'Requirement baseline for egress width and travel distance.', 'utf8');
+  fs.writeFileSync(path.join(subDir, 'notes.md'), 'General project notes for coordination.', 'utf8');
+  fs.writeFileSync(path.join(subDir, 'risk.csv'), 'id,topic\n1,egress', 'utf8');
+
+  const digest = ingestSources({ sources: [subDir], maxFiles: 2, prioritizeRequirements: true });
+  assert.strictEqual(digest.selected_files, 2);
+  assert.strictEqual(digest.discovered_files >= 3, true);
+  assert.strictEqual(digest.documents.length, 2);
+  assert.ok(digest.documents[0].source.toLowerCase().includes('requirement'));
+});
+
+test('buildDataQualityCheck reports gate status and failed checks', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pca-quality-'));
+  const sourceA = path.join(tmpDir, 'a.md');
+  fs.writeFileSync(sourceA, 'Short note with limited extractable claims only.', 'utf8');
+
+  const report = buildDataQualityCheck({
+    sources: [sourceA],
+    minSources: 2,
+    minTotalClaims: 4,
+    minAvgClaimsPerDoc: 2
+  });
+
+  assert.strictEqual(report.source_count, 1);
+  assert.strictEqual(report.quality_gate.ready_for_evidence_check, false);
+  assert.ok(Array.isArray(report.quality_gate.failed_checks));
+  assert.ok(report.quality_gate.failed_checks.length > 0);
 });

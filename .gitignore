@@ -3,3 +3,5 @@ coverage/
 development/
 *.log
 archive/
+data/
+outputs/

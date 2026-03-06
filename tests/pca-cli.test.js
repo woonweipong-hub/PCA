@@ -217,3 +217,48 @@ test('evidence-check command returns evidence metrics with assessment', () => {
   assert.ok(Object.prototype.hasOwnProperty.call(output, 'evidence'));
   assert.ok(Object.prototype.hasOwnProperty.call(output, 'assessment'));
 });
+
+test('ingest command supports directory source with max-files', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pca-cli-dir-'));
+  const sourceDir = path.join(tmpDir, 'assets');
+  fs.mkdirSync(sourceDir, { recursive: true });
+  fs.writeFileSync(path.join(sourceDir, 'requirements-set.md'), 'Requirements: maintain minimum egress width and route redundancy.', 'utf8');
+  fs.writeFileSync(path.join(sourceDir, 'context.md'), 'Contextual notes and assumptions for project team.', 'utf8');
+  fs.writeFileSync(path.join(sourceDir, 'register.csv'), 'id,topic\n1,egress', 'utf8');
+
+  const result = runCli([
+    'ingest',
+    '--sources',
+    sourceDir,
+    '--max-files',
+    '2'
+  ]);
+
+  assert.strictEqual(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.strictEqual(output.selected_files, 2);
+  assert.strictEqual(output.source_count, 2);
+});
+
+test('quality-check command returns data quality gate report', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pca-cli-quality-'));
+  const sourceA = path.join(tmpDir, 'a.md');
+  const sourceB = path.join(tmpDir, 'b.md');
+  fs.writeFileSync(sourceA, 'Release checklist indicates stable outcome and reproducible evidence across teams.', 'utf8');
+  fs.writeFileSync(sourceB, 'Evidence summary confirms quality and consistent measurements for gate reviews.', 'utf8');
+
+  const result = runCli([
+    'quality-check',
+    '--sources',
+    `${sourceA},${sourceB}`,
+    '--min-sources',
+    '2',
+    '--min-total-claims',
+    '2'
+  ]);
+
+  assert.strictEqual(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.ok(Object.prototype.hasOwnProperty.call(output, 'quality_gate'));
+  assert.strictEqual(typeof output.quality_gate.ready_for_evidence_check, 'boolean');
+});

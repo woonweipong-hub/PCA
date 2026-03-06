@@ -2,6 +2,16 @@
 
 This document is the canonical command guide for the PCA CLI.
 
+## Framework Positioning
+
+PCA commands are domain-agnostic and form a general decision-quality framework.
+
+Domain examples are optional overlays that reuse the same command contracts:
+
+- Fire-egress example: `docs/USE-CASE-FIRE-EGRESS-COMPLIANCE.md`
+- TRHS interpretation example: `docs/USE-CASE-TRHS-INTERPRETATION.md`
+- Optional agentic TRHS pipeline: `docs/USE-CASE-AGENTIC-TRHS-PIPELINE.md`
+
 ## Scope and Standards
 
 Each command section follows the same quality standard:
@@ -31,6 +41,7 @@ Valid commands:
 - `assess`
 - `persist`
 - `ingest`
+- `quality-check`
 - `evidence-check`
 - `help`
 
@@ -145,6 +156,17 @@ Example:
 pca propose discuss --decision "launch approach" --sources "reports/a.md,reports/b.md"
 ```
 
+Failure modes:
+
+- invalid mode
+- invalid `--topology` or `--policy`
+- `--sources` points to missing path(s)
+
+Automation guidance:
+
+- Use this output to seed proposer-agent prompts without reparsing framework logic.
+- Preserve `evidence_digest` metadata in logs for traceability.
+
 ## `critique`
 
 Purpose:
@@ -166,6 +188,17 @@ Example:
 ```bash
 pca critique discuss --decision "launch approach" --proposal "pilot in two regions" --critique "Risk exists due to uncertain demand baseline"
 ```
+
+Failure modes:
+
+- invalid mode
+- invalid `--topology` or `--policy`
+- `--sources` points to missing path(s)
+
+Automation guidance:
+
+- Feed `extracted_risk_flags` directly into governance routing or escalation checks.
+- Persist critic payloads to support audit review of objections and alternatives.
 
 ## `route`
 
@@ -293,8 +326,15 @@ Build local evidence digest from dataset/doc sources (`.md`, `.txt`, `.json`, `.
 Syntax:
 
 ```bash
-pca ingest --sources <path1,path2,...> [--max-claims-per-doc <1..20>]
+pca ingest --sources <path1,path2,...> [--max-claims-per-doc <1..20>] [--max-files <1..2000>] [--prioritize-requirements <true|false>]
 ```
+
+Notes:
+
+- `--sources` accepts files and directories.
+- Directory sources are scanned recursively for supported files: `.md`, `.txt`, `.json`, `.csv`.
+- `--max-files` caps selected files for large datasets.
+- `--prioritize-requirements true` favors files with names containing `requirement`, `brief`, `scope`, `spec`.
 
 Output contract:
 
@@ -306,6 +346,40 @@ Example:
 pca ingest --sources "reports/a.md,reports/b.md" --max-claims-per-doc 10
 ```
 
+## `quality-check`
+
+Purpose:
+
+Validate corpus quality/readiness before running `evidence-check`.
+
+Syntax:
+
+```bash
+pca quality-check --sources <path1,path2,...> [--max-claims-per-doc <1..20>] [--max-files <1..2000>] [--prioritize-requirements <true|false>] [--min-sources <n>] [--min-total-claims <n>] [--min-avg-claims-per-doc <n>]
+```
+
+Output contract:
+
+- Returns source summary + quality checks with pass/fail status.
+- Includes `quality_gate.ready_for_evidence_check` and recommendation text.
+
+Example:
+
+```bash
+pca quality-check --sources "data/public-pdf-text" --min-sources 2 --min-total-claims 6 --min-avg-claims-per-doc 2
+```
+
+Failure modes:
+
+- missing `--sources`
+- no supported source files found (`.md`, `.txt`, `.json`, `.csv`)
+- source path not found
+
+Automation guidance:
+
+- Require `quality_gate.ready_for_evidence_check = true` before automated `evidence-check`.
+- Log failed checks for data engineering/collection follow-up.
+
 ## `evidence-check`
 
 Purpose:
@@ -315,7 +389,7 @@ Run cross-document claim linkage and contradiction checks, then produce PCA asse
 Syntax:
 
 ```bash
-pca evidence-check <discuss|verify> --sources <path1,path2,...> [--decision <text>] [--context <text>] [--policy <fast|balanced|strict>] [--max-claims-per-doc <1..20>] [--needs-human-review <true|false>]
+pca evidence-check <discuss|verify> --sources <path1,path2,...> [--decision <text>] [--context <text>] [--policy <fast|balanced|strict>] [--max-claims-per-doc <1..20>] [--max-files <1..2000>] [--prioritize-requirements <true|false>] [--needs-human-review <true|false>]
 ```
 
 Output contract:
@@ -331,6 +405,18 @@ Example:
 ```bash
 pca evidence-check verify --decision "release gate" --sources "reports/r1.md,reports/r2.md" --policy strict
 ```
+
+Failure modes:
+
+- invalid mode
+- missing `--sources`
+- no supported source files found (`.md`, `.txt`, `.json`, `.csv`)
+- source path not found
+
+Automation guidance:
+
+- Gate follow-up execution on `assessment.human_control.recommended_mode`.
+- Track `evidence.metrics` over time to measure corpus quality and contradiction trends.
 
 ## `help`
 
@@ -357,7 +443,8 @@ Automation guidance:
 ## Recommended Quality Gates for Every Command Integration
 
 - Validate command exit code.
-- Parse JSON for `prepare/run/propose/critique/route/assess/persist/ingest/evidence-check`.
+- Parse JSON for `prepare/run/propose/critique/route/assess/persist/ingest/quality-check/evidence-check`.
+- Require `quality-check` pass before running `evidence-check` on large/heterogeneous datasets.
 - Route `HITL` decisions to explicit human approval.
 - Record command inputs/outputs in run logs.
 - Pin schema assumptions to `SCHEMA.md` and tolerate optional field additions.

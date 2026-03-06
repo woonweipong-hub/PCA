@@ -3,6 +3,7 @@ const VALID_POLICIES = new Set(['fast', 'balanced', 'strict']);
 const VALID_TOPOLOGIES = new Set(['single-critic', 'multi-critic', 'red-team']);
 const fs = require('fs');
 const path = require('path');
+const SUPPORTED_SOURCE_EXTENSIONS = new Set(['.md', '.txt', '.json', '.csv']);
 const WORKFLOW_DIAGRAM = [
   'flowchart TD',
   '  A[Decision + context] --> B[pca prepare or run]',
@@ -72,6 +73,97 @@ function parseDelimitedList(value) {
     .split(/[;,\n]/)
     .map((v) => v.trim())
     .filter(Boolean);
+}
+
+function isSupportedSourceFile(filePath) {
+  const ext = path.extname(String(filePath || '')).toLowerCase();
+  return SUPPORTED_SOURCE_EXTENSIONS.has(ext);
+}
+
+function scoreSourcePath(filePath) {
+  const normalized = String(filePath || '').toLowerCase();
+  let score = 0;
+  if (normalized.includes('requirement')) score += 6;
+  if (normalized.includes('brief')) score += 5;
+  if (normalized.includes('scope')) score += 4;
+  if (normalized.includes('spec')) score += 3;
+  if (normalized.includes('risk')) score += 2;
+  return score;
+}
+
+function collectFilesRecursive(dirPath) {
+  const results = [];
+  const stack = [dirPath];
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+    const entries = fs.readdirSync(current, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(fullPath);
+      } else if (entry.isFile() && isSupportedSourceFile(fullPath)) {
+        results.push(fullPath);
+      }
+    }
+  }
+
+  return results;
+}
+
+function resolveSourcePaths({ sources, maxFiles = 200, prioritizeRequirements = true }) {
+  const parsedSources = Array.isArray(sources) ? sources : parseDelimitedList(sources);
+  if (parsedSources.length === 0) {
+    throw new Error('ingest requires --sources <path1,path2,...>');
+  }
+
+  const discovered = [];
+
+  parsedSources.forEach((source) => {
+    const absolute = path.resolve(source);
+    if (!fs.existsSync(absolute)) {
+      throw new Error(`source path not found: ${source}`);
+    }
+
+    const stat = fs.statSync(absolute);
+    if (stat.isDirectory()) {
+      discovered.push(...collectFilesRecursive(absolute));
+      return;
+    }
+
+    if (stat.isFile()) {
+      if (!isSupportedSourceFile(absolute)) {
+        return;
+      }
+      discovered.push(absolute);
+    }
+  });
+
+  const deduped = Array.from(new Set(discovered));
+  if (deduped.length === 0) {
+    throw new Error('no supported source files found (.md, .txt, .json, .csv)');
+  }
+
+  const normalizedMaxFiles = Math.max(1, Math.min(Number(maxFiles) || 200, 2000));
+  const normalizedPrioritize = (prioritizeRequirements === undefined || prioritizeRequirements === null)
+    ? true
+    : parseBoolean(prioritizeRequirements);
+  const sorted = deduped.sort((a, b) => {
+    if (!normalizedPrioritize) return a.localeCompare(b);
+    const scoreDiff = scoreSourcePath(b) - scoreSourcePath(a);
+    if (scoreDiff !== 0) return scoreDiff;
+    return a.localeCompare(b);
+  });
+
+  const selected = sorted.slice(0, normalizedMaxFiles);
+
+  return {
+    source_roots: parsedSources,
+    discovered_files: sorted.length,
+    selected_files: selected.length,
+    skipped_files: Math.max(0, sorted.length - selected.length),
+    paths: selected
+  };
 }
 
 function splitIntoSentences(text) {
@@ -251,13 +343,14 @@ function compareDocumentsForEvidence(documents) {
   return links;
 }
 
-function ingestSources({ sources, maxClaimsPerDocument = 8 }) {
-  const parsedSources = Array.isArray(sources) ? sources : parseDelimitedList(sources);
-  if (parsedSources.length === 0) {
-    throw new Error('ingest requires --sources <path1,path2,...>');
-  }
+function ingestSources({ sources, maxClaimsPerDocument = 8, maxFiles = 200, prioritizeRequirements = true }) {
+  const resolved = resolveSourcePaths({
+    sources,
+    maxFiles,
+    prioritizeRequirements
+  });
 
-  const documents = parsedSources.map((source) => {
+  const documents = resolved.paths.map((source) => {
     const text = readSourceText(source);
     return buildDocumentDigest({
       source,
@@ -270,6 +363,10 @@ function ingestSources({ sources, maxClaimsPerDocument = 8 }) {
   const totalWords = documents.reduce((sum, doc) => sum + doc.word_count, 0);
 
   return {
+    source_roots: resolved.source_roots,
+    discovered_files: resolved.discovered_files,
+    selected_files: resolved.selected_files,
+    skipped_files: resolved.skipped_files,
     source_count: documents.length,
     total_claims: totalClaims,
     total_words: totalWords,
@@ -277,9 +374,71 @@ function ingestSources({ sources, maxClaimsPerDocument = 8 }) {
   };
 }
 
-function buildEvidenceCheck({ mode, decision, context, sources, maxClaimsPerDocument, policy, needsHumanReview }) {
+function buildDataQualityCheck({
+  sources,
+  maxClaimsPerDocument,
+  maxFiles,
+  prioritizeRequirements,
+  minSources = 2,
+  minTotalClaims = 6,
+  minAvgClaimsPerDoc = 2
+}) {
+  const digest = ingestSources({ sources, maxClaimsPerDocument, maxFiles, prioritizeRequirements });
+
+  const averageClaimsPerDocument = digest.source_count > 0
+    ? Number((digest.total_claims / digest.source_count).toFixed(3))
+    : 0;
+
+  const checks = [
+    {
+      key: 'min_sources',
+      actual: digest.source_count,
+      threshold: Math.max(1, Number(minSources) || 2),
+      pass: digest.source_count >= Math.max(1, Number(minSources) || 2)
+    },
+    {
+      key: 'min_total_claims',
+      actual: digest.total_claims,
+      threshold: Math.max(1, Number(minTotalClaims) || 6),
+      pass: digest.total_claims >= Math.max(1, Number(minTotalClaims) || 6)
+    },
+    {
+      key: 'min_avg_claims_per_doc',
+      actual: averageClaimsPerDocument,
+      threshold: Math.max(0.5, Number(minAvgClaimsPerDoc) || 2),
+      pass: averageClaimsPerDocument >= Math.max(0.5, Number(minAvgClaimsPerDoc) || 2)
+    }
+  ];
+
+  const passed = checks.filter((item) => item.pass).length;
+  const failedChecks = checks.filter((item) => !item.pass).map((item) => item.key);
+  const ready = failedChecks.length === 0;
+
+  return {
+    source_roots: digest.source_roots,
+    discovered_files: digest.discovered_files,
+    selected_files: digest.selected_files,
+    skipped_files: digest.skipped_files,
+    source_count: digest.source_count,
+    total_claims: digest.total_claims,
+    total_words: digest.total_words,
+    average_claims_per_document: averageClaimsPerDocument,
+    checks,
+    quality_gate: {
+      ready_for_evidence_check: ready,
+      passed_checks: passed,
+      total_checks: checks.length,
+      failed_checks: failedChecks,
+      recommendation: ready
+        ? 'Proceed to pca evidence-check.'
+        : 'Improve source quality/coverage before pca evidence-check.'
+    }
+  };
+}
+
+function buildEvidenceCheck({ mode, decision, context, sources, maxClaimsPerDocument, maxFiles, prioritizeRequirements, policy, needsHumanReview }) {
   assertMode(mode);
-  const ingested = ingestSources({ sources, maxClaimsPerDocument });
+  const ingested = ingestSources({ sources, maxClaimsPerDocument, maxFiles, prioritizeRequirements });
   const claimLinks = compareDocumentsForEvidence(ingested.documents);
 
   const contradictionCount = claimLinks.filter((l) => l.relation === 'contradiction').length;
@@ -353,11 +512,11 @@ function buildEvidenceCheck({ mode, decision, context, sources, maxClaimsPerDocu
   };
 }
 
-function buildProposalResult({ mode, decision, context, proposal, sources, maxClaimsPerDocument, topology = 'single-critic', policy = 'balanced' }) {
+function buildProposalResult({ mode, decision, context, proposal, sources, maxClaimsPerDocument, maxFiles, prioritizeRequirements, topology = 'single-critic', policy = 'balanced' }) {
   assertMode(mode);
   const session = buildSession({ mode, decision, context, topology, policy });
   const ingested = sources
-    ? ingestSources({ sources, maxClaimsPerDocument })
+    ? ingestSources({ sources, maxClaimsPerDocument, maxFiles, prioritizeRequirements })
     : null;
 
   return {
@@ -394,11 +553,11 @@ function extractRiskFlagsFromText(text) {
     .map(([, flag]) => flag);
 }
 
-function buildCritiqueResult({ mode, decision, context, proposal, critique, sources, maxClaimsPerDocument, topology = 'single-critic', policy = 'balanced' }) {
+function buildCritiqueResult({ mode, decision, context, proposal, critique, sources, maxClaimsPerDocument, maxFiles, prioritizeRequirements, topology = 'single-critic', policy = 'balanced' }) {
   assertMode(mode);
   const session = buildSession({ mode, decision, context, topology, policy });
   const ingested = sources
-    ? ingestSources({ sources, maxClaimsPerDocument })
+    ? ingestSources({ sources, maxClaimsPerDocument, maxFiles, prioritizeRequirements })
     : null;
   const critiqueSummary = critique ? summarizeForChat(critique) : null;
   const extractedRiskFlags = extractRiskFlagsFromText(critiqueSummary);
@@ -837,7 +996,9 @@ module.exports = {
   parseRiskFlags,
   parseScores,
   parseDelimitedList,
+  resolveSourcePaths,
   ingestSources,
+  buildDataQualityCheck,
   buildEvidenceCheck,
   buildProposalResult,
   buildCritiqueResult,

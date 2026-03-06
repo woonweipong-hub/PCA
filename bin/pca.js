@@ -6,6 +6,7 @@ const path = require('path');
 const {
   buildAssessmentResult,
   buildCritiqueResult,
+  buildDataQualityCheck,
   buildEvidenceCheck,
   buildProposalResult,
   formatAssessmentMarkdown,
@@ -15,7 +16,7 @@ const {
   buildSession
 } = require('../src/pca-core');
 
-const VALID_COMMANDS = ['prepare', 'run', 'propose', 'critique', 'route', 'assess', 'persist', 'ingest', 'evidence-check'];
+const VALID_COMMANDS = ['prepare', 'run', 'propose', 'critique', 'route', 'assess', 'persist', 'ingest', 'quality-check', 'evidence-check'];
 const VALID_MODES = ['discuss', 'verify'];
 
 function fail(message) {
@@ -54,6 +55,11 @@ function parseArgs(argv) {
     scores: getArg('--scores'),
     sources: getArg('--sources'),
     maxClaimsPerDoc: getArg('--max-claims-per-doc'),
+    maxFiles: getArg('--max-files'),
+    prioritizeRequirements: getArg('--prioritize-requirements'),
+    minSources: getArg('--min-sources'),
+    minTotalClaims: getArg('--min-total-claims'),
+    minAvgClaimsPerDoc: getArg('--min-avg-claims-per-doc'),
     output: getArg('--output'),
     format: getArg('--format')
   };
@@ -64,8 +70,9 @@ function buildHelpText() {
     'PCA CLI',
     '',
     'Usage:',
-    '  pca <prepare|run|propose|critique|route|assess|persist|ingest|evidence-check> <discuss|verify> [flags]',
+    '  pca <prepare|run|propose|critique|route|assess|persist|ingest|quality-check|evidence-check> <discuss|verify> [flags]',
     '  pca ingest --sources <path1,path2,...> [--max-claims-per-doc 8]',
+    '  pca quality-check --sources <path1,path2,...> [quality flags]',
     '  pca help',
     '',
     'Commands:',
@@ -77,6 +84,7 @@ function buildHelpText() {
     '  assess   Build PCA assessment payload.',
     '  persist  Save assessment payload to file (json or md).',
     '  ingest   Build local evidence digest from source files.',
+    '  quality-check Validate corpus quality before evidence-check.',
     '  evidence-check Run cross-document evidence checks + PCA assessment.',
     '',
     'Common flags:',
@@ -95,7 +103,14 @@ function buildHelpText() {
     '  --risk-flags <"flag1;flag2">',
     '  --scores <"key=0..5;key2=0..5">',
     '  --sources <"path1,path2,..."> (ingest/evidence-check)',
+    '    Supported source file types: .md, .txt, .json, .csv',
+    '    Note: convert PDFs to .txt first (for example with pdftotext).',
     '  --max-claims-per-doc <1..20> (ingest/evidence-check)',
+    '  --max-files <1..2000> (ingest/evidence-check/propose/critique)',
+    '  --prioritize-requirements <true|false> (default true)',
+    '  --min-sources <n> (quality-check, default 2)',
+    '  --min-total-claims <n> (quality-check, default 6)',
+    '  --min-avg-claims-per-doc <n> (quality-check, default 2)',
     '  --output <path> (persist only)',
     '  --format <json|md> (persist only, default json)',
     '',
@@ -106,7 +121,10 @@ function buildHelpText() {
     '  pca route verify --verdict "accepted-with-conditions" --risk-flags "partial coverage"',
     '  pca persist verify --verdict "needs-human-review" --output development/pca.json',
     '  pca ingest --sources "docs/a.md,docs/b.md"',
-    '  pca evidence-check verify --decision "release gate" --sources "reports/r1.md,reports/r2.md"'
+    '  pca quality-check --sources "docs/a.md,docs/b.md" --min-sources 2 --min-total-claims 6',
+    '  pca evidence-check verify --decision "release gate" --sources "reports/r1.md,reports/r2.md"',
+    '  # TRHS workflow (PDFs converted to text) example:',
+    '  pca evidence-check verify --decision "TRHS interpretation" --sources "data/trhs-text" --policy strict --max-files 120 --prioritize-requirements true'
   ].join('\n') + '\n';
 }
 
@@ -130,15 +148,31 @@ function run() {
     }
 
     if (!parsed.command || !VALID_COMMANDS.includes(parsed.command)) {
-      fail('Usage: pca <prepare|run|propose|critique|route|assess|persist|ingest|evidence-check> <discuss|verify> [--decision text] [--context text]');
+      fail('Usage: pca <prepare|run|propose|critique|route|assess|persist|ingest|quality-check|evidence-check> <discuss|verify> [--decision text] [--context text]');
     }
 
     if (parsed.command === 'ingest') {
       const digest = ingestSources({
         sources: parsed.sources,
-        maxClaimsPerDocument: parsed.maxClaimsPerDoc
+        maxClaimsPerDocument: parsed.maxClaimsPerDoc,
+        maxFiles: parsed.maxFiles,
+        prioritizeRequirements: parsed.prioritizeRequirements
       });
       process.stdout.write(`${JSON.stringify(digest, null, 2)}\n`);
+      return;
+    }
+
+    if (parsed.command === 'quality-check') {
+      const report = buildDataQualityCheck({
+        sources: parsed.sources,
+        maxClaimsPerDocument: parsed.maxClaimsPerDoc,
+        maxFiles: parsed.maxFiles,
+        prioritizeRequirements: parsed.prioritizeRequirements,
+        minSources: parsed.minSources,
+        minTotalClaims: parsed.minTotalClaims,
+        minAvgClaimsPerDoc: parsed.minAvgClaimsPerDoc
+      });
+      process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
       return;
     }
 
@@ -153,6 +187,8 @@ function run() {
         context: parsed.context,
         sources: parsed.sources,
         maxClaimsPerDocument: parsed.maxClaimsPerDoc,
+        maxFiles: parsed.maxFiles,
+        prioritizeRequirements: parsed.prioritizeRequirements,
         policy: parsed.policy,
         needsHumanReview: parsed.needsHumanReview
       });
@@ -168,6 +204,8 @@ function run() {
         proposal: parsed.proposal,
         sources: parsed.sources,
         maxClaimsPerDocument: parsed.maxClaimsPerDoc,
+        maxFiles: parsed.maxFiles,
+        prioritizeRequirements: parsed.prioritizeRequirements,
         topology: parsed.topology,
         policy: parsed.policy
       });
@@ -184,6 +222,8 @@ function run() {
         critique: parsed.critique,
         sources: parsed.sources,
         maxClaimsPerDocument: parsed.maxClaimsPerDoc,
+        maxFiles: parsed.maxFiles,
+        prioritizeRequirements: parsed.prioritizeRequirements,
         topology: parsed.topology,
         policy: parsed.policy
       });

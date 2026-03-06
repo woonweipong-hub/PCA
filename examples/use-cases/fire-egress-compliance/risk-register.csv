@@ -1,0 +1,5 @@
+risk_id,topic,description,severity,owner
+R-001,egress width,"East stair below minimum width requirement",high,architect
+R-002,travel distance,"Travel distance exceeds 30m threshold",high,fire-engineer
+R-003,dead-end corridor,"Dead-end corridor exceeds allowable limit",medium,architect
+R-004,smoke lobby,"Missing smoke-stop lobby at east core",high,mep-consultant

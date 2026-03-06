@@ -7,7 +7,10 @@
     "pca": "bin/pca.js"
   },
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js tests/*.test.cjs",
+    "convert:pdf": "node scripts/convert-pdf-batch.cjs",
+    "ocr:pdf": "node scripts/ocr-pdf-batch.cjs",
+    "convert:trhs": "node scripts/convert-pdf-batch.cjs --input-dir \"C:\\2026_Research\\Assets\" --output-dir \"data/trhs-text\" --include-prefixes \"BCA,URA,SCDF\" --exclude-files \"BCA_HS_Checks_Scope.pdf\" --pdftotext-path \"C:\\poppler\\Library\\bin\\pdftotext.exe\""
   },
   "keywords": [
     "pca",

@@ -195,6 +195,10 @@ Required fields:
 
 ```json
 {
+  "source_roots": ["string"],
+  "discovered_files": 120,
+  "selected_files": 80,
+  "skipped_files": 40,
   "source_count": 2,
   "total_claims": 12,
   "total_words": 1480,
@@ -217,10 +221,56 @@ Required fields:
 ```
 
 Required fields:
+- `source_roots`
+- `discovered_files`
+- `selected_files`
+- `skipped_files`
 - `source_count`
 - `total_claims`
 - `total_words`
 - `documents`
+
+## `quality-check` Output
+
+```json
+{
+  "source_roots": ["string"],
+  "discovered_files": 120,
+  "selected_files": 80,
+  "skipped_files": 40,
+  "source_count": 2,
+  "total_claims": 12,
+  "total_words": 1480,
+  "average_claims_per_document": 6,
+  "checks": [
+    {
+      "key": "min_sources|min_total_claims|min_avg_claims_per_doc",
+      "actual": 2,
+      "threshold": 2,
+      "pass": true
+    }
+  ],
+  "quality_gate": {
+    "ready_for_evidence_check": true,
+    "passed_checks": 3,
+    "total_checks": 3,
+    "failed_checks": ["string"],
+    "recommendation": "string"
+  }
+}
+```
+
+Required fields:
+- `source_roots`
+- `discovered_files`
+- `selected_files`
+- `skipped_files`
+- `source_count`
+- `total_claims`
+- `total_words`
+- `average_claims_per_document`
+- `checks`
+- `quality_gate`
 
 ## `evidence-check` Output
 
@@ -230,6 +280,10 @@ Required fields:
   "decision": "string|null",
   "context": "string|null",
   "evidence": {
+    "source_roots": ["string"],
+    "discovered_files": 120,
+    "selected_files": 80,
+    "skipped_files": 40,
     "source_count": 2,
     "total_claims": 12,
     "total_words": 1480,
@@ -306,7 +360,7 @@ Error: <message>
 ```
 
 Common messages:
-- `Usage: pca <prepare|run|propose|critique|route|assess|persist|ingest|evidence-check> ...`
+- `Usage: pca <prepare|run|propose|critique|route|assess|persist|ingest|quality-check|evidence-check> ...`
 - `mode must be 'discuss' or 'verify'`
 - `diagram policy must be 'auto', 'always', or 'never'`
 - `policy must be 'fast', 'balanced', or 'strict'`
