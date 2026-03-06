@@ -71,18 +71,18 @@ flowchart TD
   C --> D[Process: Critique]
   D --> E[Process: Assess]
 
-  Q[Qualitative Rubrics\nInterpretation, trade-offs, confidence] -. feeds .-> C
+  Q[Qualitative Rubrics<br/>Interpretation, trade-offs, confidence] -. feeds .-> C
   Q -. critiques .-> D
   Q -. scoring context .-> E
 
-  S[Symbolic Checks (Z3)\nFeasible or infeasible constraints] --> V{Verify Gates Passed?}
+  S[Symbolic Checks (Z3)<br/>Feasible or infeasible constraints] --> V{Verify Gates Passed?}
   E --> V
 
-  X[Adaptive Depth\nLow risk: 1 pass\nMedium risk: 2 passes\nHigh risk: 3 passes] -. controls .-> C
+  X[Adaptive Depth<br/>Low risk: 1 pass<br/>Medium risk: 2 passes<br/>High risk: 3 passes] -. controls .-> C
 
   V -- No --> C
   V -- Yes --> G[Output: Recommend]
-  G --> AC[Action Contract\nOwner, due, success metric, rollback trigger]
+  G --> AC[Action Contract<br/>Owner, due, success metric, rollback trigger]
   AC --> R{Route HITL/HOTL}
   R -- HITL --> H[Human Approval Checkpoint]
   R -- HOTL --> M[Monitored Progression]
