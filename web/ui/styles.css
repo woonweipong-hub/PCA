@@ -675,6 +675,17 @@ button.slim {
   color: var(--accent);
 }
 
+.badge-link {
+  text-decoration: none;
+}
+
+.badge-link:hover,
+.badge-link:focus-visible {
+  border-color: var(--accent);
+  background: rgba(15, 118, 110, 0.12);
+  outline: none;
+}
+
 .runtime-callout p,
 .runtime-config p {
   margin: 0.35rem 0 0;
