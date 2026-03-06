@@ -11,7 +11,7 @@
 </head>
 <body>
   <div class="bg-layer"></div>
-  <main class="shell">
+  <main class="shell wide">
     <header class="hero">
       <p class="eyebrow">PCA Web UI</p>
       <h1>Control Desk for Evidence and Governance</h1>
@@ -30,6 +30,12 @@
         <label>Text Output Folder</label>
         <input id="textDir" value="data/public-pdf-text" />
 
+        <label>Conversion Include Prefixes (optional, comma-separated)</label>
+        <input id="includePrefixes" value="" placeholder="BCA,URA,SCDF" />
+
+        <label>Conversion Exclude Files (optional, comma-separated)</label>
+        <input id="excludeFiles" value="" placeholder="BCA_HS_Checks_Scope.pdf" />
+
         <div class="actions">
           <button id="btnOcr" class="ghost">Run OCR Preprocess</button>
           <button id="btnConvert">Convert PDF to TXT</button>
@@ -46,6 +52,9 @@
 
         <label>Context</label>
         <textarea id="context">Cross-document support and contradiction review for compliance decisions.</textarea>
+
+        <label>Sources To Use (folder path or comma-separated paths)</label>
+        <input id="sourcesInput" value="data/public-pdf-text" />
 
         <label>Expectations (one per line)</label>
         <textarea id="expectations">Clear recommendation
@@ -95,6 +104,29 @@
           <div>
             <label>Debate Cycles</label>
             <input id="debateCycles" type="number" min="1" max="5" value="3" />
+          </div>
+        </div>
+
+        <h3>Model Selection (By Role)</h3>
+        <div class="inline-grid">
+          <div>
+            <label>Propose Model</label>
+            <input id="modelProposal" value="gpt-5.3-codex" />
+          </div>
+          <div>
+            <label>Critique Model</label>
+            <input id="modelCritique" value="gpt-5.3-codex" />
+          </div>
+        </div>
+
+        <div class="inline-grid">
+          <div>
+            <label>Assess Model</label>
+            <input id="modelAssess" value="gpt-5.3-codex" />
+          </div>
+          <div>
+            <label>Model Notes</label>
+            <input id="modelNotes" value="Paid Copilot runtime; prefer high-quality reasoning models" />
           </div>
         </div>
 

@@ -32,9 +32,10 @@ body {
 
 .shell {
   position: relative;
-  max-width: 1180px;
+  max-width: none;
+  width: 100%;
   margin: 0 auto;
-  padding: 2rem 1rem 3rem;
+  padding: 1.2rem 2rem 2.2rem;
 }
 
 .hero h1 {
@@ -62,7 +63,7 @@ body {
 
 .grid-two {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1.2fr 1fr;
   gap: 1rem;
 }
 
@@ -175,11 +176,11 @@ button.slim {
 }
 
 .tall {
-  min-height: 420px;
+  min-height: 620px;
 }
 
 pre {
-  height: 355px;
+  height: 520px;
   overflow: auto;
   background: #111827;
   color: #d1fae5;

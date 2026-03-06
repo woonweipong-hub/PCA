@@ -5,15 +5,22 @@ const artifactList = document.getElementById('artifactList');
 const inputDir = document.getElementById('inputDir');
 const ocrDir = document.getElementById('ocrDir');
 const textDir = document.getElementById('textDir');
+const includePrefixes = document.getElementById('includePrefixes');
+const excludeFiles = document.getElementById('excludeFiles');
 const decision = document.getElementById('decision');
 const objective = document.getElementById('objective');
 const contextText = document.getElementById('context');
+const sourcesInput = document.getElementById('sourcesInput');
 const expectations = document.getElementById('expectations');
 const researchNeeds = document.getElementById('researchNeeds');
 const constraints = document.getElementById('constraints');
 const activeSearchEnabled = document.getElementById('activeSearchEnabled');
 const policy = document.getElementById('policy');
 const runtimeProvider = document.getElementById('runtimeProvider');
+const modelProposal = document.getElementById('modelProposal');
+const modelCritique = document.getElementById('modelCritique');
+const modelAssess = document.getElementById('modelAssess');
+const modelNotes = document.getElementById('modelNotes');
 const maxFiles = document.getElementById('maxFiles');
 const debateCycles = document.getElementById('debateCycles');
 const minSources = document.getElementById('minSources');
@@ -94,8 +101,14 @@ async function refreshArtifacts() {
 
 function commonPayload() {
   return {
-    sources: textDir.value,
+    sources: sourcesInput.value || textDir.value,
     runtimeProvider: runtimeProvider.value,
+    modelSelection: {
+      proposal: modelProposal.value,
+      critique: modelCritique.value,
+      assess: modelAssess.value,
+      notes: modelNotes.value
+    },
     objective: objective.value,
     expectations: expectations.value,
     researchNeeds: researchNeeds.value,
@@ -128,7 +141,8 @@ btnFramework.addEventListener('click', async () => {
       scoringView.textContent = JSON.stringify({
         verification_plan: data.result.verification_plan,
         active_ai_search_plan: data.result.active_ai_search_plan || null,
-        data_inputs: data.result.data_inputs || null
+        data_inputs: data.result.data_inputs || null,
+        selected_sources_hint: commonPayload().sources
       }, null, 2);
     }
 
@@ -156,6 +170,14 @@ btnResearch.addEventListener('click', async () => {
 
     if (data.result && data.result.research_synthesis) {
       scoringView.textContent = JSON.stringify(data.result.research_synthesis, null, 2);
+    }
+
+    if (data.result && data.result.evidence_check && data.result.evidence_check.evidence) {
+      appendDebateEvent(
+        'Dataset Selection',
+        `Research used ${data.result.evidence_check.evidence.source_count} sources from: ${commonPayload().sources}`,
+        'neutral'
+      );
     }
 
     appendDebateEvent(
@@ -342,6 +364,24 @@ async function runLiveDebate() {
           return;
         }
 
+        if (evt === 'model-selection') {
+          appendDebateEvent(
+            'Model Selection',
+            `Proposal: ${data.proposal || 'n/a'}, Critique: ${data.critique || 'n/a'}, Assess: ${data.assess || 'n/a'}`,
+            'neutral'
+          );
+          return;
+        }
+
+        if (evt === 'dataset-selection') {
+          appendDebateEvent(
+            'Dataset Selection',
+            `Using ${data.source_count} source files (selected ${data.selected_files}/${data.discovered_files}). Preview: ${(data.source_preview || []).join(', ') || 'n/a'}`,
+            'neutral'
+          );
+          return;
+        }
+
         if (evt === 'step') {
           renderStepEvent(data);
           return;
@@ -363,6 +403,20 @@ async function runLiveDebate() {
           }
           if (data.scoring) {
             scoringView.textContent = JSON.stringify(data.scoring, null, 2);
+          }
+          if (data.model_selection) {
+            appendDebateEvent(
+              'Models Used',
+              `Proposal ${data.model_selection.proposal || 'n/a'} | Critique ${data.model_selection.critique || 'n/a'} | Assess ${data.model_selection.assess || 'n/a'}`,
+              'neutral'
+            );
+          }
+          if (data.dataset_selection) {
+            appendDebateEvent(
+              'Dataset Used',
+              `Selected ${data.dataset_selection.selected_files}/${data.dataset_selection.discovered_files} files. Input: ${data.dataset_selection.input_sources || 'n/a'}`,
+              'neutral'
+            );
           }
           appendDebateEvent('Final Recommendation', checkpoint.decision || 'Recommendation ready.', checkpoint.required ? 'warn' : 'ok');
           debateState.textContent = 'Completed';
@@ -419,6 +473,8 @@ btnConvert.addEventListener('click', async () => {
       runtimeProvider: runtimeProvider.value,
       inputDir: inputDir.value,
       outputDir: textDir.value,
+      includePrefixes: includePrefixes.value,
+      excludeFiles: excludeFiles.value,
       recursive: true
     });
     showResult('Conversion Completed', data);
@@ -474,6 +530,8 @@ btnPipeline.addEventListener('click', async () => {
       runtimeProvider: runtimeProvider.value,
       inputDir: inputDir.value,
       outputDir: textDir.value,
+      includePrefixes: includePrefixes.value,
+      excludeFiles: excludeFiles.value,
       recursive: true
     });
 

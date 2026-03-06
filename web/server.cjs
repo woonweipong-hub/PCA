@@ -121,6 +121,16 @@ function normalizeRuntimeProvider(value) {
   return normalized || 'unknown';
 }
 
+function normalizeModelSelection(value) {
+  const input = value && typeof value === 'object' ? value : {};
+  return {
+    proposal: String(input.proposal || '').trim() || null,
+    critique: String(input.critique || '').trim() || null,
+    assess: String(input.assess || '').trim() || null,
+    notes: String(input.notes || '').trim() || null
+  };
+}
+
 function sendSseEvent(res, eventName, payload) {
   res.write(`event: ${eventName}\n`);
   res.write(`data: ${JSON.stringify(payload)}\n\n`);
@@ -218,6 +228,7 @@ function summarizeEvidenceForResearch(evidenceResult) {
 async function handleFrameworkProposal(body) {
   const mode = body.mode || 'discuss';
   const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
+  const modelSelection = normalizeModelSelection(body.modelSelection);
   const decision = body.decision || 'Unspecified decision';
   const context = body.context || 'No context provided';
   const objective = body.objective || decision;
@@ -259,6 +270,7 @@ async function handleFrameworkProposal(body) {
 
   const proposal = {
     runtime_provider: runtimeProvider,
+    model_selection: modelSelection,
     mode,
     request_contract: {
       objective,
@@ -332,6 +344,7 @@ async function handleFrameworkProposal(body) {
 
 async function handleResearchPack(body) {
   const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
+  const modelSelection = normalizeModelSelection(body.modelSelection);
   const mode = body.mode || 'verify';
   const qualityArgs = ['bin/pca.js', 'quality-check'];
   pushFlag(qualityArgs, '--sources', body.sources);
@@ -366,6 +379,7 @@ async function handleResearchPack(body) {
   const synthesis = summarizeEvidenceForResearch(evidenceParsed);
   const result = {
     runtime_provider: runtimeProvider,
+    model_selection: modelSelection,
     mode,
     objective: body.objective || body.decision || null,
     decision: body.decision || null,
@@ -426,11 +440,13 @@ async function handleConvertPdf(body) {
     throw new Error(result.stderr.trim() || 'convert-pdf failed');
   }
   const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
+  const modelSelection = normalizeModelSelection(body.modelSelection);
   const artifact = saveArtifact('convert-pdf', {
     runtime_provider: runtimeProvider,
+    model_selection: modelSelection,
     result: parsed
   });
-  return { runtime_provider: runtimeProvider, result: parsed, artifact };
+  return { runtime_provider: runtimeProvider, model_selection: modelSelection, result: parsed, artifact };
 }
 
 async function handleOcrPdf(body) {
@@ -449,11 +465,13 @@ async function handleOcrPdf(body) {
     throw new Error(result.stderr.trim() || 'ocr-pdf failed');
   }
   const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
+  const modelSelection = normalizeModelSelection(body.modelSelection);
   const artifact = saveArtifact('ocr-pdf', {
     runtime_provider: runtimeProvider,
+    model_selection: modelSelection,
     result: parsed
   });
-  return { runtime_provider: runtimeProvider, result: parsed, artifact };
+  return { runtime_provider: runtimeProvider, model_selection: modelSelection, result: parsed, artifact };
 }
 
 async function handleQualityCheck(body) {
@@ -472,11 +490,13 @@ async function handleQualityCheck(body) {
     throw new Error(result.stderr.trim() || 'quality-check failed');
   }
   const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
+  const modelSelection = normalizeModelSelection(body.modelSelection);
   const artifact = saveArtifact('quality-check', {
     runtime_provider: runtimeProvider,
+    model_selection: modelSelection,
     result: parsed
   });
-  return { runtime_provider: runtimeProvider, result: parsed, artifact };
+  return { runtime_provider: runtimeProvider, model_selection: modelSelection, result: parsed, artifact };
 }
 
 async function handleEvidenceCheck(body) {
@@ -495,17 +515,20 @@ async function handleEvidenceCheck(body) {
     throw new Error(result.stderr.trim() || 'evidence-check failed');
   }
   const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
+  const modelSelection = normalizeModelSelection(body.modelSelection);
   const artifact = saveArtifact('evidence-check', {
     runtime_provider: runtimeProvider,
+    model_selection: modelSelection,
     result: parsed
   });
-  return { runtime_provider: runtimeProvider, result: parsed, artifact };
+  return { runtime_provider: runtimeProvider, model_selection: modelSelection, result: parsed, artifact };
 }
 
 async function handleDebateLive(req, res, body) {
   const cycles = Math.max(1, Math.min(Number(body.cycles) || 3, 5));
   const mode = body.mode || 'verify';
   const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
+  const modelSelection = normalizeModelSelection(body.modelSelection);
 
   res.writeHead(200, {
     'Content-Type': 'text/event-stream; charset=utf-8',
@@ -520,6 +543,7 @@ async function handleDebateLive(req, res, body) {
 
   const trace = {
     runtime_provider: runtimeProvider,
+    model_selection: modelSelection,
     mode,
     cycles,
     decision: body.decision || null,
@@ -536,6 +560,7 @@ async function handleDebateLive(req, res, body) {
   sendSseEvent(res, 'start', {
     message: 'Live debate started.',
     runtime_provider: runtimeProvider,
+    model_selection: modelSelection,
     mode,
     cycles,
     policy: trace.policy
@@ -544,8 +569,11 @@ async function handleDebateLive(req, res, body) {
   let previousAssessment = null;
   let previousRiskFlags = [];
   let previousScore100 = null;
+  let datasetSelection = null;
 
   try {
+    sendSseEvent(res, 'model-selection', modelSelection);
+
     const prepareArgs = ['bin/pca.js', 'prepare', mode];
     pushFlag(prepareArgs, '--decision', body.decision || 'Live debate decision');
     pushFlag(prepareArgs, '--context', body.context || 'Live debate context');
@@ -657,6 +685,22 @@ async function handleDebateLive(req, res, body) {
         throw new Error(evidenceResult.stderr.trim() || `evidence-check failed on cycle ${cycle}`);
       }
 
+      if (!datasetSelection) {
+        const documents = evidenceParsed.evidence && Array.isArray(evidenceParsed.evidence.documents)
+          ? evidenceParsed.evidence.documents
+          : [];
+        const sourcePaths = Array.from(new Set(documents.map((doc) => doc.source).filter(Boolean)));
+        datasetSelection = {
+          input_sources: body.sources || null,
+          discovered_files: evidenceParsed.evidence ? evidenceParsed.evidence.discovered_files : sourcePaths.length,
+          selected_files: evidenceParsed.evidence ? evidenceParsed.evidence.selected_files : sourcePaths.length,
+          source_count: evidenceParsed.evidence ? evidenceParsed.evidence.source_count : sourcePaths.length,
+          source_preview: sourcePaths.slice(0, 20)
+        };
+        trace.dataset_selection = datasetSelection;
+        sendSseEvent(res, 'dataset-selection', datasetSelection);
+      }
+
       previousAssessment = evidenceParsed.assessment || null;
       previousRiskFlags = previousAssessment && Array.isArray(previousAssessment.risk_flags)
         ? previousAssessment.risk_flags
@@ -732,7 +776,9 @@ async function handleDebateLive(req, res, body) {
 
     const finalPayload = {
       cycles_completed: cycles,
+      model_selection: modelSelection,
       framework: trace.framework,
+      dataset_selection: datasetSelection,
       scoring: {
         cycle_snapshots: trace.scoring.cycle_snapshots,
         final_weighted_score_100: finalAssessment
