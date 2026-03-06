@@ -25,9 +25,13 @@ Valid commands:
 
 - `prepare`
 - `run`
+- `propose`
+- `critique`
 - `route`
 - `assess`
 - `persist`
+- `ingest`
+- `evidence-check`
 - `help`
 
 Valid modes:
@@ -118,6 +122,50 @@ Automation guidance:
 
 - Prefer `prepare` for new scripts.
 - Keep `run` for compatibility while migrating existing pipelines.
+
+## `propose`
+
+Purpose:
+
+Build proposer role payload with prompt and optional captured proposal text.
+
+Syntax:
+
+```bash
+pca propose <discuss|verify> [--decision <text>] [--context <text>] [--proposal <text>] [--sources <path1,path2,...>] [--max-claims-per-doc <1..20>] [--topology <single-critic|multi-critic|red-team>] [--policy <fast|balanced|strict>]
+```
+
+Output contract:
+
+- Role payload for `proposer` with prompt, optional proposal summary, and optional evidence digest.
+
+Example:
+
+```bash
+pca propose discuss --decision "launch approach" --sources "reports/a.md,reports/b.md"
+```
+
+## `critique`
+
+Purpose:
+
+Build critic role payload with prompt, optional critique text, and extracted risk flags.
+
+Syntax:
+
+```bash
+pca critique <discuss|verify> [--decision <text>] [--context <text>] [--proposal <text>] [--critique <text>] [--sources <path1,path2,...>] [--max-claims-per-doc <1..20>] [--topology <single-critic|multi-critic|red-team>] [--policy <fast|balanced|strict>]
+```
+
+Output contract:
+
+- Role payload for `critic` with prompt, critique summary, extracted risk flags, and optional evidence digest.
+
+Example:
+
+```bash
+pca critique discuss --decision "launch approach" --proposal "pilot in two regions" --critique "Risk exists due to uncertain demand baseline"
+```
 
 ## `route`
 
@@ -236,6 +284,54 @@ Automation guidance:
 - Store artifacts in CI workspace for traceability.
 - Prefer JSON for machine pipelines and Markdown for human review packs.
 
+## `ingest`
+
+Purpose:
+
+Build local evidence digest from dataset/doc sources (`.md`, `.txt`, `.json`, `.csv`).
+
+Syntax:
+
+```bash
+pca ingest --sources <path1,path2,...> [--max-claims-per-doc <1..20>]
+```
+
+Output contract:
+
+- Returns source-level claim digest for local cross-document checks.
+
+Example:
+
+```bash
+pca ingest --sources "reports/a.md,reports/b.md" --max-claims-per-doc 10
+```
+
+## `evidence-check`
+
+Purpose:
+
+Run cross-document claim linkage and contradiction checks, then produce PCA assessment.
+
+Syntax:
+
+```bash
+pca evidence-check <discuss|verify> --sources <path1,path2,...> [--decision <text>] [--context <text>] [--policy <fast|balanced|strict>] [--max-claims-per-doc <1..20>] [--needs-human-review <true|false>]
+```
+
+Output contract:
+
+- Returns:
+	- `evidence.documents[]`
+	- `evidence.links[]` (`support` or `contradiction`)
+	- `evidence.metrics`
+	- `assessment` with governance routing
+
+Example:
+
+```bash
+pca evidence-check verify --decision "release gate" --sources "reports/r1.md,reports/r2.md" --policy strict
+```
+
 ## `help`
 
 Purpose:
@@ -261,7 +357,7 @@ Automation guidance:
 ## Recommended Quality Gates for Every Command Integration
 
 - Validate command exit code.
-- Parse JSON only for `prepare/run/route/assess/persist`.
+- Parse JSON for `prepare/run/propose/critique/route/assess/persist/ingest/evidence-check`.
 - Route `HITL` decisions to explicit human approval.
 - Record command inputs/outputs in run logs.
 - Pin schema assumptions to `SCHEMA.md` and tolerate optional field additions.

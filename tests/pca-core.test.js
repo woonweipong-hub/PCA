@@ -1,11 +1,18 @@
 const test = require('node:test');
 const assert = require('node:assert');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 
 const {
   parseBoolean,
   normalizeRole,
   parseRiskFlags,
   parseScores,
+  buildProposalResult,
+  buildCritiqueResult,
+  ingestSources,
+  buildEvidenceCheck,
   getGovernancePolicy,
   getTopologyConfig,
   getAssessmentFramework,
@@ -89,4 +96,71 @@ test('buildSession workflow diagram is auto-included when cycles exceed 3 and ca
   const topoSession = buildSession({ mode: 'discuss', topology: 'red-team', policy: 'strict', maxCycles: 5 });
   assert.strictEqual(topoSession.orchestration.name, 'red-team');
   assert.strictEqual(topoSession.governance_policy.name, 'strict');
+});
+
+test('ingestSources builds local document digest from markdown files', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pca-ingest-'));
+  const docA = path.join(tmpDir, 'a.md');
+  const docB = path.join(tmpDir, 'b.md');
+  fs.writeFileSync(docA, 'Revenue increased in Q4 due to enterprise expansion. Churn remained stable and onboarding improved.', 'utf8');
+  fs.writeFileSync(docB, 'Q4 revenue grew because enterprise deals expanded. Churn did not increase and onboarding improved.', 'utf8');
+
+  const digest = ingestSources({ sources: [docA, docB], maxClaimsPerDocument: 5 });
+  assert.strictEqual(digest.source_count, 2);
+  assert.strictEqual(digest.documents.length, 2);
+  assert.strictEqual(digest.documents[0].claim_count > 0, true);
+});
+
+test('buildEvidenceCheck returns assessment and contradiction metrics', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pca-evidence-'));
+  const docA = path.join(tmpDir, 'a.md');
+  const docB = path.join(tmpDir, 'b.md');
+  fs.writeFileSync(docA, 'Deployment is safe and no rollback is required. Evidence quality is strong for release.', 'utf8');
+  fs.writeFileSync(docB, 'Deployment is not safe and rollback is required. Evidence quality is weak for release.', 'utf8');
+
+  const result = buildEvidenceCheck({
+    mode: 'verify',
+    decision: 'release gate',
+    sources: [docA, docB],
+    policy: 'strict'
+  });
+
+  assert.strictEqual(result.evidence.source_count, 2);
+  assert.strictEqual(typeof result.evidence.metrics.contradiction_count, 'number');
+  assert.ok(Object.prototype.hasOwnProperty.call(result, 'assessment'));
+});
+
+test('CSV ingestion handles quoted commas correctly', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pca-csv-'));
+  const csvPath = path.join(tmpDir, 'sample.csv');
+  fs.writeFileSync(
+    csvPath,
+    'region,comment,value\nAPAC,"growth, strong",12\nEMEA,"stable, moderate",10\n',
+    'utf8'
+  );
+
+  const digest = ingestSources({ sources: [csvPath] });
+  assert.strictEqual(digest.source_count, 1);
+  assert.strictEqual(digest.total_words > 0, true);
+});
+
+test('propose/critique builders return role payloads', () => {
+  const proposal = buildProposalResult({
+    mode: 'discuss',
+    decision: 'topic',
+    context: 'ctx',
+    proposal: 'Pilot by segment and monitor outcomes.'
+  });
+  assert.strictEqual(proposal.role, 'proposer');
+  assert.ok(proposal.prompt.includes('Proposer'));
+
+  const critique = buildCritiqueResult({
+    mode: 'discuss',
+    decision: 'topic',
+    context: 'ctx',
+    proposal: 'Pilot by segment and monitor outcomes.',
+    critique: 'Risk exists due to uncertain sample and missing baseline.'
+  });
+  assert.strictEqual(critique.role, 'critic');
+  assert.ok(Array.isArray(critique.extracted_risk_flags));
 });

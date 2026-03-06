@@ -58,6 +58,16 @@ Optional global executable:
 npm install -g .
 ```
 
+### Free/Open Local Model Path
+
+PCA can run without paid APIs using local OSS models via Ollama:
+
+1. Install Ollama: https://ollama.com/download
+2. Pull models, for example: `qwen2.5:7b`, `llama3.1:8b`, `qwen2.5:14b`
+3. Run adapter: `node integrations/ollama/adapter.js discuss --decision "..." --context "..."`
+
+Model selection strategy and routing patterns: `docs/MODEL-ROUTING.md`
+
 ## Commands
 
 Full command specification (syntax, flags, outputs, failure modes): `docs/COMMAND-REFERENCE.md`
@@ -76,6 +86,22 @@ Current standalone alias for `prepare`.
 
 ```bash
 node bin/pca.js run verify --decision "Release readiness" --context "UAT shows intermittent errors"
+```
+
+### `propose`
+
+Builds proposer role payload and prompt, optionally with local evidence digest.
+
+```bash
+node bin/pca.js propose discuss --decision "Should we split the service?" --sources "reports/a.md,reports/b.md"
+```
+
+### `critique`
+
+Builds critic role payload and extracts risk flags from critique text.
+
+```bash
+node bin/pca.js critique discuss --decision "Should we split the service?" --proposal "Split by domain" --critique "Risk due to unclear ownership and missing rollback details"
 ```
 
 ### `route`
@@ -108,6 +134,22 @@ Prints concise CLI usage in terminal.
 
 ```bash
 node bin/pca.js help
+```
+
+### `ingest`
+
+Build local claim digest from files (`.md`, `.txt`, `.json`, `.csv`) without sending data off-server.
+
+```bash
+node bin/pca.js ingest --sources "reports/a.md,reports/b.csv"
+```
+
+### `evidence-check`
+
+Run cross-document checks (support vs contradiction) and generate PCA assessment.
+
+```bash
+node bin/pca.js evidence-check verify --decision "release gate" --sources "reports/a.md,reports/b.md" --policy strict
 ```
 
 ## Governance Model

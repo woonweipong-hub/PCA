@@ -63,6 +63,38 @@ test('prepare supports topology and governance policy options', () => {
   assert.strictEqual(output.governance_policy.name, 'strict');
 });
 
+test('propose command returns proposer payload', () => {
+  const result = runCli([
+    'propose',
+    'discuss',
+    '--decision',
+    'launch topic',
+    '--context',
+    'q4'
+  ]);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.strictEqual(output.role, 'proposer');
+  assert.ok(output.prompt.includes('Proposer'));
+});
+
+test('critique command returns critic payload', () => {
+  const result = runCli([
+    'critique',
+    'discuss',
+    '--decision',
+    'launch topic',
+    '--proposal',
+    'pilot in two regions',
+    '--critique',
+    'Risk exists due to uncertain evidence.'
+  ]);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.strictEqual(output.role, 'critic');
+  assert.ok(Array.isArray(output.extracted_risk_flags));
+});
+
 test('assess accepts criterion scores and returns score summary', () => {
   const result = runCli([
     'assess',
@@ -145,4 +177,43 @@ test('invalid policy returns readable error', () => {
   const result = runCli(['prepare', 'discuss', '--policy', 'extreme']);
   assert.notStrictEqual(result.status, 0);
   assert.ok(result.stderr.includes("policy must be 'fast', 'balanced', or 'strict'"));
+});
+
+test('ingest command summarizes local source files', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pca-cli-ingest-'));
+  const sourceA = path.join(tmpDir, 'source-a.md');
+  const sourceB = path.join(tmpDir, 'source-b.md');
+  fs.writeFileSync(sourceA, 'Customer retention improved and defects decreased in Q4. The process became more stable.', 'utf8');
+  fs.writeFileSync(sourceB, 'Q4 showed improved retention and fewer defects. Team process quality improved.', 'utf8');
+
+  const result = runCli(['ingest', '--sources', `${sourceA},${sourceB}`]);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.strictEqual(output.source_count, 2);
+  assert.strictEqual(output.total_claims > 0, true);
+});
+
+test('evidence-check command returns evidence metrics with assessment', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pca-cli-evidence-'));
+  const sourceA = path.join(tmpDir, 'source-a.md');
+  const sourceB = path.join(tmpDir, 'source-b.md');
+  fs.writeFileSync(sourceA, 'This release is safe and does not require rollback. Evidence quality is high.', 'utf8');
+  fs.writeFileSync(sourceB, 'This release is not safe and requires rollback. Evidence quality is uncertain.', 'utf8');
+
+  const result = runCli([
+    'evidence-check',
+    'verify',
+    '--decision',
+    'release gate',
+    '--sources',
+    `${sourceA},${sourceB}`,
+    '--policy',
+    'strict'
+  ]);
+
+  assert.strictEqual(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.strictEqual(output.mode, 'verify');
+  assert.ok(Object.prototype.hasOwnProperty.call(output, 'evidence'));
+  assert.ok(Object.prototype.hasOwnProperty.call(output, 'assessment'));
 });

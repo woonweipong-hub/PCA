@@ -13,6 +13,12 @@ It applies structured debate, quality checks, and explicit governance (`HITL`/`H
 ╚═╝       ╚═════╝   ╚═╝  ╚═╝
 ```
 
+## About The Author
+
+I am a trained building architect and a working public servant, not a professional coder. I use AI to work smarter and build practical tools for the building and construction industry. My work focuses on automating compliance checks, improving design workflows, and exploring multi-agent AI patterns that help practitioners deliver safer, higher-quality buildings with less manual effort.
+
+LinkedIn: `https://www.linkedin.com/in/woonwei/`
+
 ## Why PCA
 
 - Independent workflow: use PCA in any project or stack.
@@ -86,9 +92,13 @@ pca prepare discuss --decision "Architecture framing" --context "Phase 1 migrati
 |---|---|---|
 | `pca prepare <discuss|verify>` | Build PCA session contract (framework + prompts) | JSON session object |
 | `pca run <discuss|verify>` | Current alias of `prepare` for standalone MVP | JSON session object |
+| `pca propose <discuss|verify>` | Build proposer payload and prompt | JSON proposer object |
+| `pca critique <discuss|verify>` | Build critic payload, prompt, and extracted risks | JSON critic object |
 | `pca route <discuss|verify>` | Compute governance routing from verdict/risk | JSON with `human_control` |
 | `pca assess <discuss|verify>` | Build final PCA assessment payload | JSON assessment object |
 | `pca persist <discuss|verify>` | Save assessment output to disk | JSON receipt + saved file |
+| `pca ingest` | Ingest local sources into claim digest | JSON evidence digest |
+| `pca evidence-check <discuss|verify>` | Cross-document support/contradiction checks + assessment | JSON evidence + assessment |
 | `pca help` | Show CLI usage and examples | Plain text reference |
 
 Detailed per-command reference: `docs/COMMAND-REFERENCE.md`
@@ -102,6 +112,10 @@ node bin/pca.js prepare discuss --decision "service boundary" --context "latency
 # Verify risk routing
 node bin/pca.js route verify --verdict "accepted-with-conditions" --risk-flags "partial coverage"
 
+# Role payloads for Propose and Critique
+node bin/pca.js propose discuss --decision "service boundary" --sources "reports/a.md,reports/b.md"
+node bin/pca.js critique discuss --decision "service boundary" --proposal "split by domain" --critique "Risk due to missing ownership model"
+
 # Build final assessment payload
 node bin/pca.js assess verify --verdict "accepted" --judgement "Evidence is reproducible"
 
@@ -110,6 +124,12 @@ node bin/pca.js persist verify --verdict "needs-human-review" --risk-flags "unce
 
 # Force human decision
 node bin/pca.js route verify --verdict "needs-human-review" --needs-human-review true
+
+# Ingest local documents/datasets (local server path)
+node bin/pca.js ingest --sources "reports/a.md,reports/b.json,reports/c.csv"
+
+# Cross-document evidence check with strict governance
+node bin/pca.js evidence-check verify --decision "release gate" --sources "reports/a.md,reports/b.md" --policy strict
 ```
 
 ## Quality Standard (GSD-Inspired)
@@ -139,8 +159,11 @@ PCA is adapter-ready. Start with templates in:
 
 - `integrations/copilot/`
 - `integrations/gemini-antigravity/`
+- `integrations/ollama/` (free/open local models)
 
 All integrations should consume the stable contract in `SCHEMA.md`.
+
+Model routing guide (single-model, split-role, hybrid): `docs/MODEL-ROUTING.md`
 
 ## Public Redevelopment
 

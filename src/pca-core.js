@@ -1,6 +1,8 @@
 const VALID_MODES = new Set(['discuss', 'verify']);
 const VALID_POLICIES = new Set(['fast', 'balanced', 'strict']);
 const VALID_TOPOLOGIES = new Set(['single-critic', 'multi-critic', 'red-team']);
+const fs = require('fs');
+const path = require('path');
 const WORKFLOW_DIAGRAM = [
   'flowchart TD',
   '  A[Decision + context] --> B[pca prepare or run]',
@@ -62,6 +64,363 @@ function parseScores(value) {
       acc[key] = Math.max(0, Math.min(score, 5));
       return acc;
     }, {});
+}
+
+function parseDelimitedList(value) {
+  if (!value) return [];
+  return String(value)
+    .split(/[;,\n]/)
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
+function splitIntoSentences(text) {
+  return String(text || '')
+    .replace(/\r\n/g, '\n')
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function tokenizeText(text) {
+  const stopWords = new Set(['the', 'and', 'for', 'with', 'that', 'this', 'from', 'into', 'are', 'was', 'were', 'have', 'has', 'had', 'will', 'would', 'should', 'could', 'about', 'their', 'there', 'which', 'when', 'where', 'what', 'your', 'while', 'than', 'then', 'also', 'only', 'over', 'under', 'very', 'more', 'most', 'less', 'least']);
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 3 && !stopWords.has(t));
+}
+
+function hasNegationSignal(text) {
+  return /\b(no|not|never|without|cannot|can't|wont|won't|decline|decrease|drop|fail|failed)\b/i.test(String(text || ''));
+}
+
+function toTextFromJson(value, parentKey = '') {
+  if (value === null || value === undefined) return [];
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    const prefix = parentKey ? `${parentKey}: ` : '';
+    return [`${prefix}${String(value)}`];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap((item, idx) => toTextFromJson(item, `${parentKey}[${idx}]`));
+  }
+  if (typeof value === 'object') {
+    return Object.keys(value).flatMap((key) => {
+      const nextKey = parentKey ? `${parentKey}.${key}` : key;
+      return toTextFromJson(value[key], nextKey);
+    });
+  }
+  return [];
+}
+
+function parseCsvToLines(raw) {
+  function parseCsvRow(row) {
+    const cells = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < row.length; i += 1) {
+      const char = row[i];
+      const nextChar = row[i + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          current += '"';
+          i += 1;
+          continue;
+        }
+        inQuotes = !inQuotes;
+        continue;
+      }
+
+      if (char === ',' && !inQuotes) {
+        cells.push(current.trim());
+        current = '';
+        continue;
+      }
+
+      current += char;
+    }
+
+    cells.push(current.trim());
+    return cells;
+  }
+
+  const lines = String(raw || '')
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  if (lines.length <= 1) return [];
+  const headers = parseCsvRow(lines[0]);
+  return lines.slice(1, 201).map((row, idx) => {
+    const cols = parseCsvRow(row);
+    const pairs = headers.map((h, i) => `${h}=${cols[i] || ''}`).join(', ');
+    return `row ${idx + 1}: ${pairs}`;
+  });
+}
+
+function readSourceText(sourcePath) {
+  const absolutePath = path.resolve(sourcePath);
+  const ext = path.extname(absolutePath).toLowerCase();
+  const raw = fs.readFileSync(absolutePath, 'utf-8');
+
+  if (ext === '.json') {
+    try {
+      const parsed = JSON.parse(raw);
+      return toTextFromJson(parsed).join('\n');
+    } catch (_error) {
+      return raw;
+    }
+  }
+
+  if (ext === '.csv') {
+    return parseCsvToLines(raw).join('\n');
+  }
+
+  return raw;
+}
+
+function buildDocumentDigest({ source, text, maxClaims = 8 }) {
+  const sentences = splitIntoSentences(text);
+  const claims = [];
+
+  for (let i = 0; i < sentences.length; i += 1) {
+    const sentence = sentences[i];
+    if (sentence.length < 30 || sentence.length > 320) continue;
+    const tokens = tokenizeText(sentence);
+    if (tokens.length < 5) continue;
+    claims.push({
+      claim_id: `${path.basename(source)}:${claims.length + 1}`,
+      text: sentence,
+      tokens,
+      has_negation: hasNegationSignal(sentence)
+    });
+    if (claims.length >= maxClaims) break;
+  }
+
+  return {
+    source,
+    word_count: tokenizeText(text).length,
+    claim_count: claims.length,
+    claims
+  };
+}
+
+function jaccardSimilarity(tokensA, tokensB) {
+  const a = new Set(tokensA || []);
+  const b = new Set(tokensB || []);
+  if (a.size === 0 || b.size === 0) return 0;
+  let intersection = 0;
+  for (const token of a) {
+    if (b.has(token)) intersection += 1;
+  }
+  const union = a.size + b.size - intersection;
+  return union === 0 ? 0 : intersection / union;
+}
+
+function compareDocumentsForEvidence(documents) {
+  const links = [];
+
+  for (let i = 0; i < documents.length; i += 1) {
+    for (let j = i + 1; j < documents.length; j += 1) {
+      const left = documents[i];
+      const right = documents[j];
+
+      left.claims.forEach((leftClaim) => {
+        right.claims.forEach((rightClaim) => {
+          const similarity = jaccardSimilarity(leftClaim.tokens, rightClaim.tokens);
+          if (similarity < 0.35) return;
+
+          const contradiction = similarity >= 0.4 && leftClaim.has_negation !== rightClaim.has_negation;
+          links.push({
+            left_source: left.source,
+            left_claim_id: leftClaim.claim_id,
+            right_source: right.source,
+            right_claim_id: rightClaim.claim_id,
+            relation: contradiction ? 'contradiction' : 'support',
+            similarity: Number(similarity.toFixed(3))
+          });
+        });
+      });
+    }
+  }
+
+  return links;
+}
+
+function ingestSources({ sources, maxClaimsPerDocument = 8 }) {
+  const parsedSources = Array.isArray(sources) ? sources : parseDelimitedList(sources);
+  if (parsedSources.length === 0) {
+    throw new Error('ingest requires --sources <path1,path2,...>');
+  }
+
+  const documents = parsedSources.map((source) => {
+    const text = readSourceText(source);
+    return buildDocumentDigest({
+      source,
+      text,
+      maxClaims: Math.max(1, Math.min(Number(maxClaimsPerDocument) || 8, 20))
+    });
+  });
+
+  const totalClaims = documents.reduce((sum, doc) => sum + doc.claim_count, 0);
+  const totalWords = documents.reduce((sum, doc) => sum + doc.word_count, 0);
+
+  return {
+    source_count: documents.length,
+    total_claims: totalClaims,
+    total_words: totalWords,
+    documents
+  };
+}
+
+function buildEvidenceCheck({ mode, decision, context, sources, maxClaimsPerDocument, policy, needsHumanReview }) {
+  assertMode(mode);
+  const ingested = ingestSources({ sources, maxClaimsPerDocument });
+  const claimLinks = compareDocumentsForEvidence(ingested.documents);
+
+  const contradictionCount = claimLinks.filter((l) => l.relation === 'contradiction').length;
+  const supportCount = claimLinks.filter((l) => l.relation === 'support').length;
+  const totalLinks = claimLinks.length;
+  const corroborationRatio = totalLinks ? supportCount / totalLinks : 0;
+  const contradictionRatio = totalLinks ? contradictionCount / totalLinks : 0;
+  const sourceCoverage = ingested.source_count > 1 ? Math.min(1, totalLinks / Math.max(1, ingested.total_claims / 2)) : 0;
+
+  const autoScores = mode === 'verify'
+    ? {
+      evidence_quality: Number((Math.max(0, Math.min(1, corroborationRatio - contradictionRatio)) * 5).toFixed(2)),
+      release_safety: Number((Math.max(0, 1 - contradictionRatio) * 5).toFixed(2)),
+      user_impact: Number((Math.max(0, 1 - contradictionRatio * 1.2) * 5).toFixed(2)),
+      completeness: Number((Math.max(0, sourceCoverage) * 5).toFixed(2))
+    }
+    : {
+      scope_alignment: Number((Math.max(0, sourceCoverage) * 5).toFixed(2)),
+      assumption_quality: Number((Math.max(0, 1 - contradictionRatio) * 5).toFixed(2)),
+      strategy_clarity: Number((Math.max(0, corroborationRatio) * 5).toFixed(2)),
+      completeness: Number((Math.max(0, sourceCoverage) * 5).toFixed(2))
+    };
+
+  const riskFlags = [];
+  if (ingested.source_count < 2) riskFlags.push('single-source-evidence');
+  if (ingested.total_claims < 4) riskFlags.push('limited-claim-coverage');
+  if (contradictionCount > 0) riskFlags.push(`cross-document-contradictions:${contradictionCount}`);
+  if (sourceCoverage < 0.3) riskFlags.push('low-cross-document-linkage');
+
+  const verdict = contradictionCount > 0
+    ? 'needs-human-review'
+    : (sourceCoverage >= 0.5 && corroborationRatio >= 0.55 ? 'accepted' : 'accepted-with-conditions');
+
+  const judgement = [
+    `Cross-document check completed for ${ingested.source_count} source(s).`,
+    `Support links: ${supportCount}. Contradictions: ${contradictionCount}.`,
+    `Coverage ratio: ${Number(sourceCoverage.toFixed(3))}.`
+  ].join(' ');
+
+  const actions = contradictionCount > 0
+    ? 'Resolve contradictory claims with source owner review before execution.'
+    : 'Proceed with tracked actions and monitor flagged evidence gaps.';
+
+  const assessment = buildAssessmentResult({
+    mode,
+    verdict,
+    judgement,
+    actions,
+    needsHumanReview,
+    riskFlags,
+    scores: autoScores,
+    policy
+  });
+
+  return {
+    mode,
+    decision: decision || null,
+    context: context || null,
+    evidence: {
+      ...ingested,
+      links: claimLinks,
+      metrics: {
+        support_count: supportCount,
+        contradiction_count: contradictionCount,
+        corroboration_ratio: Number(corroborationRatio.toFixed(3)),
+        contradiction_ratio: Number(contradictionRatio.toFixed(3)),
+        source_coverage_ratio: Number(sourceCoverage.toFixed(3))
+      }
+    },
+    assessment
+  };
+}
+
+function buildProposalResult({ mode, decision, context, proposal, sources, maxClaimsPerDocument, topology = 'single-critic', policy = 'balanced' }) {
+  assertMode(mode);
+  const session = buildSession({ mode, decision, context, topology, policy });
+  const ingested = sources
+    ? ingestSources({ sources, maxClaimsPerDocument })
+    : null;
+
+  return {
+    mode,
+    role: 'proposer',
+    decision: decision || null,
+    context: context || null,
+    prompt: session.prompts.proposal,
+    proposal: proposal ? summarizeForChat(proposal) : null,
+    evidence_digest: ingested
+      ? {
+        source_count: ingested.source_count,
+        total_claims: ingested.total_claims,
+        total_words: ingested.total_words
+      }
+      : null,
+    next_step: 'Run pca critique with --proposal to challenge assumptions and identify risks.'
+  };
+}
+
+function extractRiskFlagsFromText(text) {
+  const normalized = String(text || '').toLowerCase();
+  const candidates = [
+    ['uncertain', 'uncertain-evidence'],
+    ['contradiction', 'cross-document-contradiction'],
+    ['risk', 'risk-mentioned'],
+    ['gap', 'evidence-gap'],
+    ['missing', 'missing-information'],
+    ['rollback', 'rollback-risk']
+  ];
+
+  return candidates
+    .filter(([needle]) => normalized.includes(needle))
+    .map(([, flag]) => flag);
+}
+
+function buildCritiqueResult({ mode, decision, context, proposal, critique, sources, maxClaimsPerDocument, topology = 'single-critic', policy = 'balanced' }) {
+  assertMode(mode);
+  const session = buildSession({ mode, decision, context, topology, policy });
+  const ingested = sources
+    ? ingestSources({ sources, maxClaimsPerDocument })
+    : null;
+  const critiqueSummary = critique ? summarizeForChat(critique) : null;
+  const extractedRiskFlags = extractRiskFlagsFromText(critiqueSummary);
+
+  return {
+    mode,
+    role: 'critic',
+    decision: decision || null,
+    context: context || null,
+    proposal: proposal ? summarizeForChat(proposal) : null,
+    prompt: buildCriticPrompt(mode, decision, proposal || null, context, topology),
+    critique: critiqueSummary,
+    extracted_risk_flags: extractedRiskFlags,
+    evidence_digest: ingested
+      ? {
+        source_count: ingested.source_count,
+        total_claims: ingested.total_claims,
+        total_words: ingested.total_words
+      }
+      : null,
+    next_step: 'Run pca assess with --risk-flags and --scores for final governance routing.'
+  };
 }
 
 function normalizePolicy(policy) {
@@ -477,6 +836,11 @@ module.exports = {
   summarizeForChat,
   parseRiskFlags,
   parseScores,
+  parseDelimitedList,
+  ingestSources,
+  buildEvidenceCheck,
+  buildProposalResult,
+  buildCritiqueResult,
   normalizePolicy,
   getGovernancePolicy,
   normalizeTopology,
