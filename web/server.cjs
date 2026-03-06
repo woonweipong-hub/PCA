@@ -72,7 +72,7 @@ function isAllowedPath(targetPath) {
 
 function ensureAllowedPath(targetPath, label = 'path') {
   if (!isAllowedPath(targetPath)) {
-    throw new Error(`${label} is outside allowed roots`);
+    throw createHttpError(403, `${label} is outside allowed roots`);
   }
   return targetPath;
 }
@@ -80,7 +80,7 @@ function ensureAllowedPath(targetPath, label = 'path') {
 function ensureAllowedExistingDirectory(targetPath, label = 'directory') {
   const normalized = ensureAllowedPath(path.normalize(targetPath), label);
   if (!fs.existsSync(normalized) || !fs.statSync(normalized).isDirectory()) {
-    throw new Error(`${label} does not exist or is not a directory`);
+    throw createHttpError(400, `${label} does not exist or is not a directory`);
   }
   return normalized;
 }
@@ -88,7 +88,7 @@ function ensureAllowedExistingDirectory(targetPath, label = 'directory') {
 function ensureAllowedExistingFileOrDirectory(targetPath, label = 'path') {
   const normalized = ensureAllowedPath(path.normalize(targetPath), label);
   if (!fs.existsSync(normalized)) {
-    throw new Error(`${label} does not exist`);
+    throw createHttpError(400, `${label} does not exist`);
   }
   return normalized;
 }

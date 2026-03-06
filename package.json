@@ -11,6 +11,7 @@
     "smoke:copilot": "node scripts/runtime-smoke.cjs copilot",
     "smoke:antigravity": "node scripts/runtime-smoke.cjs antigravity",
     "smoke:runtimes": "node scripts/runtime-smoke.cjs copilot antigravity",
+    "smoke:web-security": "node scripts/web-security-smoke.cjs",
     "adapter:byom": "node integrations/byom/adapter.js",
     "convert:pdf": "node scripts/convert-pdf-batch.cjs",
     "ocr:pdf": "node scripts/ocr-pdf-batch.cjs",
