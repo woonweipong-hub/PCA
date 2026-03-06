@@ -2,6 +2,8 @@
 
 Thanks for helping improve PCA.
 
+"This project is independently developed. Any similarity to other systems reflects common industry patterns (for example proposer/critic/evaluator workflows) and does not imply code, prompt, or proprietary method reuse."
+
 ## Project Goals
 
 - Keep `pca-core` runtime-agnostic.
@@ -15,6 +17,7 @@ Thanks for helping improve PCA.
 3. Add or update tests.
 4. Run `npm test`.
 5. Update docs when behavior changes.
+6. If external concepts were referenced, update `docs/PRIOR-ART.md`.
 
 ## Release Checklist
 
@@ -55,3 +58,4 @@ Before changing output fields:
 - Do not commit credentials.
 - Do not include confidential user data in examples.
 - Keep public Q&A data anonymized.
+- Track conceptual references in `docs/PRIOR-ART.md` and avoid proprietary reuse.

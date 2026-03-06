@@ -70,6 +70,12 @@ Optional global executable:
 npm install -g .
 ```
 
+Web UI (local-first, downloadable artifacts, online deployment guidance): `docs/WEB-UI.md`
+
+For live visibility, use the Web UI `Run Live Debate x3` action to stream proposer/critic/assessor events and a final human checkpoint.
+
+Antigravity integration (CLI-only and hybrid UI workflows): `docs/ANTIGRAVITY-INTEGRATION.md`
+
 ### Free/Open Local Model Path
 
 PCA can run without paid APIs using local OSS models via Ollama:

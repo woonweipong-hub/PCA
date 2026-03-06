@@ -4,6 +4,8 @@ PCA (Propose-Critique-Assess) is a standalone quality workflow engine inspired b
 
 It applies structured debate, quality checks, and explicit governance (`HITL`/`HOTL`) to improve decision quality before execution.
 
+"This project is independently developed. Any similarity to other systems reflects common industry patterns (for example proposer/critic/evaluator workflows) and does not imply code, prompt, or proprietary method reuse."
+
 ```text
 ██████╗   ██████╗    █████╗
 ██╔══██╗ ██╔════╝   ██╔══██╗
@@ -52,6 +54,8 @@ Expected outcomes:
 - Better downstream execution safety via explicit human control gates.
 
 Contract details for all outputs are defined in `SCHEMA.md`.
+
+Prior art and acknowledgement log: `docs/PRIOR-ART.md`.
 
 ## Workflow Diagram
 
@@ -112,6 +116,20 @@ node bin/pca.js prepare discuss --decision "API strategy" --context "Migrate saf
 npm install -g .
 pca prepare discuss --decision "Architecture framing" --context "Phase 1 migration"
 ```
+
+## Web UI
+
+PCA includes a local-first web UI for running OCR, conversion, quality checks, evidence checks, and downloading run artifacts.
+
+```bash
+npm run ui:start
+```
+
+Open `http://localhost:4173`.
+
+Web UI guide (local + online deployment): `docs/WEB-UI.md`
+
+Antigravity integration guide (CLI-only and hybrid UI workflows): `docs/ANTIGRAVITY-INTEGRATION.md`
 
 ## Command Reference
 
@@ -210,10 +228,14 @@ PCA is adapter-ready. Start with templates in:
 - `integrations/copilot/`
 - `integrations/gemini-antigravity/`
 - `integrations/ollama/` (free/open local models)
+- `integrations/byom/` (OpenAI-compatible bring-your-own-model setup)
+- `integrations/gsd/` (install PCA as GSD quality overlay)
 
 All integrations should consume the stable contract in `SCHEMA.md`.
 
 Model routing guide (single-model, split-role, hybrid): `docs/MODEL-ROUTING.md`
+
+GSD integration guide: `docs/GSD-INTEGRATION.md`
 
 Use-case library (optional examples built on PCA core):
 

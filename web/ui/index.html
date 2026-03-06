@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PCA Control Desk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="bg-layer"></div>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">PCA Web UI</p>
+      <h1>Control Desk for Evidence and Governance</h1>
+      <p class="subtitle">Run OCR, conversion, quality gates, and evidence checks from one place. Download machine-readable artifacts after every run.</p>
+    </header>
+
+    <section class="panel grid-two">
+      <article class="card">
+        <h2>Corpus Setup</h2>
+        <label>Input PDF Folder</label>
+        <input id="inputDir" value="C:\\2026_Research\\Assets" />
+
+        <label>OCR Output Folder</label>
+        <input id="ocrDir" value="data/public-pdf-ocr" />
+
+        <label>Text Output Folder</label>
+        <input id="textDir" value="data/public-pdf-text" />
+
+        <div class="actions">
+          <button id="btnOcr" class="ghost">Run OCR Preprocess</button>
+          <button id="btnConvert">Convert PDF to TXT</button>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Quality and Evidence</h2>
+        <label>Objective</label>
+        <input id="objective" value="Produce a defensible compliance interpretation." />
+
+        <label>Decision</label>
+        <input id="decision" value="Interpret regulatory requirements" />
+
+        <label>Context</label>
+        <textarea id="context">Cross-document support and contradiction review for compliance decisions.</textarea>
+
+        <label>Expectations (one per line)</label>
+        <textarea id="expectations">Clear recommendation
+      Key assumptions listed
+      Risk flags and escalation path</textarea>
+
+        <label>Research Needs (one per line)</label>
+        <textarea id="researchNeeds">Find latest public regulations
+      Find contradiction points across sources
+      Find edge-case requirements</textarea>
+
+        <label>Constraints (one per line)</label>
+        <textarea id="constraints">Use only approved/public datasets
+      Escalate unresolved high-risk conflicts</textarea>
+
+        <label class="inline-check">
+          <input id="activeSearchEnabled" type="checkbox" />
+          Enable active AI search plan (query suggestions + task plan)
+        </label>
+
+        <div class="inline-grid">
+          <div>
+            <label>Policy</label>
+            <select id="policy">
+              <option>strict</option>
+              <option>balanced</option>
+              <option>fast</option>
+            </select>
+          </div>
+          <div>
+            <label>Runtime Provider</label>
+            <select id="runtimeProvider">
+              <option value="copilot">copilot</option>
+              <option value="antigravity">antigravity</option>
+              <option value="byom">byom</option>
+              <option value="ollama" selected>ollama</option>
+              <option value="other">other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="inline-grid">
+          <div>
+            <label>Max Files</label>
+            <input id="maxFiles" type="number" value="200" />
+          </div>
+          <div>
+            <label>Debate Cycles</label>
+            <input id="debateCycles" type="number" min="1" max="5" value="3" />
+          </div>
+        </div>
+
+        <div class="inline-grid">
+          <div>
+            <label>Min Sources</label>
+            <input id="minSources" type="number" value="2" />
+          </div>
+          <div>
+            <label>Min Total Claims</label>
+            <input id="minClaims" type="number" value="6" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="btnFramework" class="ghost">Propose Framework</button>
+          <button id="btnResearch" class="ghost">Run Research Pack</button>
+          <button id="btnQuality" class="ghost">Run Quality Check</button>
+          <button id="btnEvidence">Run Evidence Check</button>
+          <button id="btnPipeline" class="accent">Run Full Pipeline</button>
+          <button id="btnLiveDebate" class="accent">Run Live Debate x3</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <article class="card">
+        <div class="card-head">
+          <h2>Live Debate Timeline</h2>
+          <span class="mono" id="debateState">Not started</span>
+        </div>
+        <ul id="debateTimeline" class="timeline-list">
+          <li class="timeline-empty">No debate run yet.</li>
+        </ul>
+        <div id="humanCheckpoint" class="checkpoint-card hidden">
+          <h3>Human Checkpoint</h3>
+          <p id="checkpointDecision"></p>
+          <p id="checkpointReason" class="muted"></p>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel grid-two">
+      <article class="card">
+        <h2>Framework Snapshot</h2>
+        <pre id="frameworkView">Framework not loaded yet.</pre>
+      </article>
+      <article class="card">
+        <h2>Scoring Snapshot</h2>
+        <pre id="scoringView">Scoring not loaded yet.</pre>
+      </article>
+    </section>
+
+    <section class="panel grid-two">
+      <article class="card tall">
+        <h2>Latest Result</h2>
+        <pre id="resultView">No run yet.</pre>
+      </article>
+
+      <article class="card tall">
+        <div class="card-head">
+          <h2>Artifacts</h2>
+          <button id="btnRefreshArtifacts" class="ghost slim">Refresh</button>
+        </div>
+        <ul id="artifactList" class="artifact-list"></ul>
+      </article>
+    </section>
+
+    <footer class="statusbar">
+      <span id="status">Idle</span>
+    </footer>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

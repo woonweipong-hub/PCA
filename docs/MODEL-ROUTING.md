@@ -14,6 +14,8 @@ Fastest free/open route:
 
 No paid API is required for this path.
 
+If you already use Copilot (VS Code) or Antigravity, keep those as your runtime and place PCA on top for structured debate/governance.
+
 ## Routing Modes
 
 ### 1) Single-Model
@@ -84,6 +86,20 @@ When running `strict`, escalate to human review if:
     "provider": "premium"
   }
 }
+```
+
+## Bring Your Own Models (BYOM)
+
+PCA now includes a generic adapter for OpenAI-compatible endpoints:
+
+- `integrations/byom/adapter.js`
+
+This allows role-based model routing (`proposal`, `critic`, `assess`) across local or hosted providers without modifying PCA core.
+
+Example:
+
+```bash
+npm run adapter:byom -- verify --decision "Release readiness" --endpoint "http://localhost:11434/v1" --api-key "none" --model-proposal "qwen2.5:7b" --model-critic "llama3.1:8b" --model-assess "qwen2.5:14b" --policy strict
 ```
 
 ## Integration Principles

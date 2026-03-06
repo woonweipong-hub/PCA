@@ -6,6 +6,7 @@ Current templates:
 - `integrations/copilot/`
 - `integrations/gemini-antigravity/`
 - `integrations/ollama/`
+- `integrations/byom/`
 
 Integration contract is defined in `SCHEMA.md`.
 
