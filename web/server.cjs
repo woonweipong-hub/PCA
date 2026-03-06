@@ -14,6 +14,14 @@ const PROJECT_ROOT = path.resolve(__dirname, '..');
 const ARTIFACT_DIR = path.join(PROJECT_ROOT, 'outputs', 'ui');
 const DATA_ROOT = path.join(PROJECT_ROOT, 'data');
 const OUTPUT_ROOT = path.join(PROJECT_ROOT, 'outputs');
+const EXTRA_ALLOWED_HOSTS = String(process.env.PCA_UI_ALLOWED_HOSTS || '')
+  .split(/[;,]/)
+  .map((value) => String(value || '').trim().toLowerCase())
+  .filter(Boolean);
+const EXTRA_ALLOWED_ORIGINS = String(process.env.PCA_UI_ALLOWED_ORIGINS || '')
+  .split(/[;,]/)
+  .map((value) => String(value || '').trim())
+  .filter(Boolean);
 const EXTRA_ALLOWED_ROOTS = String(process.env.PCA_UI_ALLOWED_ROOTS || '')
   .split(path.delimiter)
   .map((value) => String(value || '').trim())
@@ -33,6 +41,18 @@ const ALLOWED_ROOTS = Array.from(new Set([
     return false;
   }
 });
+const ALLOWED_HOSTS = Array.from(new Set([
+  '127.0.0.1',
+  'localhost',
+  '::1',
+  String(HOST || '').trim().toLowerCase()
+    .replace(/^\[(.*)\]$/, '$1'),
+  ...EXTRA_ALLOWED_HOSTS
+].filter(Boolean)));
+const ALLOWED_ORIGINS = Array.from(new Set([
+  ...ALLOWED_HOSTS.map((hostValue) => `http://${hostValue.includes(':') ? `[${hostValue}]` : hostValue}:${PORT}`),
+  ...EXTRA_ALLOWED_ORIGINS
+]));
 
 fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
 
@@ -71,6 +91,106 @@ function ensureAllowedExistingFileOrDirectory(targetPath, label = 'path') {
     throw new Error(`${label} does not exist`);
   }
   return normalized;
+}
+
+function createHttpError(statusCode, message) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+}
+
+function parseRequestHostname(req) {
+  const rawHost = String(req.headers.host || '').trim();
+  if (!rawHost) return '';
+  try {
+    return new URL(`http://${rawHost}`).hostname.toLowerCase().replace(/^\[(.*)\]$/, '$1');
+  } catch (_error) {
+    return '';
+  }
+}
+
+function assertAllowedHostHeader(req) {
+  const hostname = parseRequestHostname(req);
+  if (!hostname || !ALLOWED_HOSTS.includes(hostname)) {
+    throw createHttpError(403, 'host header is not allowed');
+  }
+}
+
+function assertAllowedOrigin(req) {
+  const origin = String(req.headers.origin || '').trim();
+  if (!origin) return;
+  if (!ALLOWED_ORIGINS.includes(origin)) {
+    throw createHttpError(403, 'origin is not allowed');
+  }
+}
+
+function assertJsonPost(req) {
+  if (req.method !== 'POST') return;
+  const contentType = String(req.headers['content-type'] || '').toLowerCase();
+  if (!contentType.startsWith('application/json')) {
+    throw createHttpError(415, 'content-type must be application/json');
+  }
+}
+
+function resolveDirectoryInput(targetPath, fallbackPath, label) {
+  const candidate = String(targetPath || '').trim();
+  const resolved = candidate
+    ? (path.isAbsolute(candidate)
+      ? path.normalize(candidate)
+      : path.normalize(path.resolve(PROJECT_ROOT, candidate)))
+    : path.normalize(path.resolve(PROJECT_ROOT, fallbackPath));
+  return ensureAllowedExistingDirectory(resolved, label);
+}
+
+function normalizeAllowedSourceInput(value) {
+  if (value === undefined || value === null || String(value).trim() === '') return '';
+  return parseSourceList(value)
+    .map((entry) => toUiPath(resolveSourcePath(entry)))
+    .join(',');
+}
+
+function normalizeSafeHttpUrl(value, label) {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return '';
+  let parsed;
+  try {
+    parsed = new URL(trimmed);
+  } catch (_error) {
+    throw createHttpError(400, `${label} must be a valid http or https URL`);
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw createHttpError(400, `${label} must use http or https`);
+  }
+  if (parsed.username || parsed.password) {
+    throw createHttpError(400, `${label} must not include embedded credentials`);
+  }
+  return parsed.toString().replace(/\/$/, '');
+}
+
+function sanitizeRequestBody(body) {
+  const sanitized = body && typeof body === 'object' ? { ...body } : {};
+  if (Object.prototype.hasOwnProperty.call(sanitized, 'sources')) {
+    sanitized.sources = normalizeAllowedSourceInput(sanitized.sources);
+  }
+  if (Object.prototype.hasOwnProperty.call(sanitized, 'inputDir')) {
+    sanitized.inputDir = toUiPath(resolveDirectoryInput(sanitized.inputDir, 'data', 'input directory'));
+  }
+  if (Object.prototype.hasOwnProperty.call(sanitized, 'textDir')) {
+    sanitized.textDir = toUiPath(resolveDirectoryInput(sanitized.textDir, 'data/public-pdf-text', 'text directory'));
+  }
+  if (Object.prototype.hasOwnProperty.call(sanitized, 'ocrDir')) {
+    sanitized.ocrDir = toUiPath(resolveDirectoryInput(sanitized.ocrDir, 'data/public-pdf-ocr', 'OCR directory'));
+  }
+  if (Object.prototype.hasOwnProperty.call(sanitized, 'outputDir')) {
+    const outputFallback = sanitized.ocrDir || 'data/public-pdf-text';
+    sanitized.outputDir = toUiPath(resolveDirectoryInput(sanitized.outputDir, outputFallback, 'output directory'));
+  }
+  if (Object.prototype.hasOwnProperty.call(sanitized, 'byomEndpoint')) {
+    sanitized.byomEndpoint = normalizeSafeHttpUrl(sanitized.byomEndpoint, 'BYOM endpoint');
+  }
+  delete sanitized.pdftotextPath;
+  delete sanitized.ocrmypdfPath;
+  return sanitized;
 }
 
 function sendJson(res, statusCode, payload) {
@@ -207,7 +327,6 @@ function saveArtifact(prefix, payload) {
   fs.writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
   return {
     file_name: fileName,
-    file_path: filePath,
     download_url: `/api/download?file=${encodeURIComponent(fileName)}`
   };
 }
@@ -941,24 +1060,14 @@ function toFixedNumber(value, digits = 2) {
 
 async function handleConvertPdf(body) {
   const args = ['scripts/convert-pdf-batch.cjs'];
-  const inputDir = ensureAllowedExistingDirectory(
-    path.isAbsolute(body.inputDir || '')
-      ? path.normalize(body.inputDir)
-      : path.normalize(path.resolve(PROJECT_ROOT, body.inputDir || 'data')),
-    'input directory'
-  );
-  const outputDir = ensureAllowedExistingDirectory(
-    path.isAbsolute(body.outputDir || '')
-      ? path.normalize(body.outputDir)
-      : path.normalize(path.resolve(PROJECT_ROOT, body.outputDir || 'data/public-pdf-text')),
-    'output directory'
-  );
+  const inputDir = resolveDirectoryInput(body.inputDir, 'data', 'input directory');
+  const outputDir = resolveDirectoryInput(body.outputDir, 'data/public-pdf-text', 'output directory');
   pushFlag(args, '--input-dir', inputDir);
   pushFlag(args, '--output-dir', outputDir);
   pushFlag(args, '--recursive', toBool(body.recursive, true));
   pushFlag(args, '--include-prefixes', body.includePrefixes || '');
   pushFlag(args, '--exclude-files', body.excludeFiles || '');
-  pushFlag(args, '--pdftotext-path', body.pdftotextPath || process.env.PDFTOTEXT_PATH || '');
+  pushFlag(args, '--pdftotext-path', process.env.PDFTOTEXT_PATH || '');
 
   const result = await runNodeCommand(args);
   const parsed = maybeParseJson(result.stdout.trim());
@@ -985,25 +1094,15 @@ async function handleConvertPdf(body) {
 
 async function handleOcrPdf(body) {
   const args = ['scripts/ocr-pdf-batch.cjs'];
-  const inputDir = ensureAllowedExistingDirectory(
-    path.isAbsolute(body.inputDir || '')
-      ? path.normalize(body.inputDir)
-      : path.normalize(path.resolve(PROJECT_ROOT, body.inputDir || 'data')),
-    'input directory'
-  );
-  const outputDir = ensureAllowedExistingDirectory(
-    path.isAbsolute(body.outputDir || '')
-      ? path.normalize(body.outputDir)
-      : path.normalize(path.resolve(PROJECT_ROOT, body.outputDir || 'data/public-pdf-ocr')),
-    'output directory'
-  );
+  const inputDir = resolveDirectoryInput(body.inputDir, 'data', 'input directory');
+  const outputDir = resolveDirectoryInput(body.outputDir, 'data/public-pdf-ocr', 'output directory');
   pushFlag(args, '--input-dir', inputDir);
   pushFlag(args, '--output-dir', outputDir);
   pushFlag(args, '--recursive', toBool(body.recursive, true));
   pushFlag(args, '--language', body.language || 'eng');
   pushFlag(args, '--skip-text', toBool(body.skipText, true));
   pushFlag(args, '--force-ocr', toBool(body.forceOcr, false));
-  pushFlag(args, '--ocrmypdf-path', body.ocrmypdfPath || process.env.OCRMYPDF_PATH || '');
+  pushFlag(args, '--ocrmypdf-path', process.env.OCRMYPDF_PATH || '');
 
   const result = await runNodeCommand(args);
   const parsed = maybeParseJson(result.stdout.trim());
@@ -1838,6 +1937,10 @@ const server = http.createServer(async (req, res) => {
   const pathname = reqUrl.pathname;
 
   try {
+    assertAllowedHostHeader(req);
+    assertAllowedOrigin(req);
+    assertJsonPost(req);
+
     if (req.method === 'GET' && pathname === '/api/health') {
       sendJson(res, 200, { ok: true, service: 'pca-web-ui' });
       return;
@@ -1877,62 +1980,62 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && pathname === '/api/convert-pdf') {
-      const body = await parseBody(req);
+      const body = sanitizeRequestBody(await parseBody(req));
       const output = await handleConvertPdf(body);
       sendJson(res, 200, output);
       return;
     }
 
     if (req.method === 'POST' && pathname === '/api/ocr-pdf') {
-      const body = await parseBody(req);
+      const body = sanitizeRequestBody(await parseBody(req));
       const output = await handleOcrPdf(body);
       sendJson(res, 200, output);
       return;
     }
 
     if (req.method === 'POST' && pathname === '/api/quality-check') {
-      const body = await parseBody(req);
+      const body = sanitizeRequestBody(await parseBody(req));
       const output = await handleQualityCheck(body);
       sendJson(res, 200, output);
       return;
     }
 
     if (req.method === 'POST' && pathname === '/api/evidence-check') {
-      const body = await parseBody(req);
+      const body = sanitizeRequestBody(await parseBody(req));
       const output = await handleEvidenceCheck(body);
       sendJson(res, 200, output);
       return;
     }
 
     if (req.method === 'POST' && pathname === '/api/framework-proposal') {
-      const body = await parseBody(req);
+      const body = sanitizeRequestBody(await parseBody(req));
       const output = await handleFrameworkProposal(body);
       sendJson(res, 200, output);
       return;
     }
 
     if (req.method === 'POST' && pathname === '/api/corpus-preview') {
-      const body = await parseBody(req);
+      const body = sanitizeRequestBody(await parseBody(req));
       const output = await handleCorpusPreview(body);
       sendJson(res, 200, output);
       return;
     }
 
     if (req.method === 'POST' && pathname === '/api/research-pack') {
-      const body = await parseBody(req);
+      const body = sanitizeRequestBody(await parseBody(req));
       const output = await handleResearchPack(body);
       sendJson(res, 200, output);
       return;
     }
 
     if (req.method === 'POST' && pathname === '/api/debate-live') {
-      const body = await parseBody(req);
+      const body = sanitizeRequestBody(await parseBody(req));
       await handleDebateLive(req, res, body);
       return;
     }
 
     if (req.method === 'POST' && pathname === '/api/run-pipeline') {
-      const body = await parseBody(req);
+      const body = sanitizeRequestBody(await parseBody(req));
       await handleRunPipeline(req, res, body);
       return;
     }
@@ -1944,7 +2047,7 @@ const server = http.createServer(async (req, res) => {
 
     sendText(res, 404, 'Not Found');
   } catch (error) {
-    sendJson(res, 500, {
+    sendJson(res, error && error.statusCode ? error.statusCode : 500, {
       ok: false,
       error: error && error.message ? error.message : 'unexpected error'
     });

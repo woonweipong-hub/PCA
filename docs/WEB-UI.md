@@ -53,6 +53,8 @@ Environment overrides:
 - `PCA_UI_HOST` (default `127.0.0.1`)
 - `PCA_UI_PORT` (default `4173`)
 - `PCA_UI_ALLOWED_ROOTS` (optional extra allowed local roots, separated by `;` on Windows and `:` on Unix-like systems)
+- `PCA_UI_ALLOWED_HOSTS` (optional extra hostnames allowed in the `Host` header)
+- `PCA_UI_ALLOWED_ORIGINS` (optional extra browser origins allowed for API calls)
 
 Default allowed roots are intentionally narrow:
 
@@ -61,10 +63,24 @@ Default allowed roots are intentionally narrow:
 
 This means the folder browser, source preview, OCR, and PDF conversion endpoints only operate inside those approved roots unless the user explicitly extends them with `PCA_UI_ALLOWED_ROOTS`.
 
+The UI also enforces local browser protections by default:
+
+- only approved `Host` headers are accepted
+- browser `Origin` headers must match an approved local origin unless explicitly extended
+- POST API calls must use `application/json`
+
 Example on Windows:
 
 ```powershell
 $env:PCA_UI_ALLOWED_ROOTS='C:\Users\<user>\Documents\PCA-Inputs;C:\Shared\Approved-Datasets'
+npm run ui:start
+```
+
+If you intentionally deploy behind a reverse proxy or alternate local hostname, extend the host and origin allowlists explicitly:
+
+```powershell
+$env:PCA_UI_ALLOWED_HOSTS='pca.local'
+$env:PCA_UI_ALLOWED_ORIGINS='https://pca.local'
 npm run ui:start
 ```
 
@@ -158,5 +174,6 @@ Important notes for online usage:
 - The UI now defaults to localhost-only binding. Keep it that way for normal single-user use.
 - Do not expose this UI directly to the open internet without auth.
 - Do not add broad filesystem roots such as an entire drive letter to `PCA_UI_ALLOWED_ROOTS`.
+- Do not loosen `PCA_UI_ALLOWED_HOSTS` or `PCA_UI_ALLOWED_ORIGINS` unless you are intentionally fronting PCA with a controlled host or reverse proxy.
 - Keep confidential exclusion lists in workflow policy.
 - Store artifacts in controlled storage with retention policy.
