@@ -16,6 +16,12 @@ This document defines stable JSON shapes emitted by the PCA CLI.
   "decision": "string|null",
   "context": "string|null",
   "max_cycles": 1,
+  "workflow": {
+    "diagram_policy": "auto|always|never",
+    "diagram_recommended": true,
+    "diagram_included": true,
+    "diagram_mermaid": "string|null"
+  },
   "framework": {
     "name": "string",
     "purpose": "string",
@@ -45,6 +51,7 @@ This document defines stable JSON shapes emitted by the PCA CLI.
 Required fields:
 - `mode`
 - `max_cycles`
+- `workflow`
 - `framework`
 - `prompts`
 
@@ -57,6 +64,24 @@ Required fields:
   "judgement": "string|null",
   "actions": "string|null",
   "risk_flags": ["string"],
+  "score_summary": {
+    "scale": { "min": 0, "max": 5 },
+    "coverage": {
+      "provided": 3,
+      "total": 9,
+      "ratio": 0.3333
+    },
+    "weighted_score_5": 3.8,
+    "weighted_score_100": 76.0,
+    "band": "high|medium|low|insufficient-data",
+    "criteria": [
+      {
+        "key": "string",
+        "weight": 0.08,
+        "score": 4
+      }
+    ]
+  },
   "needs_human_review": true,
   "human_control": {
     "recommended_mode": "HITL|HOTL",
@@ -69,6 +94,7 @@ Required fields:
 - `mode`
 - `verdict`
 - `risk_flags`
+- `score_summary`
 - `needs_human_review`
 - `human_control`
 
@@ -85,6 +111,24 @@ Required fields:
     "judgement": "string|null",
     "actions": "string|null",
     "risk_flags": ["string"],
+      "score_summary": {
+        "scale": { "min": 0, "max": 5 },
+        "coverage": {
+          "provided": 3,
+          "total": 9,
+          "ratio": 0.3333
+        },
+        "weighted_score_5": 3.8,
+        "weighted_score_100": 76.0,
+        "band": "high|medium|low|insufficient-data",
+        "criteria": [
+          {
+            "key": "string",
+            "weight": 0.08,
+            "score": 4
+          }
+        ]
+      },
     "needs_human_review": true,
     "human_control": {
       "recommended_mode": "HITL|HOTL",
@@ -111,4 +155,5 @@ Error: <message>
 Common messages:
 - `Usage: pca <prepare|run|route|assess|persist> <discuss|verify> ...`
 - `mode must be 'discuss' or 'verify'`
+- `diagram policy must be 'auto', 'always', or 'never'`
 - `persist requires --output <path>`

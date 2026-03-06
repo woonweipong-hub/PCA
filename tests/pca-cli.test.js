@@ -27,6 +27,70 @@ test('assess returns a valid assessment payload', () => {
   assert.strictEqual(output.mode, 'verify');
   assert.strictEqual(output.verdict, 'needs-human-review');
   assert.strictEqual(output.human_control.recommended_mode, 'HITL');
+  assert.ok(Object.prototype.hasOwnProperty.call(output, 'score_summary'));
+});
+
+test('prepare auto-includes workflow diagram when max cycles exceed 3', () => {
+  const result = runCli(['prepare', 'discuss', '--max-cycles', '4']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.strictEqual(output.workflow.diagram_recommended, true);
+  assert.strictEqual(output.workflow.diagram_included, true);
+});
+
+test('prepare allows opting out of diagram when cycles exceed 3', () => {
+  const result = runCli(['prepare', 'discuss', '--max-cycles', '4', '--diagram-policy', 'never']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.strictEqual(output.workflow.diagram_included, false);
+  assert.strictEqual(output.workflow.diagram_mermaid, null);
+});
+
+test('prepare supports topology and governance policy options', () => {
+  const result = runCli([
+    'prepare',
+    'verify',
+    '--topology',
+    'multi-critic',
+    '--policy',
+    'strict',
+    '--max-cycles',
+    '4'
+  ]);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.strictEqual(output.orchestration.name, 'multi-critic');
+  assert.strictEqual(output.governance_policy.name, 'strict');
+});
+
+test('assess accepts criterion scores and returns score summary', () => {
+  const result = runCli([
+    'assess',
+    'verify',
+    '--scores',
+    'evidence_quality=4;user_impact=3;completeness=5'
+  ]);
+
+  assert.strictEqual(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.strictEqual(output.score_summary.weighted_score_100 !== null, true);
+  assert.ok(['high', 'medium', 'low'].includes(output.score_summary.band));
+});
+
+test('strict policy can escalate assess result to HITL', () => {
+  const result = runCli([
+    'assess',
+    'verify',
+    '--verdict',
+    'accepted',
+    '--scores',
+    'evidence_quality=2;release_safety=2',
+    '--policy',
+    'strict'
+  ]);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.strictEqual(output.human_control.recommended_mode, 'HITL');
 });
 
 test('persist writes markdown output', () => {
@@ -60,4 +124,25 @@ test('persist requires output path', () => {
   const result = runCli(['persist', 'discuss']);
   assert.notStrictEqual(result.status, 0);
   assert.ok(result.stderr.includes('persist requires --output <path>'));
+});
+
+test('help command prints command reference', () => {
+  const result = runCli(['help']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.ok(result.stdout.includes('PCA CLI'));
+  assert.ok(result.stdout.includes('prepare'));
+  assert.ok(result.stdout.includes('persist'));
+});
+
+test('--help flag prints command reference', () => {
+  const result = runCli(['--help']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.ok(result.stdout.includes('Usage:'));
+  assert.ok(result.stdout.includes('Examples:'));
+});
+
+test('invalid policy returns readable error', () => {
+  const result = runCli(['prepare', 'discuss', '--policy', 'extreme']);
+  assert.notStrictEqual(result.status, 0);
+  assert.ok(result.stderr.includes("policy must be 'fast', 'balanced', or 'strict'"));
 });

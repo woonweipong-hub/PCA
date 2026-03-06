@@ -18,24 +18,33 @@ Verdict set:
 
 ## Workflow Diagram
 
-```text
-Decision + context
-	  |
-	  v
-  Propose
-	  |
-	  v
-  Critique
-	  |
-	  v
-  Assess
-	  |
-	  +--> accepted
-	  +--> accepted-with-conditions
-	  +--> needs-human-review -> HITL
-
-If risk is bounded and monitored -> HOTL
+```mermaid
+flowchart TD
+	A[Decision + context] --> B[pca prepare or run]
+	B --> C[Proposer Agent]
+	C --> D[Critic Agent]
+	D --> E[Assessor Agent]
+	E --> F[pca assess]
+	F --> G[pca route]
+	G -->|HITL| H[Human approval required]
+	G -->|HOTL| I[Proceed with monitoring]
+	H --> J[pca persist]
+	I --> J[pca persist]
 ```
+
+Detailed role swimlane and agent topology: `docs/WORKFLOW.md`
+
+## Roles and Agents
+
+| Stage | Primary Role | Typical Runtime |
+|---|---|---|
+| Input framing | Requester | Human |
+| Session preparation | Orchestrator | AI agent/CI |
+| Proposal generation | Proposer | AI agent |
+| Critique generation | Critic | AI agent |
+| Final judgement | Assessor | AI agent |
+| Governance gate | Human Reviewer (when HITL) | Human |
+| Artifact persistence | Orchestrator | AI agent/CI |
 
 ## Installation
 
@@ -50,6 +59,8 @@ npm install -g .
 ```
 
 ## Commands
+
+Full command specification (syntax, flags, outputs, failure modes): `docs/COMMAND-REFERENCE.md`
 
 ### `prepare`
 
@@ -89,6 +100,14 @@ Writes assessment output to disk in JSON or Markdown format.
 
 ```bash
 node bin/pca.js persist verify --verdict "needs-human-review" --risk-flags "uncertain evidence" --output development/pca-assessment.json --format json
+```
+
+### `help`
+
+Prints concise CLI usage in terminal.
+
+```bash
+node bin/pca.js help
 ```
 
 ## Governance Model
