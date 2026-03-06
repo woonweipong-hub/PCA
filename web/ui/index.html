@@ -19,12 +19,11 @@
     </header>
 
     <nav class="segment-nav" aria-label="Quick page navigation">
-      <a class="segment-nav-link" href="#top-output">Results</a>
-      <a class="segment-nav-link" href="#top-input">Input</a>
-      <a class="segment-nav-link" href="#segment-live-thread">Thread</a>
-      <a class="segment-nav-link" href="#segment-runtime-setup">Setup</a>
+      <a class="segment-nav-link" href="#top-output">Results + Input</a>
+      <a class="segment-nav-link" href="#segment-live-thread">Thread + Topics</a>
       <a class="segment-nav-link" href="#segment-evidence-outputs">Evidence</a>
-      <a class="segment-nav-link" href="#segment-appearance">Theme</a>
+      <a class="segment-nav-link" href="#segment-runtime-setup">Setup</a>
+      <a class="segment-nav-link" href="#segment-appearance">Web Theme / Visuals</a>
     </nav>
 
     <section id="top-output" class="panel section-anchor-target">
@@ -69,8 +68,8 @@
     <section id="segment-live-thread" class="panel structured-segment section-anchor-target">
       <div class="segment-header">
         <p class="segment-kicker">Segment 01</p>
-        <h2>Live Working Thread</h2>
-        <p class="muted">Follow the active conversation trail, PCA role activity, and human checkpoints in one dedicated segment.</p>
+        <h2>Thread and Topics</h2>
+        <p class="muted">Follow the active conversation trail, PCA role activity, human checkpoints, and use-case topic paths in one dedicated segment.</p>
       </div>
 
     <section class="panel">
@@ -91,11 +90,100 @@
       </article>
     </section>
 
+    <section class="panel">
+      <article class="card">
+        <div class="card-head">
+          <div>
+            <h2>Use Case Paths</h2>
+            <p class="muted selected-use-case-note" id="selectedUseCaseNote">Choose a use case path to start fast, or continue an earlier session.</p>
+          </div>
+          <button id="btnContinueSession" class="ghost slim" type="button">Continue Latest Session</button>
+        </div>
+        <div id="useCaseHub" class="use-case-grid"></div>
+      </article>
+    </section>
+
+    </section>
+
+    <section id="segment-evidence-outputs" class="panel structured-segment section-anchor-target">
+      <div class="segment-header">
+        <p class="segment-kicker">Segment 02</p>
+        <h2>Evidence, Structure, and Outputs</h2>
+        <p class="muted">Review source material, inspect the evidence register, and follow the structured records PCA generates for assessment and downstream action.</p>
+      </div>
+
+    <section class="panel">
+      <article class="card">
+        <h2>Source Preview</h2>
+        <p class="muted">Review source file contents and registered references before running analysis.</p>
+        <pre id="corpusPreviewView">No source preview yet.</pre>
+      </article>
+    </section>
+
+    <section class="panel">
+      <article class="card">
+        <h2>Input Evidence Register</h2>
+        <p class="muted">Track public code/act/guideline references and user-provided datasets used for this run.</p>
+        <pre id="inputRegistryView">Input register not generated yet.</pre>
+      </article>
+    </section>
+
+    <section class="panel">
+      <article class="card">
+        <h2>Workflow Map (Governance-Enhanced)</h2>
+        <p class="muted">Input (Data -> Requirements -> Objectives) -> Process (Organize -> Test -> Verify) -> Output (Recommend -> Route HITL/HOTL -> Implement -> Document).</p>
+        <div class="workflow-map">
+          <div class="wf-step">1. Input: Data</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">2. Input: Requirements</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">3. Input: Objectives</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">4. Process: Organize</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">5. Process: Test</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">6. Process: Verify</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">7. Output: Recommend</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">8. Output: Route HITL/HOTL</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">9. Output: Implement</div>
+          <div class="wf-arrow">-></div>
+          <div class="wf-step">10. Output: Document</div>
+        </div>
+        <pre class="compact">Input (Data -> Requirements -> Objectives) -> Process (Organize -> Test -> Verify) -> Output (Recommend -> Route HITL/HOTL -> Implement -> Document).</pre>
+      </article>
+    </section>
+
+    <section class="panel grid-two">
+      <article class="card">
+        <h2>Framework Snapshot</h2>
+        <pre id="frameworkView">Framework not loaded yet.</pre>
+      </article>
+      <article class="card">
+        <h2>Scoring Snapshot</h2>
+        <pre id="scoringView">Scoring not loaded yet.</pre>
+      </article>
+    </section>
+
+    <section class="panel">
+      <article class="card artifact-card">
+        <div class="card-head">
+          <h2>Artifacts</h2>
+          <button id="btnRefreshArtifacts" class="ghost slim">Refresh</button>
+        </div>
+        <p class="muted">Compact artifact ledger for generated files and downloadable outputs.</p>
+        <ul id="artifactList" class="artifact-list artifact-list-compact"></ul>
+      </article>
+    </section>
+
     </section>
 
     <section id="segment-runtime-setup" class="panel structured-segment section-anchor-target">
       <div class="segment-header">
-        <p class="segment-kicker">Segment 02</p>
+        <p class="segment-kicker">Segment 03</p>
         <h2>Runtime and Direction Setup</h2>
         <p class="muted">Choose the use case path, set the runtime posture, and prepare the data and task direction for the next governed run.</p>
       </div>
@@ -155,19 +243,6 @@
           <button id="btnConvert">Convert PDF to TXT</button>
           <button id="btnPreviewCorpus" class="ghost">Preview Sources + References</button>
         </div>
-      </article>
-    </section>
-
-    <section class="panel">
-      <article class="card">
-        <div class="card-head">
-          <div>
-            <h2>Use Case Paths</h2>
-            <p class="muted selected-use-case-note" id="selectedUseCaseNote">Choose a use case path to start fast, or continue an earlier session.</p>
-          </div>
-          <button id="btnContinueSession" class="ghost slim" type="button">Continue Latest Session</button>
-        </div>
-        <div id="useCaseHub" class="use-case-grid"></div>
       </article>
     </section>
 
@@ -497,82 +572,6 @@ Side issues to revisit after main decision</textarea>
           <button id="btnPipeline" class="accent">Run Full Pipeline</button>
           <button id="btnLiveDebate" class="accent">Run Live Debate x3</button>
         </div>
-      </article>
-    </section>
-
-    </section>
-
-    <section id="segment-evidence-outputs" class="panel structured-segment section-anchor-target">
-      <div class="segment-header">
-        <p class="segment-kicker">Segment 03</p>
-        <h2>Evidence, Structure, and Outputs</h2>
-        <p class="muted">Review source material, inspect the evidence register, and follow the structured records PCA generates for assessment and downstream action.</p>
-      </div>
-
-    <section class="panel">
-      <article class="card">
-        <h2>Source Preview</h2>
-        <p class="muted">Review source file contents and registered references before running analysis.</p>
-        <pre id="corpusPreviewView">No source preview yet.</pre>
-      </article>
-    </section>
-
-    <section class="panel">
-      <article class="card">
-        <h2>Input Evidence Register</h2>
-        <p class="muted">Track public code/act/guideline references and user-provided datasets used for this run.</p>
-        <pre id="inputRegistryView">Input register not generated yet.</pre>
-      </article>
-    </section>
-
-    <section class="panel">
-      <article class="card">
-        <h2>Workflow Map (Governance-Enhanced)</h2>
-        <p class="muted">Input (Data -> Requirements -> Objectives) -> Process (Organize -> Test -> Verify) -> Output (Recommend -> Route HITL/HOTL -> Implement -> Document).</p>
-        <div class="workflow-map">
-          <div class="wf-step">1. Input: Data</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">2. Input: Requirements</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">3. Input: Objectives</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">4. Process: Organize</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">5. Process: Test</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">6. Process: Verify</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">7. Output: Recommend</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">8. Output: Route HITL/HOTL</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">9. Output: Implement</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">10. Output: Document</div>
-        </div>
-        <pre class="compact">Input (Data -> Requirements -> Objectives) -> Process (Organize -> Test -> Verify) -> Output (Recommend -> Route HITL/HOTL -> Implement -> Document).</pre>
-      </article>
-    </section>
-
-    <section class="panel grid-two">
-      <article class="card">
-        <h2>Framework Snapshot</h2>
-        <pre id="frameworkView">Framework not loaded yet.</pre>
-      </article>
-      <article class="card">
-        <h2>Scoring Snapshot</h2>
-        <pre id="scoringView">Scoring not loaded yet.</pre>
-      </article>
-    </section>
-
-    <section class="panel">
-      <article class="card artifact-card">
-        <div class="card-head">
-          <h2>Artifacts</h2>
-          <button id="btnRefreshArtifacts" class="ghost slim">Refresh</button>
-        </div>
-        <p class="muted">Compact artifact ledger for generated files and downloadable outputs.</p>
-        <ul id="artifactList" class="artifact-list artifact-list-compact"></ul>
       </article>
     </section>
 
