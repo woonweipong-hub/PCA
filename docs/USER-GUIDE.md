@@ -86,6 +86,13 @@ PCA uses the same governed method across three main operating surfaces. Choose t
 
 The method stays the same across all three surfaces: frame the work, gather evidence, run adaptive proposal and critique passes, assess readiness, and route the result under explicit human control.
 
+Useful product distinction:
+
+- the Browser UI is the operating platform where the work is surfaced, tracked, resumed, and reviewed
+- PCA is the flexible framework that shapes the roles, loops, checkpoints, and governance needed for that work
+
+That distinction matters because long conversations usually fail when roles blur and process disappears into chat drift. PCA gives the process shape. The platform makes that shape visible and usable.
+
 ## Traceability and Transparency
 
 PCA is intended to improve decision transparency for both human reviewers and automated workflows.
@@ -113,6 +120,20 @@ Important distinction:
 - PCA is built around structured decision records and a structured reasoning trail that are practical, reviewable, and operationally useful.
 
 This matters for human-machine co-working because it lets a human see how the work progressed across stages without depending on one long fragile conversation thread.
+
+## The Pattern Can Be The Product
+
+PCA should not be understood only as a command set, browser UI, or prompt wrapper. It can also be understood as a productized working pattern for human-machine collaboration.
+
+What becomes productized is the way the work happens:
+
+- the user frames intent, objective, and constraints explicitly
+- the machine helps structure options, critique, and evidence synthesis
+- the process stays visible through timelines, checkpoints, and artifacts
+- interruption does not mean losing the work because the session state and structured reasoning trail can be documented and resumed
+- the outcome is not just an answer, but a better collaborative process that produces more practical and feasible throughput
+
+This matters because many teams do not only need a model response. They need a reliable co-working method they can reuse, review, govern, and improve over time.
 
 ## Installation
 
@@ -292,6 +313,81 @@ npm run ui:start
 1. Open:
 
 - `http://localhost:4173`
+
+### How Browser UI Captures a Request
+
+The Browser UI is not just a folder picker. It is the platform surface for capturing a governed request contract so PCA can interpret the user's ask with traceable intent, evidence scope, and quality expectations.
+
+The key operating idea is that PCA acts as an outer-layer role and action guide for co-thinking, not only as a form-driven executor. The UI should help users think, refine, and co-create continuously in the same way Copilot-assisted PCA work does in chat: clarify the objective, sharpen the decision, expose gaps, tighten constraints, and then run evidence-backed proposal, critique, and assessment loops.
+
+That collaboration model should be continuous rather than brittle. A PCA conversation may pause, end for the moment, branch into a side topic, resume later, or return to an unresolved issue after new evidence appears. The important point is not that one run stays open forever. The important point is that PCA keeps supporting human-machine co-work across interruptions, extensions, irregular subjects, and unfinished threads without losing the role structure or the quality controls.
+
+In practice, the current UI collects most of the right decision-quality inputs up front:
+
+- `Objective`: what outcome the user wants PCA to produce.
+- `Decision`: the judgement, interpretation, or choice PCA is being asked to make.
+- `Context`: the operating situation, scope, and background needed to interpret the request correctly.
+- `Sources To Use`: the local folder path or selected source set PCA should treat as evidence input.
+- `Expectations`: what a good answer should contain, usually one requirement per line.
+- `Research Needs`: the specific follow-up questions, contradictions, updates, or edge cases PCA should actively investigate.
+- `Constraints`: limits on what PCA may use or recommend, such as public-data-only rules or escalation requirements.
+- `Public References`: externally named references the user wants considered as part of the record.
+- `User Dataset Register`: the user-declared dataset list that documents what source collections were intentionally provided.
+
+Taken together, these fields already capture most user requests in a structured way. The user's request is usually not one separate sentence in PCA. It is the combination of objective, decision, context, expectations, research needs, constraints, and chosen sources.
+
+This is why the UI should be read as a guided co-working surface:
+
+- `Objective` helps the user state the desired outcome.
+- `Decision` helps the user name the exact judgement to make.
+- `Context` helps the user explain the situation and refine scope as they learn.
+- `Expectations` helps the user define what a useful answer must include.
+- `Research Needs` helps the user ask for deeper checks, contradiction-finding, and updates.
+- `Constraints` helps the user set operational boundaries and escalation rules.
+
+In other words, PCA is the outer framework layer that helps the user think through the work while also structuring the downstream run. The UI is the platform where that framework becomes visible, resumable, and operational.
+
+Important collaboration principle: ideas should grow with traceability, not drift silently. When correction is necessary, PCA should make that correction explicit and documented so the current position can still be understood as a continuation of the work rather than an unexplained reset.
+
+This structure matters because it keeps the run measurable and reviewable:
+
+- intent is explicit
+- evidence scope is explicit
+- quality criteria are explicit
+- dataset provenance is explicit
+- later artifacts can show what PCA was actually asked to do
+
+Use this pattern when preparing requests in the Browser UI:
+
+1. Put the desired outcome in `Objective`.
+2. Put the actual judgement or interpretation task in `Decision`.
+3. Put scenario details and boundaries in `Context`.
+4. Point PCA at the approved evidence set in `Sources To Use`.
+5. Put output-quality requirements in `Expectations`.
+6. Put open questions and contradiction checks in `Research Needs`.
+7. Put operating limits and escalation rules in `Constraints`.
+
+If the user has a more specific instruction, preference, concern, or objection, the best current place to express it is in `Context`, `Expectations`, or `Constraints`, depending on whether it changes situation, output quality, or allowed behavior.
+
+Operationally, this means users can work with the Browser UI in a continuous loop:
+
+1. frame the request
+2. review sources and evidence scope
+3. run proposal or research outputs
+4. refine the request based on what PCA surfaced
+5. run critique, assessment, or full pipeline again
+
+That loop is the intended PCA behavior: flexible co-creation with explicit roles, visible actions, and governed outputs.
+
+In practical use, that loop can also be interrupted and resumed:
+
+1. stop after an initial framing or evidence pass
+2. return later with new documents, new questions, or a changed objective
+3. extend the same topic with a deeper critique or a different decision angle
+4. branch briefly into an irregular side issue, then come back to the main question
+5. continue until the outcome and the process quality are both strong enough
+
+PCA is therefore not only a workflow runner. It is a collaboration layer for sustained human-machine thinking, co-creation, and process improvement.
 
 ### Local Data Access in Browser UI
 

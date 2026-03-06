@@ -1,9 +1,20 @@
 # PCA Web UI
 
-PCA is an Evidence-Governed Adaptive Solver, and this Browser UI is its visual control-desk surface for governed human-machine work.
+PCA is an Evidence-Governed Adaptive Solver, and this Browser UI is its visual control-desk platform for governed human-machine work.
 It supports adaptive debate depth, evidence checks, explicit `HITL/HOTL` routing, and optional Python package-backed symbolic checks (`z3-solver`) when formal constraints matter.
 
-PCA Web UI provides a browser-based control desk for OCR, PDF conversion, quality gating, evidence checks, live governed runs, and artifact downloads.
+PCA Web UI provides a browser-based platform for OCR, PDF conversion, quality gating, evidence checks, live governed runs, and artifact downloads.
+
+It should also be understood as a continuous co-working platform. PCA sits as the framework layer around the user's task: it helps users frame the objective, define the decision, state expectations, surface research questions, tighten constraints, inspect evidence, and then iterate through propose, critique, assess, and govern loops.
+
+This platform/framework split is intentional:
+
+- the UI platform holds the visible state, interaction flow, resumable session context, and downloadable artifacts
+- the PCA framework defines how roles, checks, and process loops should be shaped for the problem at hand
+
+That flexibility is what helps streamline lengthy conversations. Instead of letting every topic stay as one long thread, PCA can reshape the work into clearer stages, explicit checkpoints, and documented continuation paths.
+
+This collaboration does not need to be one-shot or perfectly linear. A PCA session can pause, be interrupted, continue later, extend into open topics, or temporarily shift to irregular supporting questions before returning to the main decision. The Browser UI should support that style of work by keeping the structure visible while still allowing flexible human-machine collaboration.
 
 ## What You Can Do
 
@@ -36,6 +47,35 @@ The UI is designed to make PCA runs inspectable and reviewable.
 This supports transparency in a practical sense: users can inspect what the system used, what it concluded, and where human review is still required.
 
 That makes the UI suitable for human-machine co-working workflows where teams want visible co-creation, co-checks, and co-tasking rather than a single opaque conversational result.
+
+The intended user experience is flexible and continuous rather than one-shot. Users should expect to update the request as PCA reveals contradictions, missing evidence, stronger framing, or better next actions. In that sense, the Browser UI plays a role similar to Copilot-assisted PCA work in chat, but with explicit fields, visible workflow stages, and persistent artifacts.
+
+Important collaboration principle: ideas should grow along the way, not appear to change arbitrarily. If a course correction is needed, the correction should be explicit, documented, and connected to the earlier reasoning trail.
+
+The intended model is continuous conversation and continuous co-work:
+
+- users can stop and resume without treating the earlier work as wasted
+- users can extend an open topic with more evidence or sharper instructions
+- users can interrupt the main thread to explore a side issue, then return
+- users can keep refining both the output and the process as PCA surfaces better framing
+
+The goal is better human-machine collaboration, better thinking, and better outputs, not merely completion of a single isolated run.
+
+In that sense, the working pattern itself can be treated as the product. The Browser UI is not only a front end for commands. It is a visible co-working surface for capturing intent, documenting evidence use, recording stage-by-stage progress, pausing safely, resuming later, and keeping the structured reasoning trail available for human review and continuation.
+
+Current request-shaping inputs in the UI already support most of that co-working pattern:
+
+- `Objective`
+- `Decision`
+- `Context`
+- `Sources To Use`
+- `Expectations`
+- `Research Needs`
+- `Constraints`
+- `Public References`
+- `User Dataset Register`
+
+Together these fields act as the user's working request contract, not just static configuration.
 
 ## Start Locally
 

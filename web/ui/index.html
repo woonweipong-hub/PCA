@@ -134,6 +134,48 @@
         <textarea id="constraints">Use only approved/public datasets
       Escalate unresolved high-risk conflicts</textarea>
 
+        <div class="runtime-callout collaboration-callout">
+          <div class="card-head compact-head">
+            <h3>Continuous Collaboration</h3>
+            <span class="mono badge">co-work</span>
+          </div>
+          <p class="muted">Use this section to keep PCA aligned when work pauses, resumes, branches into side issues, or continues across open topics.</p>
+
+          <div class="inline-grid">
+            <div>
+              <label>Collaboration Mode</label>
+              <select id="collaborationMode">
+                <option value="new-request" selected>New Request</option>
+                <option value="resume-open-topic">Resume Open Topic</option>
+                <option value="interrupted-resume">Interrupted and Resume</option>
+                <option value="extend-existing-thread">Extend Existing Thread</option>
+                <option value="branch-side-topic">Branch to Side Topic</option>
+              </select>
+            </div>
+            <div>
+              <label>User Requests and Intent</label>
+              <textarea id="userRequests" placeholder="What the user wants help with right now, including irregular or evolving asks.">Help interpret compliance requirements and keep unresolved questions visible across iterations.</textarea>
+            </div>
+          </div>
+
+          <label>Open Topics and Unresolved Questions (one per line)</label>
+          <textarea id="openTopics">Clauses needing contradiction review
+Pending evidence gaps
+Side issues to revisit after main decision</textarea>
+
+          <label>Continuation Notes</label>
+          <textarea id="continuationNotes" placeholder="What grew, what was clarified or corrected, what paused, and what should continue next.">Continue from the latest evidence-backed framing, keep unresolved contradictions visible, and let ideas grow with explicit corrections rather than resetting the whole thread.</textarea>
+
+          <div class="draft-toolbar">
+            <p id="draftStatus" class="muted draft-status">Session persistence ready. Inputs, discussion trail, and visible outputs autosave in this browser.</p>
+            <div class="actions draft-actions">
+              <button id="btnSaveDraft" type="button" class="ghost slim">Save Draft Now</button>
+              <button id="btnRestoreDraft" type="button" class="ghost slim">Restore Draft</button>
+              <button id="btnClearDraft" type="button" class="ghost slim">Clear Draft</button>
+            </div>
+          </div>
+        </div>
+
         <label class="inline-check">
           <input id="activeSearchEnabled" type="checkbox" />
           Enable active AI search plan (query suggestions + task plan)
@@ -434,6 +476,14 @@
       <article class="card">
         <h2>Scoring Snapshot</h2>
         <pre id="scoringView">Scoring not loaded yet.</pre>
+      </article>
+    </section>
+
+    <section class="panel">
+      <article class="card">
+        <h2>Collaborative Throughput Snapshot</h2>
+        <p class="muted">Condensed view of where the human-machine collaboration stands, what remains open, and the most practical next moves.</p>
+        <pre id="outcomeSummaryView">No collaborative throughput snapshot yet.</pre>
       </article>
     </section>
 

@@ -771,15 +771,23 @@ async function handleCorpusPreview(body) {
 }
 
 function buildInputRegistry(body) {
+  const userRequests = String(body.userRequests || '').trim();
+  const continuationNotes = String(body.continuationNotes || '').trim();
   return {
     public_references: parseLinesToList(body.publicReferences),
     user_datasets: parseLinesToList(body.datasetRegistry),
-    sources: body.sources || null
+    sources: body.sources || null,
+    collaboration_context: {
+      mode: body.collaborationMode || 'new-request',
+      user_requests: userRequests || null,
+      open_topics: parseLinesToList(body.openTopics),
+      continuation_notes: continuationNotes || null
+    }
   };
 }
 
-function buildSearchQueries({ decision, context, researchNeeds }) {
-  const seeds = [decision, context, ...(researchNeeds || [])]
+function buildSearchQueries({ decision, context, researchNeeds, userRequests, openTopics }) {
+  const seeds = [decision, context, userRequests, ...(researchNeeds || []), ...(openTopics || [])]
     .map((v) => String(v || '').trim())
     .filter(Boolean);
   return seeds.slice(0, 5).map((seed) => `Find authoritative evidence for: ${seed}`);
@@ -844,6 +852,9 @@ async function handleFrameworkProposal(body) {
   const expectations = parseLinesToList(body.expectations);
   const constraints = parseLinesToList(body.constraints);
   const researchNeeds = parseLinesToList(body.researchNeeds);
+  const openTopics = parseLinesToList(body.openTopics);
+  const userRequests = String(body.userRequests || '').trim();
+  const continuationNotes = String(body.continuationNotes || '').trim();
   const activeSearchEnabled = toBool(body.activeSearchEnabled, false);
   const inputRegistry = buildInputRegistry(body);
 
@@ -898,6 +909,12 @@ async function handleFrameworkProposal(body) {
       expectations,
       constraints,
       research_needs: researchNeeds,
+      collaboration: {
+        mode: body.collaborationMode || 'new-request',
+        user_requests: userRequests || null,
+        open_topics: openTopics,
+        continuation_notes: continuationNotes || null
+      },
       active_search_enabled: activeSearchEnabled
     },
     framework: {
@@ -938,7 +955,7 @@ async function handleFrameworkProposal(body) {
     },
     discussion_improvements: {
       loop_guidance: [
-        'Require proposer to state what changed from previous cycle',
+        'Require proposer to state what grew, what was clarified, and what needed correction from the previous cycle',
         'Require critic to map objections to framework criteria',
         'Track score delta and stop when improvements plateau'
       ]
@@ -949,7 +966,7 @@ async function handleFrameworkProposal(body) {
         ? 'PCA defines search tasks; execution can be done by Copilot/Codex CLI, Antigravity, or BYOM adapters.'
         : 'Active search disabled for this run.',
       suggested_queries: activeSearchEnabled
-        ? buildSearchQueries({ decision, context, researchNeeds })
+        ? buildSearchQueries({ decision, context, researchNeeds, userRequests, openTopics })
         : []
       },
       runtime_assist: runtimeAssist
@@ -967,6 +984,8 @@ async function handleResearchPack(body) {
   const modelSelection = normalizeModelSelection(body.modelSelection);
   const inputRegistry = buildInputRegistry(body);
   const mode = body.mode || 'verify';
+  const openTopics = parseLinesToList(body.openTopics);
+  const userRequests = String(body.userRequests || '').trim();
   const qualityArgs = ['bin/pca.js', 'quality-check'];
   pushFlag(qualityArgs, '--sources', body.sources);
   pushFlag(qualityArgs, '--max-claims-per-doc', body.maxClaimsPerDoc || 8);
@@ -1036,7 +1055,9 @@ async function handleResearchPack(body) {
         ? buildSearchQueries({
           decision: body.decision,
           context: body.context,
-          researchNeeds: parseLinesToList(body.researchNeeds)
+          researchNeeds: parseLinesToList(body.researchNeeds),
+          userRequests,
+          openTopics
         })
         : [],
       execution_note: 'Execute queries with Copilot/Codex CLI, Antigravity, or BYOM adapter; feed results back via sources for next cycle.'
@@ -1635,7 +1656,8 @@ async function handleRunPipeline(req, res, body) {
       data: {
         sources: body.sources || null,
         public_references: inputRegistry.public_references,
-        user_datasets: inputRegistry.user_datasets
+        user_datasets: inputRegistry.user_datasets,
+        collaboration_context: inputRegistry.collaboration_context
       },
       requirements: parseLinesToList(body.expectations),
       objectives: {

@@ -365,6 +365,20 @@ textarea::placeholder {
   margin-top: 0.9rem;
 }
 
+.draft-toolbar {
+  margin-top: 0.8rem;
+  padding-top: 0.7rem;
+  border-top: 1px dashed var(--line);
+}
+
+.draft-status {
+  margin: 0;
+}
+
+.draft-actions {
+  margin-top: 0.55rem;
+}
+
 button {
   border: none;
   border-radius: 10px;
@@ -472,6 +486,7 @@ pre {
 }
 
 #resultView,
+#outcomeSummaryView,
 #corpusPreviewView,
 #frameworkView,
 #scoringView,

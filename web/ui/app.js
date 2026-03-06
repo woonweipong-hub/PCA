@@ -1,6 +1,8 @@
 const statusEl = document.getElementById('status');
 const resultView = document.getElementById('resultView');
+const outcomeSummaryView = document.getElementById('outcomeSummaryView');
 const artifactList = document.getElementById('artifactList');
+const draftStatus = document.getElementById('draftStatus');
 
 const inputDir = document.getElementById('inputDir');
 const ocrDir = document.getElementById('ocrDir');
@@ -17,6 +19,10 @@ const sourcesInput = document.getElementById('sourcesInput');
 const expectations = document.getElementById('expectations');
 const researchNeeds = document.getElementById('researchNeeds');
 const constraints = document.getElementById('constraints');
+const collaborationMode = document.getElementById('collaborationMode');
+const userRequests = document.getElementById('userRequests');
+const openTopics = document.getElementById('openTopics');
+const continuationNotes = document.getElementById('continuationNotes');
 const activeSearchEnabled = document.getElementById('activeSearchEnabled');
 const policy = document.getElementById('policy');
 const runtimeProvider = document.getElementById('runtimeProvider');
@@ -62,6 +68,9 @@ const btnPipeline = document.getElementById('btnPipeline');
 const btnLiveDebate = document.getElementById('btnLiveDebate');
 const btnPreviewCorpus = document.getElementById('btnPreviewCorpus');
 const btnRefreshArtifacts = document.getElementById('btnRefreshArtifacts');
+const btnSaveDraft = document.getElementById('btnSaveDraft');
+const btnRestoreDraft = document.getElementById('btnRestoreDraft');
+const btnClearDraft = document.getElementById('btnClearDraft');
 
 const debateState = document.getElementById('debateState');
 const debateTimeline = document.getElementById('debateTimeline');
@@ -103,6 +112,9 @@ const sourcesInputSelect = document.getElementById('sourcesInputSelect');
 
 const CUSTOM_OPTION_VALUE = '__custom__';
 const PARENT_OPTION_VALUE = '__parent__';
+const UI_DRAFT_STORAGE_KEY = 'pca-ui-draft-v1';
+
+let draftSaveTimer = null;
 
 const USE_CASE_PROFILES = {
   corenetx: {
@@ -678,7 +690,270 @@ function clearBusy(message = 'Idle') {
   });
 }
 
+function safeGetDraft() {
+  try {
+    const raw = window.localStorage.getItem(UI_DRAFT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function safeSetDraft(payload) {
+  try {
+    window.localStorage.setItem(UI_DRAFT_STORAGE_KEY, JSON.stringify(payload));
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
+function safeRemoveDraft() {
+  try {
+    window.localStorage.removeItem(UI_DRAFT_STORAGE_KEY);
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
+function formatDraftTimestamp(value) {
+  if (!value) return 'unknown time';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'unknown time';
+  return date.toLocaleString();
+}
+
+function setDraftStatus(message) {
+  if (draftStatus) {
+    draftStatus.textContent = message;
+  }
+}
+
+function collectDraftState() {
+  return {
+    savedAt: new Date().toISOString(),
+    useCaseProfile: useCaseProfile.value,
+    objective: objective.value,
+    decision: decision.value,
+    context: contextText.value,
+    sourcesInput: sourcesInput.value,
+    expectations: expectations.value,
+    researchNeeds: researchNeeds.value,
+    constraints: constraints.value,
+    collaborationMode: collaborationMode.value,
+    userRequests: userRequests.value,
+    openTopics: openTopics.value,
+    continuationNotes: continuationNotes.value,
+    activeSearchEnabled: Boolean(activeSearchEnabled.checked),
+    policy: policy.value,
+    runtimeProvider: runtimeProvider.value,
+    taskMode: taskMode.value,
+    executionMode: executionMode.value,
+    byomProviderType: byomProviderType.value,
+    byomEndpoint: byomEndpoint.value,
+    byomApiKey: byomApiKey.value,
+    byomTemperature: byomTemperature.value,
+    modelPack: modelPack.value,
+    modelProposal: modelProposal.value,
+    modelCritique: modelCritique.value,
+    modelAssess: modelAssess.value,
+    modelNotes: modelNotes.value,
+    maxFiles: maxFiles.value,
+    debateCycles: debateCycles.value,
+    passStrategy: passStrategy.value,
+    riskLevel: riskLevel.value,
+    enableZ3GeometryCheck: Boolean(enableZ3GeometryCheck.checked),
+    geometryRoomWidth: geometryRoomWidth.value,
+    geometryRoomHeight: geometryRoomHeight.value,
+    geometryObstacleX: geometryObstacleX.value,
+    geometryObstacleY: geometryObstacleY.value,
+    geometryRadius: geometryRadius.value,
+    minSources: minSources.value,
+    minClaims: minClaims.value,
+    inputDir: inputDir.value,
+    ocrDir: ocrDir.value,
+    textDir: textDir.value,
+    publicReferences: publicReferences.value,
+    datasetRegistry: datasetRegistry.value,
+    includePrefixes: includePrefixes.value,
+    excludeFiles: excludeFiles.value,
+    themePreset: themePreset.value
+  };
+}
+
+function applyDraftState(draft) {
+  if (!draft || typeof draft !== 'object') return;
+
+  useCaseProfile.value = draft.useCaseProfile || useCaseProfile.value;
+  objective.value = draft.objective || objective.value;
+  decision.value = draft.decision || decision.value;
+  contextText.value = draft.context || contextText.value;
+  sourcesInput.value = draft.sourcesInput || sourcesInput.value;
+  expectations.value = draft.expectations || expectations.value;
+  researchNeeds.value = draft.researchNeeds || researchNeeds.value;
+  constraints.value = draft.constraints || constraints.value;
+  collaborationMode.value = draft.collaborationMode || collaborationMode.value;
+  userRequests.value = draft.userRequests || userRequests.value;
+  openTopics.value = draft.openTopics || openTopics.value;
+  continuationNotes.value = draft.continuationNotes || continuationNotes.value;
+  activeSearchEnabled.checked = Boolean(draft.activeSearchEnabled);
+  policy.value = draft.policy || policy.value;
+  runtimeProvider.value = draft.runtimeProvider || runtimeProvider.value;
+  taskMode.value = draft.taskMode || taskMode.value;
+  executionMode.value = draft.executionMode || executionMode.value;
+  byomProviderType.value = draft.byomProviderType || byomProviderType.value;
+  byomEndpoint.value = draft.byomEndpoint || byomEndpoint.value;
+  byomApiKey.value = draft.byomApiKey || byomApiKey.value;
+  byomTemperature.value = draft.byomTemperature || byomTemperature.value;
+  modelPack.value = draft.modelPack || modelPack.value;
+  modelProposal.value = draft.modelProposal || modelProposal.value;
+  modelCritique.value = draft.modelCritique || modelCritique.value;
+  modelAssess.value = draft.modelAssess || modelAssess.value;
+  modelNotes.value = draft.modelNotes || modelNotes.value;
+  maxFiles.value = draft.maxFiles || maxFiles.value;
+  debateCycles.value = draft.debateCycles || debateCycles.value;
+  passStrategy.value = draft.passStrategy || passStrategy.value;
+  riskLevel.value = draft.riskLevel || riskLevel.value;
+  enableZ3GeometryCheck.checked = Boolean(draft.enableZ3GeometryCheck);
+  geometryRoomWidth.value = draft.geometryRoomWidth || geometryRoomWidth.value;
+  geometryRoomHeight.value = draft.geometryRoomHeight || geometryRoomHeight.value;
+  geometryObstacleX.value = draft.geometryObstacleX || geometryObstacleX.value;
+  geometryObstacleY.value = draft.geometryObstacleY || geometryObstacleY.value;
+  geometryRadius.value = draft.geometryRadius || geometryRadius.value;
+  minSources.value = draft.minSources || minSources.value;
+  minClaims.value = draft.minClaims || minClaims.value;
+  inputDir.value = draft.inputDir || inputDir.value;
+  ocrDir.value = draft.ocrDir || ocrDir.value;
+  textDir.value = draft.textDir || textDir.value;
+  publicReferences.value = draft.publicReferences || publicReferences.value;
+  datasetRegistry.value = draft.datasetRegistry || datasetRegistry.value;
+  includePrefixes.value = draft.includePrefixes || includePrefixes.value;
+  excludeFiles.value = draft.excludeFiles || excludeFiles.value;
+
+  if (draft.themePreset) {
+    applyTheme(draft.themePreset);
+  }
+
+  renderTaskExecutionMode();
+  renderRuntimeGuide();
+  renderInputRegistry();
+  loadPathOptions();
+  setDraftStatus(`Session restored from ${formatDraftTimestamp(draft.savedAt)}.`);
+}
+
+function persistDraft(reason = 'autosaved') {
+  const saved = safeSetDraft(collectDraftState());
+  setDraftStatus(saved ? `Session ${reason} at ${formatDraftTimestamp(new Date().toISOString())}.` : 'Session save unavailable in this browser.');
+}
+
+function scheduleDraftSave() {
+  if (draftSaveTimer) {
+    window.clearTimeout(draftSaveTimer);
+  }
+  draftSaveTimer = window.setTimeout(() => {
+    persistDraft('autosaved');
+  }, 350);
+}
+
+function restoreSavedDraft() {
+  const draft = safeGetDraft();
+  if (!draft) {
+    setDraftStatus('No saved session found in this browser.');
+    return;
+  }
+  applyDraftState(draft);
+}
+
+function clearSavedDraft() {
+  const removed = safeRemoveDraft();
+  setDraftStatus(removed ? 'Saved session cleared for this browser.' : 'Session clear unavailable in this browser.');
+}
+
+function firstNonEmpty(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+  return null;
+}
+
+function listOrEmpty(values) {
+  return Array.isArray(values) ? values.filter(Boolean) : [];
+}
+
+function buildOutcomeSummary(label, payload) {
+  if (payload && payload.error) {
+    return `${label}\n\nStatus: blocked\nIssue: ${payload.error}`;
+  }
+
+  const envelope = payload && payload.result ? payload.result : (payload || {});
+  const collaboration = envelope.input_registry && envelope.input_registry.collaboration_context
+    ? envelope.input_registry.collaboration_context
+    : (payload && payload.input && payload.input.data ? payload.input.data.collaboration_context : null);
+  const route = envelope.route_recommendation || (payload && payload.output ? payload.output.route : null);
+  const verifyGates = envelope.verify_gates || (payload && payload.output && payload.output.recommend
+    ? payload.output.recommend.verify_gates
+    : null);
+  const checkpoint = envelope.human_checkpoint || null;
+  const implementation = payload && payload.output ? payload.output.implement : null;
+  const processQuality = envelope.process_quality || null;
+  const researchSynthesis = envelope.research_synthesis || null;
+  const activeSearchPlan = envelope.active_ai_search_plan || null;
+  const scoreSummary = firstNonEmpty(
+    envelope.final_assessment && envelope.final_assessment.score_summary
+      ? `score ${envelope.final_assessment.score_summary.weighted_score_100}/100, coverage ${Math.round((envelope.final_assessment.score_summary.coverage ? envelope.final_assessment.score_summary.coverage.ratio : 0) * 100)}%`
+      : null,
+    payload && payload.output && payload.output.recommend && payload.output.recommend.assessment && payload.output.recommend.assessment.score_summary
+      ? `score ${payload.output.recommend.assessment.score_summary.weighted_score_100}/100, coverage ${Math.round((payload.output.recommend.assessment.score_summary.coverage ? payload.output.recommend.assessment.score_summary.coverage.ratio : 0) * 100)}%`
+      : null
+  );
+  const targetedTasks = listOrEmpty(researchSynthesis ? researchSynthesis.targeted_research_tasks : []);
+  const searchQueries = listOrEmpty(activeSearchPlan ? activeSearchPlan.suggested_queries : []);
+  const openTopicsList = listOrEmpty(collaboration ? collaboration.open_topics : []);
+
+  const lines = [];
+  lines.push(label);
+  lines.push('');
+  lines.push(`Collaboration mode: ${firstNonEmpty(collaboration ? collaboration.mode : null, 'new-request')}`);
+  lines.push(`Current request: ${firstNonEmpty(collaboration ? collaboration.user_requests : null, envelope.objective, envelope.decision, 'No request summary captured.')}`);
+  lines.push(`Continuity note: ${firstNonEmpty(collaboration ? collaboration.continuation_notes : null, processQuality ? processQuality.recommendation : null, 'Continue by growing the strongest evidence-backed line of work.')}`);
+  lines.push('');
+  lines.push(`Throughput posture: ${route ? `${route.recommended_mode || 'n/a'} route` : 'route pending'}${implementation && implementation.status ? `, ${implementation.status}` : ''}`);
+  lines.push(`Practical status: ${firstNonEmpty(route ? route.reason : null, checkpoint ? checkpoint.reason : null, implementation ? implementation.note : null, 'Await next governed action.')}`);
+  if (scoreSummary) {
+    lines.push(`Evidence quality: ${scoreSummary}`);
+  }
+  if (verifyGates) {
+    lines.push(`Verify gates: ${verifyGates.all_passed ? 'all passed' : 'conditions remain open'}`);
+  }
+  lines.push('');
+  lines.push('Open topics:');
+  if (openTopicsList.length === 0) {
+    lines.push('- none recorded');
+  } else {
+    openTopicsList.slice(0, 5).forEach((item) => lines.push(`- ${item}`));
+  }
+  lines.push('');
+  lines.push('Best next moves:');
+  if (targetedTasks.length > 0) {
+    targetedTasks.slice(0, 4).forEach((item) => lines.push(`- ${item}`));
+  } else if (searchQueries.length > 0) {
+    searchQueries.slice(0, 3).forEach((item) => lines.push(`- ${item}`));
+  } else if (checkpoint && checkpoint.decision) {
+    lines.push(`- ${checkpoint.decision}`);
+  } else if (implementation && implementation.note) {
+    lines.push(`- ${implementation.note}`);
+  } else {
+    lines.push('- Review the current result, refine or correct the request explicitly, and run the next governed cycle.');
+  }
+
+  return lines.join('\n');
+}
+
 function showResult(label, payload) {
+  outcomeSummaryView.textContent = buildOutcomeSummary(label, payload);
   resultView.textContent = `${label}\n\n${JSON.stringify(payload, null, 2)}`;
 }
 
@@ -773,6 +1048,10 @@ function commonPayload() {
     expectations: expectations.value,
     researchNeeds: researchNeeds.value,
     constraints: constraints.value,
+    collaborationMode: collaborationMode.value,
+    userRequests: userRequests.value,
+    openTopics: openTopics.value,
+    continuationNotes: continuationNotes.value,
     activeSearchEnabled: Boolean(activeSearchEnabled.checked),
     passStrategy: passStrategy.value,
     riskLevel: riskLevel.value,
@@ -931,6 +1210,12 @@ function renderInputRegistry() {
     public_references: parseLineList(publicReferences.value),
     user_datasets: parseLineList(datasetRegistry.value),
     sources_used: sourcesInput.value || textDir.value,
+    collaboration_context: {
+      mode: collaborationMode.value,
+      user_requests: userRequests.value.trim() || null,
+      open_topics: parseLineList(openTopics.value),
+      continuation_notes: continuationNotes.value.trim() || null
+    },
     runtime_provider: runtimeProvider.value,
     model_selection: {
       proposal: modelProposal.value,
@@ -959,6 +1244,7 @@ btnFramework.addEventListener('click', async () => {
     }
     if (data.result && data.result.verification_plan) {
       scoringView.textContent = JSON.stringify({
+      collaborationMode,
         verification_plan: data.result.verification_plan,
         active_ai_search_plan: data.result.active_ai_search_plan || null,
         data_inputs: data.result.data_inputs || null,
@@ -980,6 +1266,9 @@ btnResearch.addEventListener('click', async () => {
     setBusy('Running research pack (quality + evidence + synthesis)...');
     const data = await callApi('/api/research-pack', {
       ...commonPayload(),
+  userRequests,
+  openTopics,
+  continuationNotes,
       decision: decision.value,
       context: contextText.value,
       policy: policy.value,
@@ -1242,6 +1531,7 @@ async function runLiveDebate() {
 
         if (evt === 'final') {
           finalPayload = data;
+          outcomeSummaryView.textContent = buildOutcomeSummary('Live Debate Completed', data);
           const checkpoint = data.human_checkpoint || {};
           humanCheckpoint.classList.remove('hidden');
           checkpointDecision.textContent = checkpoint.decision || 'Decision unavailable';
@@ -1477,6 +1767,7 @@ btnPipeline.addEventListener('click', async () => {
 
         if (evt === 'final') {
           finalPayload = data;
+          outcomeSummaryView.textContent = buildOutcomeSummary('Pipeline Completed', data);
           if (data.output && data.output.recommend && data.output.recommend.verify_gates) {
             scoringView.textContent = JSON.stringify(data.output.recommend.verify_gates, null, 2);
           }
@@ -1591,11 +1882,26 @@ loadPathOptions();
   el.addEventListener('change', renderRuntimeGuide);
   el.addEventListener('input', renderInputRegistry);
   el.addEventListener('change', renderInputRegistry);
+  el.addEventListener('input', scheduleDraftSave);
+  el.addEventListener('change', scheduleDraftSave);
 });
 
 [inputDir, textDir, sourcesInput].forEach((el) => {
   el.addEventListener('change', loadPathOptions);
   el.addEventListener('blur', loadPathOptions);
+  el.addEventListener('blur', scheduleDraftSave);
+});
+
+btnSaveDraft.addEventListener('click', () => {
+  persistDraft('saved');
+});
+
+btnRestoreDraft.addEventListener('click', () => {
+  restoreSavedDraft();
+});
+
+btnClearDraft.addEventListener('click', () => {
+  clearSavedDraft();
 });
 
 useCaseProfile.addEventListener('change', () => {
@@ -1657,3 +1963,14 @@ applyTheme(themePreset.value);
 
 renderRuntimeGuide();
 renderInputRegistry();
+
+const savedDraft = safeGetDraft();
+if (savedDraft) {
+  setDraftStatus(`Saved session available from ${formatDraftTimestamp(savedDraft.savedAt)}.`);
+} else {
+  setDraftStatus('Session persistence ready. Inputs, discussion trail, and visible outputs autosave in this browser.');
+}
+
+window.addEventListener('beforeunload', () => {
+  persistDraft('saved before exit');
+});

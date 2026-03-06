@@ -6,6 +6,8 @@ It helps teams frame decisions, run adaptive propose-critique-assess loops, appl
 
 PCA runs consistently across three primary operating surfaces: VS Code, Antigravity, and the Browser UI, so the same governed workflow can be used in chat-first, orchestration-first, or visual control-desk workflows.
 
+Product framing: the Browser UI can be treated as the platform, while PCA is the framework that shapes the roles, checkpoints, and process structure running on top of that platform. The point is not to force one rigid flow. The point is to flex the framework so lengthy conversations can be organized into clearer stages, resumed safely, and moved toward practical outcomes faster.
+
 "This project is independently developed. Any similarity to other systems reflects common industry patterns (for example proposer/critic/evaluator workflows) and does not imply code, prompt, or proprietary method reuse."
 
 ```text
@@ -46,6 +48,8 @@ PCA is designed to solve that failure mode. It turns a long, fragile, one-pass i
 
 In product terms, PCA is a decision-quality layer for human-machine work. It helps a team move from raw prompts and documents to a governed output that is easier to review, hand off, automate, and defend.
 
+That can itself be the product. The value is not only the final answer or artifact. The value is the reusable working pattern: how human intent is captured, how evidence is scoped, how proposals are challenged, how pauses and resumptions are handled, how checkpoints are made explicit, and how the structured reasoning trail is documented for continuation, review, and action.
+
 ## What PCA Can Do
 
 PCA can be used as a general-purpose human-machine decision system for any domain where quality, traceability, and governance matter.
@@ -74,7 +78,7 @@ PCA exposes the same governed method through three main operating surfaces. Choo
 | Antigravity | Orchestration-first workflows with PCA as a governance layer | PCA CLI, API, artifacts, runtime smoke checks | You already use Antigravity to drive execution and want PCA to structure evidence, critique, and routing around it |
 | Browser UI | Visual control desk, live timeline review, downloadable artifacts | UI controls, live debate, adaptive depth, verify gates, optional Z3 checks | You want visible debate flow, human checkpoints, corpus preview, and a browser-first operating experience |
 
-The underlying PCA logic remains the same across all three surfaces: frame the work, gather evidence, run adaptive proposal and critique passes, assess readiness, and route the result under explicit human control.
+The underlying PCA logic remains the same across all three surfaces: frame the work, gather evidence, run adaptive proposal and critique passes, assess readiness, and route the result under explicit human control. What changes is the platform experience around it. In the Browser UI, that framework becomes a visible operating platform for shaping roles and streamlining lengthy conversations into documented process steps.
 
 ## Human-Machine Co-Working Method
 
@@ -96,6 +100,8 @@ That loop improves normal AI-assisted work in four important ways:
 - it makes hidden assumptions visible earlier
 - it creates explicit decision points instead of conversational drift
 - it produces outputs that are easier to review, reuse, and automate
+
+Seen this way, PCA is a collaboration product as much as an analysis product. It packages a repeatable co-working pattern that can be reused across different domains, datasets, users, and runtimes without depending on one fragile conversation.
 
 ## Traceability and Transparency
 
