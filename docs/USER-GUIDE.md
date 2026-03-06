@@ -74,6 +74,34 @@ Detailed role swimlane and agent topology: `docs/WORKFLOW.md`
 | Governance gate | Human Reviewer (when HITL) | Human |
 | Artifact persistence | Orchestrator | AI agent/CI |
 
+## Traceability and Transparency
+
+PCA is intended to improve decision transparency for both human reviewers and automated workflows.
+
+It is especially useful when the work is shared between human and machine across:
+
+- co-creation of options and proposals
+- co-checks on evidence, contradictions, and risks
+- co-tasking where action should proceed only when readiness and governance conditions are clear
+
+What PCA records clearly:
+
+- the original objective and context
+- the relevant evidence sources and dataset register
+- proposal outputs
+- critique outputs and risk flags
+- assessment verdict and action requirements
+- verify-gate results
+- `HITL/HOTL` route recommendation
+- persisted artifacts for audit, handoff, or replay
+
+Important distinction:
+
+- PCA is not built around exposing unrestricted hidden chain-of-thought.
+- PCA is built around structured decision records and a structured reasoning trail that are practical, reviewable, and operationally useful.
+
+This matters for human-machine co-working because it lets a human see how the work progressed across stages without depending on one long fragile conversation thread.
+
 ## Installation
 
 ```bash

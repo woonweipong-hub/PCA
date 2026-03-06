@@ -28,6 +28,99 @@ LinkedIn: `https://www.linkedin.com/in/woonwei/`
 - Traceable outputs: verdict + actions + risk flags.
 - Governance-ready: clear routing to `HITL` or `HOTL`.
 
+## Problem Statement
+
+Human-machine collaboration often breaks down in two predictable ways:
+
+- humans do not always know what they do not know, especially in ambiguous or high-stakes problems
+- machines can generate fast answers, but they do not automatically understand what the human actually needs, what must be challenged, or when a decision should be escalated
+
+In normal one-pass long conversations, these weaknesses compound over time. Important assumptions stay hidden, weak proposals go unchallenged, contradictions are missed, and the conversation often drifts toward whichever answer sounds plausible first.
+
+PCA is designed to solve that failure mode. It turns a long, fragile, one-pass interaction into a governed decision loop that can expose assumptions, challenge weak logic, check evidence, and produce an actionable outcome with explicit human control.
+
+## What PCA Can Do
+
+PCA can be used as a general-purpose human-machine decision system for any domain where quality, traceability, and governance matter.
+
+- Frame a problem clearly using objective, context, expectations, constraints, and policy.
+- Generate structured multi-step reasoning instead of relying on a single-pass answer.
+- Run `Propose -> Critique -> Assess` loops to test options before action.
+- Ingest local documents and datasets and build an evidence digest from them.
+- Run quality gates before deeper evidence analysis.
+- Detect support, contradiction, coverage, and confidence patterns across multiple sources.
+- Apply governance checks before moving from reasoning into action.
+- Route outputs explicitly to `HOTL` or `HITL` depending on risk and readiness.
+- Add optional symbolic validation with Z3 for hard constraints and feasibility checks.
+- Produce audit-friendly artifacts for handoff, review, and repeatable execution.
+- Work across Copilot, Antigravity, local terminal workflows, BYOM, Ollama, and browser-based UI/API usage.
+
+## Human-Machine Co-Working Method
+
+PCA is built around the idea that human and machine should not behave as substitutes for one another. They should compensate for each other's blind spots.
+
+- The human provides intent, judgement context, priorities, and accountability.
+- The machine provides structure, memory, iteration, critique pressure, and evidence synthesis.
+- PCA provides the operating method that keeps both sides aligned.
+
+Instead of depending on one long conversation to carry everything, PCA breaks work into a repeatable loop:
+
+1. `Propose`: generate the strongest current option.
+2. `Critique`: challenge assumptions, gaps, risks, and contradictions.
+3. `Assess`: decide what holds, what fails, and what needs human review.
+
+That loop improves normal AI-assisted work in four important ways:
+
+- it reduces premature convergence on the first plausible answer
+- it makes hidden assumptions visible earlier
+- it creates explicit decision points instead of conversational drift
+- it produces outputs that are easier to review, reuse, and automate
+
+## Traceability and Transparency
+
+PCA is designed to make decision work inspectable without depending on opaque one-pass conversations.
+
+- It records structured decision artifacts rather than leaving important logic scattered across chat history.
+- It preserves the chain of decision development through proposal, critique, assessment, evidence checks, gates, and final routing.
+- It makes it easier for a human reviewer to understand what was proposed, what was challenged, what evidence was used, and why a decision was accepted, conditioned, or escalated.
+- It supports human-machine teamwork by making the handoff points explicit instead of implicit.
+
+This makes PCA suitable for human-machine:
+
+- co-creation: shaping options together instead of accepting the first generated answer
+- co-checks: reviewing claims, contradictions, risk flags, and gate outcomes together
+- co-tasking: moving from reasoning into action with explicit ownership, readiness, and escalation logic
+
+In PCA, transparency does not mean dumping unrestricted hidden reasoning. It means producing a usable, reviewable structured reasoning trail:
+
+- objective and context
+- evidence and corpus coverage
+- proposal summary
+- critique summary
+- assessment verdict
+- verify-gate status
+- route recommendation
+- persisted artifact for review, audit, or execution handoff
+
+## How PCA Supports Existing Copilot Work
+
+PCA is not intended to replace Copilot. It makes Copilot-assisted work more reliable.
+
+- Copilot remains strong at fast drafting, coding, searching, and implementation assistance.
+- PCA adds structure around framing, critique, evidence checking, governance, and action readiness.
+- Copilot helps move quickly; PCA helps make sure the work is actually pointed in the right direction and safe to proceed.
+
+In practice, this means PCA can streamline normal Copilot use by converting a long free-form chat into a more deliberate flow:
+
+- frame the decision
+- gather evidence
+- run proposal and critique passes
+- assess readiness and risk
+- route to `HOTL` or `HITL`
+- persist the result for action and review
+
+This is especially useful for work that is ambiguous, multi-document, high-impact, or easy to get wrong with a single conversational pass.
+
 ## Robustness Acknowledgement
 
 PCA now includes optional Python symbolic verification support via `z3-solver` (`requirements-z3.txt`).
@@ -57,6 +150,7 @@ Expected outcomes:
 - More consistent decision quality across runs and operators.
 - Clear escalation criteria when confidence, coverage, or risk posture is insufficient.
 - Better downstream execution safety via explicit human control gates.
+- Better traceability across the full human-machine decision loop.
 
 Contract details for all outputs are defined in `SCHEMA.md`.
 
@@ -157,24 +251,25 @@ Operational rule: move forward only when qualitative assessment, symbolic feasib
   │                                                          │
   │ STREAM A            STREAM B            STREAM C         │
   │ evidence            reasoning           action           │
-  │                                                          │
   │ ┌──────────────┐    ┌──────────────┐    ┌──────────────┐ │
   │ │ Collect Docs │    │ Propose      │    │ Draft Action │ │
   │ │ Normalize Ref│    │ Critique     │    │ Contract     │ │
   │ └──────┬───────┘    │ Assess       │    └──────┬───────┘ │
   │        │            └──────┬───────┘           │         │
   │        │                   │                   │         │
-  │        └──────────┬────────▼─────────┬─────────┘         │
+  │        └───────────────────┬───────────────────┘         │
+  │                            │                             │
+  │                   ┌────────▼─────────┐                   │
   │                   │ Governance Merge │                   │
   │                   │ evidence policy  │                   │
   │                   │ and Z3 checks    │                   │
   │                   └────────┬─────────┘                   │
   │                            │                             │
   │                 fail loop  │  pass route readiness       │
-  │                   ┌────────▼─────────────┐               │
-  │                   │ Execute and Monitor  │               │
-  │                   │ Feed next cycle      │               │
-  │                   └──────────────────────┘               │
+  │                 ┌──────────▼───────────┐                 │
+  │                 │ Execute and Monitor  │                 │
+  │                 │ Feed next cycle      │                 │
+  │                 └──────────────────────┘                 │
   │                                                          │
   └──────────────────────────────────────────────────────────┘
 ```

@@ -23,6 +23,20 @@ PCA Web UI provides a browser-based control desk for OCR, PDF conversion, qualit
 - View a workflow map in the UI showing objective -> research -> debate -> verification -> artifact flow.
 - Download JSON artifacts from each run.
 
+## Traceability in the UI
+
+The UI is designed to make PCA runs inspectable and reviewable.
+
+- Input evidence register shows references and datasets used for the run.
+- Corpus preview lets users inspect source content before analysis.
+- Live debate view exposes stage-by-stage proposer, critic, assessor, and governance events.
+- Verify-gate output and route recommendation show why the run is ready, blocked, or escalated.
+- Downloadable artifacts preserve the structured decision trail for later review.
+
+This supports transparency in a practical sense: users can inspect what the system used, what it concluded, and where human review is still required.
+
+That makes the UI suitable for human-machine co-working workflows where teams want visible co-creation, co-checks, and co-tasking rather than a single opaque conversational result.
+
 ## Start Locally
 
 ```bash
