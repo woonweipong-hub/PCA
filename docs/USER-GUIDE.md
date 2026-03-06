@@ -293,6 +293,62 @@ npm run ui:start
 
 - `http://localhost:4173`
 
+### Local Data Access in Browser UI
+
+The Browser UI is local-first.
+
+Simple explanation:
+
+- The PCA web server runs on your own machine.
+- The browser UI reads local folders through that local server.
+- By default, it only allows approved local roots under `data/` and `outputs/`.
+- This keeps normal browser-based use flexible without allowing unrestricted browsing across the whole machine.
+
+For most users, the intended flow is:
+
+1. Put source files into a local dataset folder.
+2. Start PCA locally with `npm run ui:start`.
+3. Open the Browser UI at `http://localhost:4173`.
+4. Choose the approved local folder in `Data Source Setup`.
+5. Preview sources, run conversion/OCR if needed, then run PCA workflows.
+
+If you need an additional local dataset folder outside `data/` or `outputs/`, add it explicitly before starting the UI.
+
+Windows example:
+
+```powershell
+$env:PCA_UI_ALLOWED_ROOTS='C:\Users\<user>\Documents\PCA-Inputs;C:\Shared\Approved-Datasets'
+npm run ui:start
+```
+
+Keep this narrow. Add only specific approved dataset folders, not an entire drive.
+
+### Online Dataset Access
+
+PCA should treat online datasets as controlled imports, not as unrestricted cloud-drive browsing.
+
+Simple explanation:
+
+- The safest pattern is to bring the dataset into a local approved folder first.
+- PCA then works on that local staged copy.
+- This keeps the Browser UI flexible for different users and regions without giving PCA broad access to an entire online drive account.
+
+Recommended flow:
+
+1. User receives a specific shared dataset link or approved online folder.
+2. User syncs or downloads that dataset into a local approved folder.
+3. PCA Browser UI reads the local copy through `Data Source Setup`.
+4. PCA runs conversion, preview, evidence checks, and artifacts against the local staged dataset.
+
+For future online connectors, the preferred model is still narrow access:
+
+- allow a specific file or dataset folder given by the user
+- import only that dataset root
+- stage it locally before PCA processing
+- avoid free roaming across the user's whole Google Drive, OneDrive, or other cloud storage
+
+This keeps PCA usable for global users across different storage providers while preserving least-privilege access.
+
 1. Typical browser-first flow:
 
 - preview corpus and references

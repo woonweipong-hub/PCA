@@ -31,6 +31,173 @@ PCA addresses this by converting interpretation into a structured, auditable, po
 - Public files: URA/BCA/SCDF documents
 - Excluded confidential file: `BCA_HS_Checks_Scope.pdf`
 
+## Normalized Use-Case Contract
+
+### TRHS Interpretation Register (TIR)
+
+This use case should persist a `TRHS Interpretation Register (TIR)` as the governed interpretation layer.
+
+The TIR is not authority text. It is PCA's auditable interpretation layer built on top of public sources.
+
+Field grouping is explicit:
+
+- Identity fields: `issue_id`, `phase`, `topic`, `authority_scope`
+- Evidence-derived fields: `source_refs`, `extraction_confidence`
+- Judgement-derived fields: `interpreted_position`, `conditions_or_assumptions`, `hitl_required`
+
+Recommended TIR schema for Phase 1 adoption:
+
+| Field | Type | Meaning | Derivation |
+| --- | --- | --- | --- |
+| `issue_id` | string | Stable identifier for one TRHS interpretation issue | identity |
+| `phase` | enum | `measurement`, `spatial-setback`, or `components-me` | identity |
+| `topic` | string | Normalized issue topic | identity |
+| `authority_scope` | string[] | Authorities materially relevant to the issue | identity |
+| `source_refs` | object[] | Source file, clause/snippet, and short evidence note | evidence-derived |
+| `extraction_confidence` | enum | `high`, `medium`, or `low` based on extraction quality | evidence-derived |
+| `interpreted_position` | enum | `aligned`, `aligned-with-conditions`, `conflicted`, or `unclear` | judgement-derived |
+| `conditions_or_assumptions` | string | Context or missing project inputs that control applicability | judgement-derived |
+| `hitl_required` | boolean | Whether this issue requires human confirmation before action | judgement-derived |
+
+Minimal JSON shape:
+
+```json
+{
+  "issue_id": "TIR-TRHS-001",
+  "phase": "measurement",
+  "topic": "Bottom-most HS floor slab thickness",
+  "authority_scope": ["BCA"],
+  "source_refs": [
+    {
+      "file": "data/trhs-text/BCA_TRHS_requirements.txt",
+      "clause": "2.3.2(c)",
+      "note": "Bottom-most HS without NS below - 200mm"
+    }
+  ],
+  "extraction_confidence": "medium",
+  "interpreted_position": "aligned-with-conditions",
+  "conditions_or_assumptions": "Project slab schedule and section details are required to verify the 200mm minimum.",
+  "hitl_required": true
+}
+```
+
+### Worked TRHS Example: TIR Mini-Catalog
+
+The worked example below uses a small issue catalog to make interpretation measurable before changing the PCA flow.
+
+Important boundary:
+
+- This is an interpretation artifact, not an authority-issued checklist.
+- Several rows below are derived from change-log style text, not the full illustrated operative clauses.
+- `aligned-with-conditions` means the public corpus supports the interpretation, but project geometry, drawings, or full clause figures are still needed before execution.
+
+| `issue_id` | `phase` | `topic` | `authority_scope` | `source_refs` | `extraction_confidence` | `interpreted_position` | `conditions_or_assumptions` | `hitl_required` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `TIR-TRHS-001` | `measurement` | Bottom-most HS floor slab thickness | `BCA` | `BCA_TRHS_requirements.txt 2.3.2(c)` | `medium` | `aligned-with-conditions` | Apply when bottom-most HS has no NS below; project slab schedule and section are required to verify `200mm`. | `true` |
+| `TIR-TRHS-002` | `measurement` | Bottom-most NS floor slab in contact with soil | `BCA`, `URA`, `SCDF` | `BCA_TRHS_requirements.txt 2.3.2(d)`; `URA_Resi_Summary_Terrace.txt Earthworks/Basements`; `SCDF_firecode-2023.txt 1.4.15 Basement storey` | `medium` | `aligned-with-conditions` | Treat as a geometry-and-ground-condition check; requires basement/ground relationship from sections and platform levels. | `true` |
+| `TIR-TRHS-003` | `spatial-setback` | RC protection above HS where non-reinforced roof is used in landed house | `BCA`, `URA` | `BCA_TRHS_requirements.txt 2.4.1(d)`; `URA_Resi_Summary_Terrace.txt Setbacks/Envelope Control`; `URA_Circular_dc25-05.txt Clarification of landed house guidelines` | `low` | `aligned-with-conditions` | Applies only to landed-house context and setback evaluation; full roof build-up, setback geometry, and one-storey-above condition must be confirmed. | `true` |
+| `TIR-TRHS-004` | `spatial-setback` | Non-reinforced lift core within setback distance of HS wall | `BCA`, `URA` | `BCA_TRHS_requirements.txt 2.4.1(e)`; `URA_Resi_Summary_Terrace.txt Setbacks/Building Appendages` | `low` | `aligned-with-conditions` | Requires project-specific confirmation of lift-core material, roof type, and exact setback relationship to HS wall without door. | `true` |
+| `TIR-TRHS-005` | `spatial-setback` | RC lift core abutting HS wall requires additional common-wall thickness | `BCA`, `URA` | `BCA_TRHS_requirements.txt 2.4.7(a)`; `URA_Resi_Summary_Terrace.txt Setbacks` | `medium` | `aligned-with-conditions` | Additional `50mm` thickness is interpreted as a deterministic wall-detail requirement, but abutment must be verified from plans and sections. | `true` |
+| `TIR-TRHS-006` | `spatial-setback` | Staircase located within setback distance of HS wall in non-landed development | `BCA` | `BCA_TRHS_requirements.txt 2.4.9` | `low` | `unclear` | Change-log text confirms allowance exists, but figure-driven design limits and non-landed applicability boundaries are not fully captured in the extracted text. | `true` |
+| `TIR-TRHS-007` | `components-me` | Ventilation sleeves must not be located in toilets or bathrooms | `BCA`, `SCDF` | `BCA_TRHS_requirements.txt 4.2(b)`; `SCDF_firecode-2023.txt Chapter 7 Mechanical Ventilation & Smoke Control Systems` | `medium` | `aligned-with-conditions` | Interpretation is stable at issue level, but detailed layout, sleeve position, and any interacting fire or ventilation constraints still need project review. | `true` |
+| `TIR-TRHS-008` | `components-me` | HS door frame stiffener must not be cut or modified for installation ease | `BCA` | `BCA_TRHS_requirements.txt 6.3(d)` | `medium` | `aligned` | Operates as a direct prohibition for installation practice; project inspection and method statement review are still required. | `true` |
+
+### Worked Metrics for the Mini-Catalog
+
+Use simple, explicit formulas for the first measurable version of the TIR.
+
+- `multi_source_support_ratio = issues with 2 or more source references / total issues`
+- `conflicted_issue_ratio = issues with interpreted_position = conflicted / total issues`
+- `extraction_uncertainty_ratio = issues with extraction_confidence = low / total issues`
+
+For the eight-row mini-catalog above:
+
+- `multi_source_support_ratio = 5 / 8 = 0.625`
+- `conflicted_issue_ratio = 0 / 8 = 0.00`
+- `extraction_uncertainty_ratio = 3 / 8 = 0.375`
+
+Interpretation of the ratios:
+
+- Multi-source support is reasonably strong for a starter catalog because landed-house setback and ventilation issues can be cross-anchored to URA and SCDF material.
+- Zero conflicts in this mini-catalog does not mean the issue set is execution-ready; it mainly means the sampled public corpus did not surface direct contradiction on these rows.
+- Extraction uncertainty remains material because several TRHS rows depend on abbreviated change-log text or figures not fully captured by PDF-to-text conversion.
+
+### Phase Roadmap for Measurable Outputs
+
+#### Phase 1 - Measurement
+
+Scope:
+
+- HS width, length, area, and volume
+- HS clear height
+- HS wall thickness
+- HS floor slab and top-most slab thickness
+- Cover key clauses in `Cl. 2.2.x` and `Cl. 2.3.x`
+
+Targets:
+
+- Automatically extract measurements from plans, sections, tables, annotations, and dimensions.
+- Run deterministic clause checks with pass/fail results.
+- Flag missing or insufficient information instead of implying compliance.
+
+Recommended additional TIR fields for this phase:
+
+- `required_value`
+- `actual_value`
+- `unit`
+- `check_result`
+- `missing_information`
+
+#### Phase 2 - Spatial & Setback
+
+Scope:
+
+- Setback distance envelope
+- Air-well adjacency limits
+- HS in basement conditions
+- HS-lift shaft common wall
+- Standard shielding wall offsets
+- Simplified trellis distance checks
+- Cover key clauses in `Cl. 2.4.x`
+
+Targets:
+
+- Automatically identify applicable setback requirements based on context such as landed housing, basement/above-ground condition, and materials.
+- Provide clause-based reasoning explaining why a condition passes, fails, or remains unclear.
+
+Recommended additional TIR fields for this phase:
+
+- `applicability_context`
+- `governing_geometry_inputs`
+- `pass_condition`
+- `fail_condition`
+- `reasoning_note`
+
+#### Phase 3 - HS Components and M&E Items
+
+Scope:
+
+- Blast door opening and nib details
+- Electrical outlets and height requirements
+- Conduit sealing provisions
+- Ventilation sleeve clearances inside and outside the HS
+- False ceiling access panels
+- HS wall recess for door handle
+- Cover key clauses in `Cl. 2.5`, `Cl. 2.7`, `Cl. 3.6`, `Cl. 4.2`, `Cl. 4.3`, and `Cl. 2.13`
+
+Targets:
+
+- Automatically detect and check key HS components and service elements.
+- Generate an itemized report.
+- Flag unclear items for manual review instead of forcing a definitive outcome.
+
+Recommended additional TIR fields for this phase:
+
+- `component_type`
+- `detection_status`
+- `item_check_result`
+- `review_note`
+
 ## Step-by-Step Demonstration
 
 ### 1) Convert PDFs to text for ingestion
@@ -95,7 +262,10 @@ Interpretation:
 A strong TRHS interpretation package should include:
 
 - Decision statement and context.
+- TIR mini-catalog or full register with stable `issue_id` values.
 - Evidence-check output with source traceability.
+- Explicit split between evidence-derived fields and judgement-derived fields.
+- Measurable ratios with written formulas.
 - Explicit governance mode and rationale.
 - Action list with named owners and due dates.
 

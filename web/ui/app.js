@@ -20,6 +20,21 @@ const constraints = document.getElementById('constraints');
 const activeSearchEnabled = document.getElementById('activeSearchEnabled');
 const policy = document.getElementById('policy');
 const runtimeProvider = document.getElementById('runtimeProvider');
+const runtimeModeTitle = document.getElementById('runtimeModeTitle');
+const runtimeModeBadge = document.getElementById('runtimeModeBadge');
+const runtimeModeBody = document.getElementById('runtimeModeBody');
+const runtimeModeHint = document.getElementById('runtimeModeHint');
+const taskMode = document.getElementById('taskMode');
+const executionMode = document.getElementById('executionMode');
+const executionModeNote = document.getElementById('executionModeNote');
+const byomConfig = document.getElementById('byomConfig');
+const byomProviderType = document.getElementById('byomProviderType');
+const byomEndpoint = document.getElementById('byomEndpoint');
+const byomApiKey = document.getElementById('byomApiKey');
+const byomTemperature = document.getElementById('byomTemperature');
+const byomCompatibilityNote = document.getElementById('byomCompatibilityNote');
+const modelPack = document.getElementById('modelPack');
+const modelPackNote = document.getElementById('modelPackNote');
 const modelProposal = document.getElementById('modelProposal');
 const modelCritique = document.getElementById('modelCritique');
 const modelAssess = document.getElementById('modelAssess');
@@ -59,6 +74,35 @@ const runtimeGuide = document.getElementById('runtimeGuide');
 const cliSnippetsView = document.getElementById('cliSnippetsView');
 const inputRegistryView = document.getElementById('inputRegistryView');
 const corpusPreviewView = document.getElementById('corpusPreviewView');
+const themePreset = document.getElementById('themePreset');
+const themePreviewGrid = document.getElementById('themePreviewGrid');
+const themeBg = document.getElementById('themeBg');
+const themeCard = document.getElementById('themeCard');
+const themeCardAlpha = document.getElementById('themeCardAlpha');
+const themeCardAlphaValue = document.getElementById('themeCardAlphaValue');
+const themeInnerAlpha = document.getElementById('themeInnerAlpha');
+const themeInnerAlphaValue = document.getElementById('themeInnerAlphaValue');
+const themeInk = document.getElementById('themeInk');
+const themeFontSans = document.getElementById('themeFontSans');
+const themeFontMono = document.getElementById('themeFontMono');
+const themeLine = document.getElementById('themeLine');
+const themeAccent = document.getElementById('themeAccent');
+const themeAccent2 = document.getElementById('themeAccent2');
+const themeMuted = document.getElementById('themeMuted');
+const themeBgStart = document.getElementById('themeBgStart');
+const themeBgEnd = document.getElementById('themeBgEnd');
+const themeGradientAngle = document.getElementById('themeGradientAngle');
+const themeGradientAngleValue = document.getElementById('themeGradientAngleValue');
+
+const inputDirSelect = document.getElementById('inputDirSelect');
+const ocrDirSelect = document.getElementById('ocrDirSelect');
+const textDirSelect = document.getElementById('textDirSelect');
+const includePrefixesSelect = document.getElementById('includePrefixesSelect');
+const excludeFilesSelect = document.getElementById('excludeFilesSelect');
+const sourcesInputSelect = document.getElementById('sourcesInputSelect');
+
+const CUSTOM_OPTION_VALUE = '__custom__';
+const PARENT_OPTION_VALUE = '__parent__';
 
 const USE_CASE_PROFILES = {
   corenetx: {
@@ -155,26 +199,326 @@ const USE_CASE_PROFILES = {
 
 const RUNTIME_GUIDE_TEXT = {
   copilot: {
-    title: 'VS Code Copilot (Paid)',
-    body: 'Use Copilot for generation, PCA for governance/evidence/debate tracking. Model fields in this UI document your selected role strategy.'
+    title: 'Copilot Runtime',
+    badge: 'paid runtime',
+    body: 'Copilot can drive generation, while PCA improves quality through role separation, critique, assessment, and governance.',
+    hint: 'Use this when you want stronger thinking quality and a more disciplined, auditable reasoning path.'
   },
   antigravity: {
-    title: 'Google Antigravity',
-    body: 'Use Antigravity orchestration with PCA API/CLI gates. Keep workflow decisions auditable with framework/research/debate artifacts.'
+    title: 'Antigravity Runtime',
+    badge: 'orchestration runtime',
+    body: 'Antigravity can orchestrate tasks, while PCA sharpens the output with framework design, evidence checks, debate structure, and routing.',
+    hint: 'Use this when Antigravity is the outer execution surface and PCA is the governed decision layer.'
   },
   ollama: {
-    title: 'Ollama (FoC)',
-    body: 'Run locally with open models. Use PCA UI/CLI for evidence and policy control while model calls run in your local environment.'
+    title: 'Ollama Local Models',
+    badge: 'foc local',
+    body: 'This is the main free and open path: run local models such as Qwen or DeepSeek variants, then let PCA improve raw model output with proposal, critique, assessment, and governance.',
+    hint: 'Best for FoC-first teams. The current browser UI prepares and documents the run; direct local model execution uses the Ollama adapter.'
   },
   byom: {
-    title: 'BYOM (OpenAI-Compatible)',
-    body: 'Bring your own hosted or local endpoint and assign role-specific models. PCA tracks governance independent of provider.'
+    title: 'Your Own Models and Endpoints',
+    badge: 'byom compatible',
+    body: 'Use your own OpenAI-compatible endpoint for local or hosted models. This fits DeepSeek, Qwen, local gateways, and any compatible provider endpoint for PCA reasoning workflows.',
+    hint: 'Claude, Gemini, and Grok usually need an OpenAI-compatible gateway or proxy unless a native PCA adapter is added.'
   },
   other: {
     title: 'Other Runtime',
-    body: 'Use PCA as the governance shell and record runtime/model metadata for audit and reproducibility.'
+    badge: 'runtime metadata',
+    body: 'Use PCA as the governance shell and record which runtime or provider was used for reproducibility and auditability.',
+    hint: 'Use this when the provider is outside the built-in runtime paths.'
   }
 };
+
+const BYOM_PROVIDER_NOTES = {
+  generic: 'Use this when the provider exposes an OpenAI-compatible chat/completions API. Works for many self-hosted and managed gateways.',
+  openai: 'Use this for providers that directly expose an OpenAI-compatible API. PCA BYOM calls chat/completions and can split proposal, critique, and assess models.',
+  openrouter: 'Use this when routing multiple models through an OpenRouter-style compatible endpoint.',
+  'anthropic-gateway': 'Claude is not directly supported by the current BYOM adapter unless it is exposed through an OpenAI-compatible gateway or proxy.',
+  'gemini-gateway': 'Gemini is not directly supported by the current BYOM adapter unless it is exposed through an OpenAI-compatible gateway or proxy.',
+  'xai-gateway': 'Grok is not directly supported by the current BYOM adapter unless it is exposed through an OpenAI-compatible gateway or proxy.',
+  deepseek: 'DeepSeek is a strong fit when you run it locally or through a DeepSeek or gateway endpoint that is OpenAI-compatible.',
+  qwen: 'Qwen is a strong FoC fit for either local Ollama use or a compatible BYOM endpoint.',
+  dola: 'DoLa is not a first-class provider path here; use it only if you already expose it through an OpenAI-compatible endpoint or gateway.',
+  'local-gateway': 'Use this for vLLM, LM Studio, LocalAI, LiteLLM, or similar local gateways exposing an OpenAI-compatible interface.'
+};
+
+const MODEL_PACKS = {
+  'foc-balanced': {
+    proposal: 'qwen2.5:7b',
+    critique: 'llama3.1:8b',
+    assess: 'qwen2.5:14b',
+    notes: 'Balanced FoC pack for governed discussion, comparison, critique, planning, and analysis.',
+    packNote: 'Best general FoC pack for PCA-style thinking tasks. Strong default for analysis, discussions, comparisons, structured debate, and implementation guidance.'
+  },
+  'analysis-debate': {
+    proposal: 'qwen2.5:14b',
+    critique: 'llama3.1:8b',
+    assess: 'qwen2.5:14b',
+    notes: 'Optimized for deeper analysis, argument comparison, insight generation, and PCA debate loops.',
+    packNote: 'Use this when you want better synthesis, tradeoff review, and debate quality over speed.'
+  },
+  'planning-insight': {
+    proposal: 'qwen2.5:7b',
+    critique: 'qwen2.5:14b',
+    assess: 'qwen2.5:14b',
+    notes: 'Optimized for planning, roadmap thinking, structured task decomposition, and development guidance.',
+    packNote: 'Use this for agentic planning, development discussion, requirement breakdowns, and next-step design.'
+  },
+  'coding-design': {
+    proposal: 'qwen2.5-coder:7b',
+    critique: 'llama3.1:8b',
+    assess: 'qwen2.5:14b',
+    notes: 'Optimized for coding discussion, design review, implementation planning, and code critique.',
+    packNote: 'Use this when the main task is coding, software design, refactoring, development, or code review.'
+  },
+  'qwen-local': {
+    proposal: 'qwen2.5:7b',
+    critique: 'qwen2.5:14b',
+    assess: 'qwen2.5:14b',
+    notes: 'Qwen-only FoC pack for teams standardizing on one local free/open family for discussion, planning, coding guidance, and development tasks.',
+    packNote: 'Good when you want a single-family FoC stack with lower operational complexity across thinking and development workflows.'
+  },
+  'deepseek-local': {
+    proposal: 'deepseek-r1:8b',
+    critique: 'llama3.1:8b',
+    assess: 'deepseek-r1:14b',
+    notes: 'DeepSeek-oriented FoC pack for reasoning-heavy analysis and discussion. Verify local availability in Ollama or your BYOM gateway before use.',
+    packNote: 'Good for reasoning-heavy discussions and analysis if your local environment or gateway supports DeepSeek models.'
+  },
+  manual: {
+    proposal: '',
+    critique: '',
+    assess: '',
+    notes: '',
+    packNote: 'Manual mode leaves model fields untouched so you can supply your own compatible models or provider-specific names.'
+  }
+};
+
+const TASK_MODE_CONFIG = {
+  analysis: {
+    note: 'Use this for analysis, insight generation, interpretation, and structured reasoning over datasets and documents.',
+    suggestedPack: 'foc-balanced'
+  },
+  debate: {
+    note: 'Use this for comparisons, competing options, challenge rounds, contradictions, and PCA-style debate loops.',
+    suggestedPack: 'analysis-debate'
+  },
+  planning: {
+    note: 'Use this for task decomposition, roadmap thinking, phase design, and agentic planning workflows.',
+    suggestedPack: 'planning-insight'
+  },
+  'dataset-access': {
+    note: 'Use this for locating datasets, checking inputs, reviewing accessible files, preparing corpus structure, and framing what data should be used.',
+    suggestedPack: 'planning-insight'
+  },
+  'read-review': {
+    note: 'Use this for reading, reviewing, summarizing, comparing, and extracting meaning from documents, code, or datasets.',
+    suggestedPack: 'analysis-debate'
+  },
+  'write-output': {
+    note: 'Use this for writing drafts, reports, summaries, structured outputs, issue registers, and governed response artifacts.',
+    suggestedPack: 'foc-balanced'
+  },
+  'transform-output': {
+    note: 'Use this for converting outputs into JSON, tables, checklists, bundles, registers, or downstream-ready packaging.',
+    suggestedPack: 'planning-insight'
+  },
+  coding: {
+    note: 'Use this for code review, design critique, technical comparison, architecture discussion, and implementation planning.',
+    suggestedPack: 'coding-design'
+  },
+  development: {
+    note: 'Use this for development discussion, solution shaping, refactoring direction, and governed build/refine workflows.',
+    suggestedPack: 'coding-design'
+  },
+  programming: {
+    note: 'Use this for programming tasks that involve reading, writing, modifying, and refining code or automation logic.',
+    suggestedPack: 'coding-design'
+  },
+  build: {
+    note: 'Use this for build-oriented tasks where PCA should maintain quality gates while moving toward concrete implementation outputs.',
+    suggestedPack: 'coding-design'
+  },
+  refine: {
+    note: 'Use this for iteration, improvement, cleanup, gap-fixing, and focused refinement of outputs or code.',
+    suggestedPack: 'coding-design'
+  }
+};
+
+const EXECUTION_MODE_CONFIG = {
+  'reasoning-only': 'Reasoning-focused mode: emphasize framing, evidence, critique, assessment, and recommendations.',
+  advisory: 'Advisory mode: produce governed next steps, suggested outputs, and implementation-ready guidance without forcing direct changes.',
+  'execution-ready': 'Execution-ready mode: produce reasoning plus concrete build, write, transform, or programming outputs where the selected workflow supports it.'
+};
+
+const THEME_PRESETS = {
+  operational: {
+    bg: '#f3efe6',
+    card: '#fffdfa',
+    cardAlpha: 82,
+    innerAlpha: 62,
+    ink: '#17201c',
+    fontSans: 'space-grotesk',
+    fontMono: 'ibm-plex-mono',
+    line: '#d9cebb',
+    accent: '#0b6e69',
+    accent2: '#c65d1a',
+    muted: '#56605c',
+    bgStart: '#f3efe6',
+    bgEnd: '#eef3ec',
+    bgAngle: 150
+  },
+  'evidence-lab': {
+    bg: '#edf3f6',
+    card: '#fcfeff',
+    cardAlpha: 76,
+    innerAlpha: 54,
+    ink: '#10202b',
+    fontSans: 'manrope',
+    fontMono: 'ibm-plex-mono',
+    line: '#c9d8df',
+    accent: '#165d86',
+    accent2: '#d97706',
+    muted: '#566975',
+    bgStart: '#edf3f6',
+    bgEnd: '#f5f9fb',
+    bgAngle: 145
+  },
+  'field-manual': {
+    bg: '#f1eadf',
+    card: '#fffaf2',
+    cardAlpha: 84,
+    innerAlpha: 66,
+    ink: '#231f1a',
+    fontSans: 'sora',
+    fontMono: 'jetbrains-mono',
+    line: '#d5c8b4',
+    accent: '#355e3b',
+    accent2: '#d66a1f',
+    muted: '#6d675f',
+    bgStart: '#f1eadf',
+    bgEnd: '#f8f1e5',
+    bgAngle: 155
+  }
+};
+
+const FONT_STACKS = {
+  'space-grotesk': "'Space Grotesk', sans-serif",
+  manrope: "'Manrope', sans-serif",
+  sora: "'Sora', sans-serif",
+  outfit: "'Outfit', sans-serif",
+  'plus-jakarta-sans': "'Plus Jakarta Sans', sans-serif",
+  'bricolage-grotesque': "'Bricolage Grotesque', sans-serif",
+  'ibm-plex-sans': "'IBM Plex Sans', sans-serif",
+  fraunces: "'Fraunces', serif",
+  'source-serif-4': "'Source Serif 4', serif",
+  'dm-serif-display': "'DM Serif Display', serif",
+  'ibm-plex-mono': "'IBM Plex Mono', monospace",
+  'jetbrains-mono': "'JetBrains Mono', monospace",
+  'fira-mono': "'Fira Mono', monospace",
+  'space-grotesk-mono': "'Space Grotesk', monospace"
+};
+
+function applyTheme(themeName) {
+  const selected = themeName || 'operational';
+  document.documentElement.dataset.theme = selected;
+  if (themePreset) {
+    themePreset.value = selected;
+  }
+  if (themePreviewGrid) {
+    themePreviewGrid.querySelectorAll('.theme-card').forEach((card) => {
+      card.classList.toggle('active', card.dataset.themeOption === selected);
+    });
+  }
+  syncThemeControlsFromPreset(selected);
+}
+
+function setThemeVariable(name, value) {
+  document.documentElement.style.setProperty(name, value);
+}
+
+function setThemeFontVariables(fontSansKey, fontMonoKey) {
+  setThemeVariable('--font-sans', FONT_STACKS[fontSansKey] || FONT_STACKS['space-grotesk']);
+  setThemeVariable('--font-mono', FONT_STACKS[fontMonoKey] || FONT_STACKS['ibm-plex-mono']);
+}
+
+function hexToRgb(hex) {
+  const normalized = String(hex || '').replace('#', '').trim();
+  if (normalized.length !== 6) return null;
+  const num = Number.parseInt(normalized, 16);
+  if (Number.isNaN(num)) return null;
+  return {
+    r: (num >> 16) & 255,
+    g: (num >> 8) & 255,
+    b: num & 255
+  };
+}
+
+function buildRgba(hex, alphaPercent) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const alpha = Math.max(0, Math.min(Number(alphaPercent) || 100, 100)) / 100;
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+}
+
+function syncThemeControlsFromPreset(themeName) {
+  const preset = THEME_PRESETS[themeName];
+  if (!preset) return;
+
+  themeBg.value = preset.bg;
+  themeCard.value = preset.card;
+  themeCardAlpha.value = preset.cardAlpha;
+  themeCardAlphaValue.textContent = `${preset.cardAlpha}%`;
+  themeInnerAlpha.value = preset.innerAlpha;
+  themeInnerAlphaValue.textContent = `${preset.innerAlpha}%`;
+  themeInk.value = preset.ink;
+  themeFontSans.value = preset.fontSans;
+  themeFontMono.value = preset.fontMono;
+  themeLine.value = preset.line;
+  themeAccent.value = preset.accent;
+  themeAccent2.value = preset.accent2;
+  themeMuted.value = preset.muted;
+  themeBgStart.value = preset.bgStart;
+  themeBgEnd.value = preset.bgEnd;
+  themeGradientAngle.value = preset.bgAngle;
+  themeGradientAngleValue.textContent = `${preset.bgAngle}deg`;
+
+  setThemeVariable('--bg', preset.bg);
+  setThemeVariable('--card', preset.card);
+  setThemeVariable('--card-surface', buildRgba(preset.card, preset.cardAlpha));
+  setThemeVariable('--inner-surface', buildRgba(preset.card, preset.innerAlpha));
+  setThemeVariable('--inner-surface-strong', buildRgba(preset.card, Math.min(preset.innerAlpha + 12, 100)));
+  setThemeVariable('--ink', preset.ink);
+  setThemeFontVariables(preset.fontSans, preset.fontMono);
+  setThemeVariable('--line', preset.line);
+  setThemeVariable('--accent', preset.accent);
+  setThemeVariable('--accent-2', preset.accent2);
+  setThemeVariable('--muted', preset.muted);
+  setThemeVariable('--bg-start', preset.bgStart);
+  setThemeVariable('--bg-end', preset.bgEnd);
+  setThemeVariable('--bg-angle', `${preset.bgAngle}deg`);
+}
+
+function applyThemeControlOverrides() {
+  setThemeVariable('--bg', themeBg.value);
+  setThemeVariable('--card', themeCard.value);
+  setThemeVariable('--card-surface', buildRgba(themeCard.value, themeCardAlpha.value));
+  setThemeVariable('--inner-surface', buildRgba(themeCard.value, themeInnerAlpha.value));
+  setThemeVariable('--inner-surface-strong', buildRgba(themeCard.value, Math.min(Number(themeInnerAlpha.value || 0) + 12, 100)));
+  setThemeVariable('--ink', themeInk.value);
+  setThemeFontVariables(themeFontSans.value, themeFontMono.value);
+  setThemeVariable('--line', themeLine.value);
+  setThemeVariable('--accent', themeAccent.value);
+  setThemeVariable('--accent-2', themeAccent2.value);
+  setThemeVariable('--muted', themeMuted.value);
+  setThemeVariable('--bg-start', themeBgStart.value);
+  setThemeVariable('--bg-end', themeBgEnd.value);
+  setThemeVariable('--bg-angle', `${themeGradientAngle.value}deg`);
+  themeCardAlphaValue.textContent = `${themeCardAlpha.value}%`;
+  themeInnerAlphaValue.textContent = `${themeInnerAlpha.value}%`;
+  themeGradientAngleValue.textContent = `${themeGradientAngle.value}deg`;
+}
 
 function buildCliSnippets() {
   const runtime = runtimeProvider.value;
@@ -187,6 +531,9 @@ function buildCliSnippets() {
   const riskLevelValue = riskLevel.value || 'medium';
   const obstacleX = String(geometryObstacleX.value || '80,120').split(',').map((x) => Number(x.trim()));
   const obstacleY = String(geometryObstacleY.value || '60,90').split(',').map((y) => Number(y.trim()));
+  const byomEndpointValue = byomEndpoint ? byomEndpoint.value : 'http://localhost:11434/v1';
+  const byomApiKeyValue = byomApiKey ? byomApiKey.value : 'none';
+  const byomTemperatureValue = byomTemperature ? Number(byomTemperature.value || 0.2) : 0.2;
 
   const lines = [
     '# 1) Convert PDFs (optional if sources already prepared)',
@@ -203,18 +550,60 @@ function buildCliSnippets() {
   ];
 
   if (runtime === 'ollama') {
-    lines.push('');
-    lines.push('# Optional direct Ollama adapter run');
-    lines.push(`node integrations/ollama/adapter.js verify --decision "${decisionText}" --context "${contextValue}" --model-proposal "${modelProposal.value}" --model-critic "${modelCritique.value}" --model-assess "${modelAssess.value}"`);
+    lines.unshift(`ollama pull ${modelProposal.value}`, `ollama pull ${modelCritique.value}`, `ollama pull ${modelAssess.value}`, '', '# FoC local runtime (recommended)', `node integrations/ollama/adapter.js verify --decision "${decisionText}" --context "${contextValue}" --model-proposal "${modelProposal.value}" --model-critic "${modelCritique.value}" --model-assess "${modelAssess.value}"`, '');
   }
 
   if (runtime === 'byom') {
-    lines.push('');
-    lines.push('# Optional direct BYOM adapter run');
-    lines.push(`npm run adapter:byom -- verify --decision "${decisionText}" --context "${contextValue}" --model-proposal "${modelProposal.value}" --model-critic "${modelCritique.value}" --model-assess "${modelAssess.value}"`);
+    lines.unshift('# BYOM runtime (your own models)', `npm run adapter:byom -- verify --decision "${decisionText}" --context "${contextValue}" --endpoint "${byomEndpointValue}" --api-key "${byomApiKeyValue}" --model-proposal "${modelProposal.value}" --model-critic "${modelCritique.value}" --model-assess "${modelAssess.value}" --temperature ${byomTemperatureValue} --policy ${policyValue}`, '');
   }
 
   return lines.join('\n');
+}
+
+function applyModelPack(packKey) {
+  const pack = MODEL_PACKS[packKey];
+  if (!pack) return;
+
+  modelPackNote.textContent = pack.packNote;
+  if (packKey === 'manual') return;
+
+  modelProposal.value = pack.proposal;
+  modelCritique.value = pack.critique;
+  modelAssess.value = pack.assess;
+  modelNotes.value = pack.notes;
+}
+
+function maybeApplySuggestedModelPack() {
+  const config = TASK_MODE_CONFIG[taskMode.value];
+  if (!config) return;
+  if (modelPack.value === 'manual') return;
+  if (config.suggestedPack && modelPack.value !== config.suggestedPack) {
+    modelPack.value = config.suggestedPack;
+  }
+  applyModelPack(modelPack.value);
+}
+
+function renderTaskExecutionMode() {
+  const taskConfig = TASK_MODE_CONFIG[taskMode.value] || TASK_MODE_CONFIG.analysis;
+  const executionNote = EXECUTION_MODE_CONFIG[executionMode.value] || EXECUTION_MODE_CONFIG['reasoning-only'];
+  executionModeNote.textContent = `${taskConfig.note} ${executionNote}`;
+}
+
+function renderRuntimeModePanel() {
+  const runtime = runtimeProvider.value;
+  const active = RUNTIME_GUIDE_TEXT[runtime] || RUNTIME_GUIDE_TEXT.other;
+
+  runtimeModeTitle.textContent = active.title;
+  runtimeModeBadge.textContent = active.badge;
+  runtimeModeBody.textContent = active.body;
+  runtimeModeHint.textContent = active.hint;
+
+  if (runtime === 'byom') {
+    byomConfig.classList.remove('hidden');
+    byomCompatibilityNote.textContent = BYOM_PROVIDER_NOTES[byomProviderType.value] || BYOM_PROVIDER_NOTES.generic;
+  } else {
+    byomConfig.classList.add('hidden');
+  }
 }
 
 function renderRuntimeGuide() {
@@ -222,16 +611,24 @@ function renderRuntimeGuide() {
   const active = RUNTIME_GUIDE_TEXT[runtime] || RUNTIME_GUIDE_TEXT.other;
   const cards = [
     {
-      title: 'What Is This?',
-      body: 'PCA is an evidence-governed decision workflow: framework proposal, research pack, debate loop, and HITL/HOTL checkpoint.'
+      title: 'Why PCA Helps FoC AI',
+      body: 'PCA improves raw AI output by separating proposal, critique, assessment, and governance instead of relying on a single unstructured answer.'
     },
     {
       title: active.title,
       body: active.body
     },
     {
-      title: 'FoC and Paid Paths',
-      body: 'Paid users can choose premium runtime/model labels; FoC users can run Ollama presets or BYOM endpoints with the same governance UX.'
+      title: 'FoC and BYOM Paths',
+      body: 'Use Ollama for the fastest free local path, or BYOM for DeepSeek, Qwen, and other compatible models exposed through your own endpoint.'
+    },
+    {
+      title: 'Recommended Free Model Families',
+      body: 'Strong FoC starting points are Qwen, DeepSeek, Llama, Gemma, Phi, Mistral, and coder-oriented Qwen/Codellama variants, as long as they are available locally or through a compatible gateway.'
+    },
+    {
+      title: 'Task Coverage',
+      body: 'The browser UI supports analysis, debate, planning, dataset access, reading, writing, output transformation, coding, programming, build, and refinement workflows through PCA governance.'
     }
   ];
 
@@ -248,6 +645,7 @@ function renderRuntimeGuide() {
     runtimeGuide.appendChild(el);
   });
 
+  renderRuntimeModePanel();
   cliSnippetsView.textContent = buildCliSnippets();
 }
 
@@ -359,6 +757,12 @@ function commonPayload() {
     publicReferences: publicReferences.value,
     datasetRegistry: datasetRegistry.value,
     runtimeProvider: runtimeProvider.value,
+    taskMode: taskMode.value,
+    executionMode: executionMode.value,
+    byomProviderType: byomProviderType.value,
+    byomEndpoint: byomEndpoint.value,
+    byomApiKey: byomApiKey.value,
+    byomTemperature: Number(byomTemperature.value || 0.2),
     modelSelection: {
       proposal: modelProposal.value,
       critique: modelCritique.value,
@@ -391,6 +795,135 @@ function parseLineList(value) {
     .split(/\r?\n/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function populateSelectOptions(target, values, currentValue, customLabel = 'Custom...') {
+  if (!target) return;
+  target.innerHTML = '';
+  const seen = new Set();
+  const normalizedCurrent = String(currentValue || '').trim();
+  const parentFolder = getParentFolder(normalizedCurrent);
+
+  if (parentFolder && parentFolder !== normalizedCurrent) {
+    const parentOption = document.createElement('option');
+    parentOption.value = PARENT_OPTION_VALUE;
+    parentOption.textContent = `.. Parent Folder (${parentFolder})`;
+    target.appendChild(parentOption);
+  }
+
+  if (normalizedCurrent) {
+    const currentOption = document.createElement('option');
+    currentOption.value = normalizedCurrent;
+    currentOption.textContent = normalizedCurrent;
+    currentOption.selected = true;
+    target.appendChild(currentOption);
+    seen.add(normalizedCurrent);
+  }
+
+  (Array.isArray(values) ? values : []).forEach((value) => {
+    if (!value || seen.has(value)) return;
+    seen.add(value);
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    target.appendChild(option);
+  });
+
+  const customOption = document.createElement('option');
+  customOption.value = CUSTOM_OPTION_VALUE;
+  customOption.textContent = customLabel;
+  target.appendChild(customOption);
+
+  if (normalizedCurrent && seen.has(normalizedCurrent)) {
+    target.value = normalizedCurrent;
+  } else {
+    target.value = CUSTOM_OPTION_VALUE;
+  }
+}
+
+function syncPickerSelection(selectEl, inputEl) {
+  if (!selectEl || !inputEl) return;
+  const useCustom = selectEl.value === CUSTOM_OPTION_VALUE;
+  inputEl.classList.toggle('hidden', !useCustom);
+  if (!useCustom) {
+    inputEl.value = selectEl.value;
+  }
+}
+
+function isFolderPicker(selectEl) {
+  return selectEl === inputDirSelect
+    || selectEl === ocrDirSelect
+    || selectEl === textDirSelect
+    || selectEl === sourcesInputSelect;
+}
+
+async function loadPathOptions() {
+  try {
+    const params = new URLSearchParams({
+      inputDir: inputDir.value || '',
+      ocrDir: ocrDir.value || '',
+      textDir: textDir.value || '',
+      sources: sourcesInput.value || ''
+    });
+    const res = await fetch(`/api/path-options?${params.toString()}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    populateSelectOptions(inputDirSelect, data.inputDirs, inputDir.value, 'Custom input folder...');
+    populateSelectOptions(ocrDirSelect, data.outputDirs, ocrDir.value, 'Custom OCR output folder...');
+    populateSelectOptions(textDirSelect, data.outputDirs, textDir.value, 'Custom text output folder...');
+    populateSelectOptions(sourcesInputSelect, data.sourcePaths, sourcesInput.value, 'Custom source path(s)...');
+    populateSelectOptions(excludeFilesSelect, data.excludeFiles, excludeFiles.value, 'Custom exclude file(s)...');
+    populateSelectOptions(includePrefixesSelect, data.includePrefixes, includePrefixes.value, 'Custom prefix list...');
+
+    syncPickerSelection(inputDirSelect, inputDir);
+    syncPickerSelection(ocrDirSelect, ocrDir);
+    syncPickerSelection(textDirSelect, textDir);
+    syncPickerSelection(sourcesInputSelect, sourcesInput);
+    syncPickerSelection(excludeFilesSelect, excludeFiles);
+    syncPickerSelection(includePrefixesSelect, includePrefixes);
+  } catch (_error) {
+    // Keep manual entry working even if suggestions fail to load.
+  }
+}
+
+function normalizeFolderPath(value) {
+  return String(value || '').trim().replace(/[\/]+$/, '');
+}
+
+function getParentFolder(value) {
+  const normalized = normalizeFolderPath(value);
+  if (!normalized) return '';
+
+  const windowsRootMatch = normalized.match(/^[A-Za-z]:$/);
+  if (windowsRootMatch) {
+    return normalized;
+  }
+
+  if (/^[A-Za-z]:\\/.test(normalized)) {
+    const withoutLast = normalized.replace(/\\[^\\]+$/, '');
+    return withoutLast || normalized;
+  }
+
+  if (normalized.includes('/')) {
+    const withoutLast = normalized.replace(/\/[^/]+$/, '');
+    return withoutLast || normalized;
+  }
+
+  return normalized;
+}
+
+function navigatePickerUp(selectEl, inputEl) {
+  const currentValue = inputEl.value || (selectEl ? selectEl.value : '');
+  const parent = getParentFolder(currentValue);
+  if (!parent || parent === currentValue) return;
+  inputEl.value = parent;
+  if (selectEl) {
+    selectEl.value = CUSTOM_OPTION_VALUE;
+    syncPickerSelection(selectEl, inputEl);
+  }
+  loadPathOptions();
+  renderRuntimeGuide();
+  renderInputRegistry();
 }
 
 function renderInputRegistry() {
@@ -836,7 +1369,7 @@ btnPreviewCorpus.addEventListener('click', async () => {
     showResult('Corpus Preview Loaded', data);
     clearBusy('Corpus preview loaded');
   } catch (error) {
-    corpusPreviewView.textContent = `Corpus preview failed: ${error.message}`;
+    corpusPreviewView.textContent = `Source preview failed: ${error.message}`;
     showResult('Corpus Preview Error', { error: error.message });
     clearBusy('Corpus preview failed');
   }
@@ -991,6 +1524,37 @@ refreshArtifacts().catch((error) => {
   showResult('Artifact Load Error', { error: error.message });
 });
 
+loadPathOptions();
+
+[
+  [inputDirSelect, inputDir],
+  [ocrDirSelect, ocrDir],
+  [textDirSelect, textDir],
+  [sourcesInputSelect, sourcesInput],
+  [excludeFilesSelect, excludeFiles],
+  [includePrefixesSelect, includePrefixes]
+].forEach(([selectEl, inputEl]) => {
+  selectEl.addEventListener('change', () => {
+    if (isFolderPicker(selectEl) && selectEl.value === PARENT_OPTION_VALUE) {
+      navigatePickerUp(selectEl, inputEl);
+      return;
+    }
+
+    syncPickerSelection(selectEl, inputEl);
+    renderRuntimeGuide();
+    renderInputRegistry();
+    if (
+      selectEl === inputDirSelect ||
+      selectEl === ocrDirSelect ||
+      selectEl === textDirSelect ||
+      selectEl === sourcesInputSelect
+    ) {
+      loadPathOptions();
+    }
+  });
+});
+
+
 [
   useCaseProfile,
   runtimeProvider,
@@ -1000,8 +1564,13 @@ refreshArtifacts().catch((error) => {
   modelCritique,
   modelAssess,
   modelNotes,
+  byomProviderType,
+  byomEndpoint,
+  byomApiKey,
+  byomTemperature,
   sourcesInput,
   inputDir,
+  ocrDir,
   textDir,
   includePrefixes,
   excludeFiles,
@@ -1024,9 +1593,67 @@ refreshArtifacts().catch((error) => {
   el.addEventListener('change', renderInputRegistry);
 });
 
+[inputDir, textDir, sourcesInput].forEach((el) => {
+  el.addEventListener('change', loadPathOptions);
+  el.addEventListener('blur', loadPathOptions);
+});
+
 useCaseProfile.addEventListener('change', () => {
   applyUseCaseProfile(useCaseProfile.value);
 });
+
+modelPack.addEventListener('change', () => {
+  applyModelPack(modelPack.value);
+  renderRuntimeGuide();
+  renderInputRegistry();
+});
+
+themePreset.addEventListener('change', () => {
+  applyTheme(themePreset.value);
+});
+
+themePreviewGrid.querySelectorAll('.theme-card').forEach((card) => {
+  card.addEventListener('click', () => {
+    applyTheme(card.dataset.themeOption);
+  });
+});
+
+[
+  themeBg,
+  themeCard,
+  themeCardAlpha,
+  themeInnerAlpha,
+  themeInk,
+  themeFontSans,
+  themeFontMono,
+  themeLine,
+  themeAccent,
+  themeAccent2,
+  themeMuted,
+  themeBgStart,
+  themeBgEnd,
+  themeGradientAngle
+].forEach((control) => {
+  control.addEventListener('input', applyThemeControlOverrides);
+  control.addEventListener('change', applyThemeControlOverrides);
+});
+
+taskMode.addEventListener('change', () => {
+  maybeApplySuggestedModelPack();
+  renderTaskExecutionMode();
+  renderRuntimeGuide();
+  renderInputRegistry();
+});
+
+executionMode.addEventListener('change', () => {
+  renderTaskExecutionMode();
+  renderRuntimeGuide();
+  renderInputRegistry();
+});
+
+applyModelPack(modelPack.value);
+renderTaskExecutionMode();
+applyTheme(themePreset.value);
 
 renderRuntimeGuide();
 renderInputRegistry();

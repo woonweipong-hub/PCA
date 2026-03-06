@@ -6,14 +6,72 @@ const path = require('path');
 const { URL } = require('url');
 const { spawn } = require('child_process');
 
-const HOST = process.env.PCA_UI_HOST || '0.0.0.0';
+const HOST = process.env.PCA_UI_HOST || '127.0.0.1';
 const PORT = Number(process.env.PCA_UI_PORT || 4173);
 
 const WEB_ROOT = path.resolve(__dirname, 'ui');
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const ARTIFACT_DIR = path.join(PROJECT_ROOT, 'outputs', 'ui');
+const DATA_ROOT = path.join(PROJECT_ROOT, 'data');
+const OUTPUT_ROOT = path.join(PROJECT_ROOT, 'outputs');
+const EXTRA_ALLOWED_ROOTS = String(process.env.PCA_UI_ALLOWED_ROOTS || '')
+  .split(path.delimiter)
+  .map((value) => String(value || '').trim())
+  .filter(Boolean)
+  .map((value) => (path.isAbsolute(value)
+    ? path.normalize(value)
+    : path.normalize(path.resolve(PROJECT_ROOT, value))));
+const ALLOWED_ROOTS = Array.from(new Set([
+  DATA_ROOT,
+  OUTPUT_ROOT,
+  ARTIFACT_DIR,
+  ...EXTRA_ALLOWED_ROOTS
+])).filter((value) => {
+  try {
+    return fs.existsSync(value) && fs.statSync(value).isDirectory();
+  } catch (_error) {
+    return false;
+  }
+});
 
 fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
+
+function normalizeForComparison(targetPath) {
+  return path.resolve(targetPath).replace(/[\\/]+$/, '').toLowerCase();
+}
+
+function isWithinRoot(targetPath, rootPath) {
+  const normalizedTarget = normalizeForComparison(targetPath);
+  const normalizedRoot = normalizeForComparison(rootPath);
+  return normalizedTarget === normalizedRoot || normalizedTarget.startsWith(`${normalizedRoot}${path.sep}`);
+}
+
+function isAllowedPath(targetPath) {
+  return ALLOWED_ROOTS.some((rootPath) => isWithinRoot(targetPath, rootPath));
+}
+
+function ensureAllowedPath(targetPath, label = 'path') {
+  if (!isAllowedPath(targetPath)) {
+    throw new Error(`${label} is outside allowed roots`);
+  }
+  return targetPath;
+}
+
+function ensureAllowedExistingDirectory(targetPath, label = 'directory') {
+  const normalized = ensureAllowedPath(path.normalize(targetPath), label);
+  if (!fs.existsSync(normalized) || !fs.statSync(normalized).isDirectory()) {
+    throw new Error(`${label} does not exist or is not a directory`);
+  }
+  return normalized;
+}
+
+function ensureAllowedExistingFileOrDirectory(targetPath, label = 'path') {
+  const normalized = ensureAllowedPath(path.normalize(targetPath), label);
+  if (!fs.existsSync(normalized)) {
+    throw new Error(`${label} does not exist`);
+  }
+  return normalized;
+}
 
 function sendJson(res, statusCode, payload) {
   const body = JSON.stringify(payload, null, 2);
@@ -180,6 +238,88 @@ function normalizeModelSelection(value) {
     critique: String(input.critique || '').trim() || null,
     assess: String(input.assess || '').trim() || null,
     notes: String(input.notes || '').trim() || null
+  };
+}
+
+function supportsDirectRuntimeInvocation(runtimeProvider) {
+  return runtimeProvider === 'ollama' || runtimeProvider === 'byom';
+}
+
+function buildRuntimeAdapterArgs(body, modeOverride, extra = {}) {
+  const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
+  if (!supportsDirectRuntimeInvocation(runtimeProvider)) {
+    return null;
+  }
+
+  const modelSelection = normalizeModelSelection(body.modelSelection);
+  const mode = modeOverride || body.mode || 'verify';
+  const decision = extra.decision || body.decision || 'PCA browser runtime assist';
+  const context = extra.context || body.context || 'PCA browser runtime context';
+  const policy = extra.policy || body.policy || 'balanced';
+  const topology = extra.topology || body.topology || 'single-critic';
+  const maxCycles = extra.maxCycles || body.maxCycles || body.cycles || 1;
+  const riskFlags = Array.isArray(extra.riskFlags)
+    ? extra.riskFlags.filter(Boolean).join(';')
+    : (extra.riskFlags || body.riskFlags || '');
+
+  const args = runtimeProvider === 'ollama'
+    ? ['integrations/ollama/adapter.js', mode]
+    : ['integrations/byom/adapter.js', mode];
+
+  pushFlag(args, '--decision', decision);
+  pushFlag(args, '--context', context);
+  pushFlag(args, '--model-proposal', modelSelection.proposal || 'qwen2.5:7b');
+  pushFlag(args, '--model-critic', modelSelection.critique || 'llama3.1:8b');
+  pushFlag(args, '--model-assess', modelSelection.assess || 'qwen2.5:14b');
+  pushFlag(args, '--policy', policy);
+  pushFlag(args, '--topology', topology);
+  pushFlag(args, '--max-cycles', maxCycles);
+  pushFlag(args, '--risk-flags', riskFlags);
+
+  if (runtimeProvider === 'byom') {
+    pushFlag(args, '--endpoint', body.byomEndpoint || process.env.PCA_BYOM_ENDPOINT || 'http://localhost:11434/v1');
+    pushFlag(args, '--api-key', body.byomApiKey || process.env.PCA_BYOM_API_KEY || 'none');
+    pushFlag(args, '--temperature', body.byomTemperature || process.env.PCA_MODEL_TEMPERATURE || 0.2);
+  }
+
+  return args;
+}
+
+async function maybeRunRuntimeAdapter(body, modeOverride, extra = {}) {
+  const runtimeProvider = normalizeRuntimeProvider(body.runtimeProvider);
+  if (!supportsDirectRuntimeInvocation(runtimeProvider)) {
+    return {
+      requested: false,
+      executed: false,
+      runtime_provider: runtimeProvider
+    };
+  }
+
+  const args = buildRuntimeAdapterArgs(body, modeOverride, extra);
+  if (!args) {
+    return {
+      requested: false,
+      executed: false,
+      runtime_provider: runtimeProvider
+    };
+  }
+
+  const result = await runNodeCommand(args);
+  const parsed = maybeParseJson((result.stdout || '').trim());
+  if (result.code !== 0 || !parsed) {
+    return {
+      requested: true,
+      executed: false,
+      runtime_provider: runtimeProvider,
+      error: (result.stderr || 'runtime adapter invocation failed').trim() || 'runtime adapter invocation failed'
+    };
+  }
+
+  return {
+    requested: true,
+    executed: true,
+    runtime_provider: runtimeProvider,
+    result: parsed
   };
 }
 
@@ -431,8 +571,10 @@ function parseSourceList(value) {
 function resolveSourcePath(rawPath) {
   const trimmed = String(rawPath || '').trim();
   if (!trimmed) return null;
-  if (path.isAbsolute(trimmed)) return path.normalize(trimmed);
-  return path.normalize(path.resolve(PROJECT_ROOT, trimmed));
+  const resolved = path.isAbsolute(trimmed)
+    ? path.normalize(trimmed)
+    : path.normalize(path.resolve(PROJECT_ROOT, trimmed));
+  return ensureAllowedExistingFileOrDirectory(resolved, 'source path');
 }
 
 function collectCorpusFiles(sourceInput, maxFiles = 12) {
@@ -617,6 +759,14 @@ async function handleFrameworkProposal(body) {
     }
   }
 
+  const runtimeAssist = await maybeRunRuntimeAdapter(body, 'discuss', {
+    decision,
+    context,
+    policy: body.policy || 'balanced',
+    topology: body.topology || 'single-critic',
+    maxCycles: 1
+  });
+
   const proposal = {
     runtime_provider: runtimeProvider,
     model_selection: modelSelection,
@@ -682,7 +832,8 @@ async function handleFrameworkProposal(body) {
       suggested_queries: activeSearchEnabled
         ? buildSearchQueries({ decision, context, researchNeeds })
         : []
-    }
+      },
+      runtime_assist: runtimeAssist
   };
 
   const artifact = saveArtifact('framework-proposal', proposal);
@@ -728,6 +879,16 @@ async function handleResearchPack(body) {
   }
 
   const synthesis = summarizeEvidenceForResearch(evidenceParsed);
+  const runtimeAssist = await maybeRunRuntimeAdapter(body, mode, {
+    decision: body.decision || 'Research pack decision',
+    context: body.context || 'Research pack context',
+    policy: body.policy || 'strict',
+    topology: body.topology || 'single-critic',
+    maxCycles: 1,
+    riskFlags: evidenceParsed.assessment && Array.isArray(evidenceParsed.assessment.risk_flags)
+      ? evidenceParsed.assessment.risk_flags
+      : []
+  });
   const result = {
     runtime_provider: runtimeProvider,
     model_selection: modelSelection,
@@ -748,6 +909,7 @@ async function handleResearchPack(body) {
       },
       assessment: evidenceParsed.assessment || null
     },
+    runtime_assist: runtimeAssist,
     research_synthesis: synthesis,
     active_ai_search_plan: {
       enabled: toBool(body.activeSearchEnabled, false),
@@ -779,8 +941,20 @@ function toFixedNumber(value, digits = 2) {
 
 async function handleConvertPdf(body) {
   const args = ['scripts/convert-pdf-batch.cjs'];
-  pushFlag(args, '--input-dir', body.inputDir || '.');
-  pushFlag(args, '--output-dir', body.outputDir || 'data/public-pdf-text');
+  const inputDir = ensureAllowedExistingDirectory(
+    path.isAbsolute(body.inputDir || '')
+      ? path.normalize(body.inputDir)
+      : path.normalize(path.resolve(PROJECT_ROOT, body.inputDir || 'data')),
+    'input directory'
+  );
+  const outputDir = ensureAllowedExistingDirectory(
+    path.isAbsolute(body.outputDir || '')
+      ? path.normalize(body.outputDir)
+      : path.normalize(path.resolve(PROJECT_ROOT, body.outputDir || 'data/public-pdf-text')),
+    'output directory'
+  );
+  pushFlag(args, '--input-dir', inputDir);
+  pushFlag(args, '--output-dir', outputDir);
   pushFlag(args, '--recursive', toBool(body.recursive, true));
   pushFlag(args, '--include-prefixes', body.includePrefixes || '');
   pushFlag(args, '--exclude-files', body.excludeFiles || '');
@@ -811,8 +985,20 @@ async function handleConvertPdf(body) {
 
 async function handleOcrPdf(body) {
   const args = ['scripts/ocr-pdf-batch.cjs'];
-  pushFlag(args, '--input-dir', body.inputDir || '.');
-  pushFlag(args, '--output-dir', body.outputDir || 'data/public-pdf-ocr');
+  const inputDir = ensureAllowedExistingDirectory(
+    path.isAbsolute(body.inputDir || '')
+      ? path.normalize(body.inputDir)
+      : path.normalize(path.resolve(PROJECT_ROOT, body.inputDir || 'data')),
+    'input directory'
+  );
+  const outputDir = ensureAllowedExistingDirectory(
+    path.isAbsolute(body.outputDir || '')
+      ? path.normalize(body.outputDir)
+      : path.normalize(path.resolve(PROJECT_ROOT, body.outputDir || 'data/public-pdf-ocr')),
+    'output directory'
+  );
+  pushFlag(args, '--input-dir', inputDir);
+  pushFlag(args, '--output-dir', outputDir);
   pushFlag(args, '--recursive', toBool(body.recursive, true));
   pushFlag(args, '--language', body.language || 'eng');
   pushFlag(args, '--skip-text', toBool(body.skipText, true));
@@ -896,11 +1082,22 @@ async function handleEvidenceCheck(body) {
   const z3Geometry = await runZ3GeometryCheck(body);
   const verifyGates = evaluateVerifyGates(parsed.assessment || null, body.policy || 'strict', z3Geometry);
   const routeRecommendation = buildRouteRecommendation(parsed.assessment || null, verifyGates);
+  const runtimeAssist = await maybeRunRuntimeAdapter(body, body.mode || 'verify', {
+    decision: body.decision || 'Evidence check',
+    context: body.context || 'Web UI initiated evidence check',
+    policy: body.policy || 'strict',
+    topology: body.topology || 'single-critic',
+    maxCycles: 1,
+    riskFlags: parsed.assessment && Array.isArray(parsed.assessment.risk_flags)
+      ? parsed.assessment.risk_flags
+      : []
+  });
   const artifact = saveArtifact('evidence-check', {
     runtime_provider: runtimeProvider,
     model_selection: modelSelection,
     input_registry: inputRegistry,
     z3_geometry: z3Geometry,
+    runtime_assist: runtimeAssist,
     verify_gates: verifyGates,
     route_recommendation: routeRecommendation,
     result: parsed
@@ -910,6 +1107,7 @@ async function handleEvidenceCheck(body) {
     model_selection: modelSelection,
     input_registry: inputRegistry,
     z3_geometry: z3Geometry,
+    runtime_assist: runtimeAssist,
     verify_gates: verifyGates,
     route_recommendation: routeRecommendation,
     result: parsed,
@@ -1021,6 +1219,25 @@ async function handleDebateLive(req, res, body) {
         previousAssessment
       });
 
+      const runtimeAssist = await maybeRunRuntimeAdapter(body, mode, {
+        decision: body.decision || 'Live debate decision',
+        context: `Cycle ${cycle}. ${body.context || 'Live debate context'}`,
+        policy: body.policy || 'strict',
+        topology: body.topology || 'single-critic',
+        maxCycles: 1,
+        riskFlags: previousRiskFlags
+      });
+
+      if (runtimeAssist.requested) {
+        sendSseEvent(res, 'runtime-assist', {
+          cycle,
+          runtime_provider: runtimeAssist.runtime_provider,
+          executed: runtimeAssist.executed,
+          error: runtimeAssist.error || null,
+          models: runtimeAssist.executed && runtimeAssist.result ? runtimeAssist.result.models || null : null
+        });
+      }
+
       const proposeArgs = ['bin/pca.js', 'propose', mode];
       pushFlag(proposeArgs, '--decision', body.decision || 'Live debate decision');
       pushFlag(proposeArgs, '--context', body.context || 'Live debate context');
@@ -1041,8 +1258,19 @@ async function handleDebateLive(req, res, body) {
         cycle,
         stage: 'propose',
         role: proposeParsed.role,
-        proposal: summarizeStepText(proposeParsed.proposal, proposalText),
-        evidence_digest: proposeParsed.evidence_digest
+        proposal: summarizeStepText(
+          runtimeAssist.executed && runtimeAssist.result && runtimeAssist.result.role_outputs
+            ? runtimeAssist.result.role_outputs.proposal
+            : proposeParsed.proposal,
+          proposalText
+        ),
+        evidence_digest: proposeParsed.evidence_digest,
+        runtime_assist: runtimeAssist.requested
+          ? {
+            executed: runtimeAssist.executed,
+            error: runtimeAssist.error || null
+          }
+          : null
       };
       trace.steps.push(proposeEvent);
       sendSseEvent(res, 'step', proposeEvent);
@@ -1074,7 +1302,12 @@ async function handleDebateLive(req, res, body) {
         cycle,
         stage: 'critique',
         role: critiqueParsed.role,
-        critique: summarizeStepText(critiqueParsed.critique, critiqueText),
+        critique: summarizeStepText(
+          runtimeAssist.executed && runtimeAssist.result && runtimeAssist.result.role_outputs
+            ? runtimeAssist.result.role_outputs.critic
+            : critiqueParsed.critique,
+          critiqueText
+        ),
         extracted_risk_flags: critiqueParsed.extracted_risk_flags || []
       };
       trace.steps.push(critiqueEvent);
@@ -1151,7 +1384,21 @@ async function handleDebateLive(req, res, body) {
             : 'insufficient-data',
           delta_weighted_score_100: null
         },
-        verify_gates: evaluateVerifyGates(previousAssessment, body.policy || 'strict', z3Geometry)
+        verify_gates: evaluateVerifyGates(previousAssessment, body.policy || 'strict', z3Geometry),
+        runtime_assist: runtimeAssist.executed && runtimeAssist.result
+          ? {
+            models: runtimeAssist.result.models || null,
+            assessment: runtimeAssist.result.assessment || null,
+            assess_summary: summarizeStepText(
+              runtimeAssist.result.role_outputs ? runtimeAssist.result.role_outputs.assess : '',
+              null
+            )
+          }
+          : (runtimeAssist.requested
+            ? {
+              error: runtimeAssist.error || 'runtime assist unavailable'
+            }
+            : null)
       };
 
       if (typeof assessEvent.scoring.weighted_score_100 === 'number') {
@@ -1215,6 +1462,9 @@ async function handleDebateLive(req, res, body) {
       z3_geometry: trace.z3_geometry,
       verify_gates: finalVerifyGates,
       route_recommendation: finalRouteRecommendation,
+      runtime_assist: trace.steps
+        .map((step) => step.runtime_assist)
+        .filter(Boolean),
       human_checkpoint: {
         required: checkpointRequired,
         decision: checkpointRequired
@@ -1398,6 +1648,127 @@ function listArtifacts() {
     }));
 }
 
+function toUiPath(targetPath) {
+  const relative = path.relative(PROJECT_ROOT, targetPath);
+  if (relative && !relative.startsWith('..') && !path.isAbsolute(relative)) {
+    return relative.split(path.sep).join('/');
+  }
+  return targetPath;
+}
+
+function normalizeExistingDir(targetPath) {
+  if (!targetPath) return null;
+  const raw = String(targetPath).trim();
+  if (!raw) return null;
+
+  const candidate = path.isAbsolute(raw)
+    ? path.normalize(raw)
+    : path.normalize(path.join(PROJECT_ROOT, raw));
+  try {
+    if (isAllowedPath(candidate) && fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) {
+      return candidate;
+    }
+  } catch (_error) {
+    return null;
+  }
+  return null;
+}
+
+function addDirectoryOption(targetSet, dirPath) {
+  const existing = normalizeExistingDir(dirPath);
+  if (existing) {
+    targetSet.add(toUiPath(existing));
+  }
+}
+
+function addChildDirectories(targetSet, rootPath, maxItems = 24) {
+  const existing = normalizeExistingDir(rootPath);
+  if (!existing) return;
+  try {
+    fs.readdirSync(existing, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .slice(0, maxItems)
+      .forEach((entry) => {
+        targetSet.add(toUiPath(path.join(existing, entry.name)));
+      });
+  } catch (_error) {
+    // Ignore unreadable directories.
+  }
+}
+
+function addFilesFromDirectory(targetSet, rootPath, allowedExtensions, maxItems = 40) {
+  const existing = normalizeExistingDir(rootPath);
+  if (!existing) return;
+  try {
+    fs.readdirSync(existing, { withFileTypes: true })
+      .filter((entry) => entry.isFile())
+      .filter((entry) => {
+        if (!allowedExtensions || allowedExtensions.length === 0) return true;
+        return allowedExtensions.includes(path.extname(entry.name).toLowerCase());
+      })
+      .slice(0, maxItems)
+      .forEach((entry) => {
+        targetSet.add(entry.name);
+      });
+  } catch (_error) {
+    // Ignore unreadable directories.
+  }
+}
+
+function buildPathOptions(query) {
+  const inputDir = query.inputDir || '';
+  const ocrDir = query.ocrDir || '';
+  const textDir = query.textDir || '';
+  const sources = query.sources || '';
+
+  const inputDirs = new Set();
+  const outputDirs = new Set();
+  const sourcePaths = new Set();
+  const excludeFiles = new Set();
+
+  const directorySeeds = ALLOWED_ROOTS;
+
+  directorySeeds.forEach((seed) => {
+    addDirectoryOption(inputDirs, seed);
+    addDirectoryOption(outputDirs, seed);
+    addDirectoryOption(sourcePaths, seed);
+    addChildDirectories(inputDirs, seed, 60);
+    addChildDirectories(outputDirs, seed, 60);
+    addChildDirectories(sourcePaths, seed, 60);
+  });
+
+  [inputDir, ocrDir, textDir].forEach((value) => {
+    const resolved = normalizeExistingDir(value);
+    if (!resolved) return;
+    addDirectoryOption(inputDirs, resolved);
+    addDirectoryOption(outputDirs, resolved);
+    addDirectoryOption(sourcePaths, resolved);
+    addChildDirectories(inputDirs, resolved, 80);
+    addChildDirectories(outputDirs, resolved, 80);
+    addChildDirectories(sourcePaths, resolved, 80);
+    addFilesFromDirectory(excludeFiles, resolved, ['.pdf', '.txt', '.json', '.pptx']);
+  });
+
+  sources.split(',').map((item) => item.trim()).filter(Boolean).forEach((value) => {
+    const resolved = normalizeExistingDir(value);
+    if (!resolved) return;
+    addDirectoryOption(sourcePaths, resolved);
+    addChildDirectories(sourcePaths, resolved, 80);
+    addFilesFromDirectory(excludeFiles, resolved, ['.pdf', '.txt', '.json']);
+  });
+
+  addFilesFromDirectory(excludeFiles, path.join(PROJECT_ROOT, 'data', 'public-pdf-text'), ['.txt', '.json']);
+
+  return {
+    inputDirs: Array.from(inputDirs).sort(),
+    outputDirs: Array.from(outputDirs).sort(),
+    sourcePaths: Array.from(sourcePaths).sort(),
+    excludeFiles: Array.from(excludeFiles).sort(),
+    includePrefixes: ['BCA', 'URA', 'SCDF', 'NEA', 'NParks', 'GovTech'],
+    allowedRoots: ALLOWED_ROOTS.map((rootPath) => toUiPath(rootPath))
+  };
+}
+
 function serveStatic(req, res, pathname) {
   const safePath = pathname === '/' ? '/index.html' : pathname;
   const filePath = path.join(WEB_ROOT, safePath);
@@ -1474,6 +1845,16 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && pathname === '/api/artifacts') {
       sendJson(res, 200, { artifacts: listArtifacts() });
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/path-options') {
+      sendJson(res, 200, buildPathOptions({
+        inputDir: reqUrl.searchParams.get('inputDir') || '',
+        ocrDir: reqUrl.searchParams.get('ocrDir') || '',
+        textDir: reqUrl.searchParams.get('textDir') || '',
+        sources: reqUrl.searchParams.get('sources') || ''
+      }));
       return;
     }
 

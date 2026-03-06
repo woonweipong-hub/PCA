@@ -12,9 +12,55 @@ PCA is designed to sit on top of runtime models/tools: Antigravity can keep exec
 
 ## Quick Setup
 
+1. Install Node dependencies:
 ```bash
 npm install
 ```
+
+2. Enable PCA Slash Commands in Antigravity:
+To make the `/PCA` and `/GSD` agent modes available in Antigravity's chat interface, you must copy the agent definition files into Antigravity's workflow directory. Run this command:
+
+```bash
+mkdir -p .agents/workflows
+cp .github/agents/*.* .agents/workflows/
+```
+
+*Note: After running this, run the VS Code command `Developer: Reload Window` (`Ctrl+Shift+P` → `Developer: Reload Window`) or open a new chat to refresh Antigravity's cache so the slash commands appear.*
+
+## Where PCA Appears in Antigravity
+
+Antigravity has two separate selection mechanisms. PCA uses **slash commands**, not the mode dropdown.
+
+| Feature | Examples | How to Access | Customizable? |
+| --- | --- | --- | --- |
+| **Mode Dropdown** (top of chat) | Fast, Planning | Click the mode selector at the top of the chat panel | No — these are built-in Antigravity intelligence modes that control reasoning depth |
+| **Slash Commands** (chat input) | `/PCA 0 Auto Flow`, `/GSD 1 Roadmap Builder` | Type `/` in the chat input box | Yes — loaded from `.agents/workflows/` in the workspace |
+
+PCA agents appear as slash commands because each one carries its own full system prompt, constraints, output format, and governed behavior. This is functionally equivalent to a mode switch: once you invoke a PCA slash command, the entire conversation follows that agent's governed method.
+
+## PCA Agent Modes
+
+After setup, the following PCA agents are available as slash commands:
+
+| Slash Command | Role | When to Use |
+| --- | --- | --- |
+| `/PCA 0 Auto Flow` | Autonomous full PCA run | You want one entrypoint that frames, debates, assesses, and routes automatically |
+| `/PCA 1 Orchestrator` | Problem framing and workflow selection | You want to structure the decision before running individual stages |
+| `/PCA 2 Proposer` | Generate the strongest current option | You want a focused proposal without critique yet |
+| `/PCA 3 Critic` | Challenge assumptions and expose risks | You have a proposal and want it stress-tested |
+| `/PCA 4 Assessor` | Produce verdict after proposal and critique | You want a final judgement with actions and readiness view |
+| `/PCA 5 Governor` | Governance gate and routing | You want a `HITL`/`HOTL` routing decision before execution |
+
+### How to Use
+
+1. Open a **new chat** in Antigravity.
+2. Type **`/`** in the chat input box.
+3. Select the PCA agent you want (e.g. `/PCA 0 Auto Flow`).
+4. Type your decision, question, or context after it.
+
+For a fully autonomous governed run, use `/PCA 0 Auto Flow`.
+
+For step-by-step stage control, use `/PCA 1 Orchestrator` first, then move through `/PCA 2 Proposer` → `/PCA 3 Critic` → `/PCA 4 Assessor` → `/PCA 5 Governor` as needed.
 
 ## Pattern A: Antigravity CLI-Only Workflow
 

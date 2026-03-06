@@ -6,29 +6,59 @@
   <title>PCA Control Desk</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@10..48,400;10..48,500;10..48,700&family=DM+Serif+Display:ital@0;1&family=Fira+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;700&family=Outfit:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Sora:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <div class="bg-layer"></div>
   <main class="shell wide">
     <header class="hero">
-      <p class="eyebrow">PCA Browser UI</p>
-      <h1>Evidence-Governed Adaptive Solver</h1>
-      <p class="subtitle">Run governed decision workflows with adaptive depth, evidence checks, optional formal verification, and explicit HITL/HOTL routing from one control desk.</p>
+      <p class="eyebrow">PCA FoC Browser UI</p>
+      <h1>Free and Open AI, Governed by PCA</h1>
+      <p class="subtitle">Use local or user-supplied AI models, then improve their output with PCA role separation, critique, assessment, evidence checks, and explicit HITL/HOTL routing.</p>
     </header>
 
-    <section class="panel grid-two">
+    <section class="panel">
+      <details class="collapsible-panel">
+        <summary class="collapsible-summary">
+          <span>
+            <strong>User Info and Guide</strong>
+            <span class="muted summary-note">Install notes, runtime guidance, and generated CLI snippets.</span>
+          </span>
+          <span class="mono collapsible-state">Open / Close</span>
+        </summary>
+        <div class="collapsible-content">
+          <article class="card">
+            <h2>Guide and Install</h2>
+            <p class="muted">FoC-first guidance for Ollama and user-provided model endpoints, plus PCA-governed CLI snippets based on your current runtime and role-model setup.</p>
+            <div id="runtimeGuide" class="guide-grid"></div>
+            <h3>CLI Snippets</h3>
+            <pre id="cliSnippetsView">Select a runtime provider to generate snippets.</pre>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="panel">
       <article class="card">
-        <h2>Corpus Setup</h2>
+        <h2>Data Source Setup</h2>
         <label>Input PDF Folder</label>
-        <input id="inputDir" value="C:\\2026_Research\\Assets" />
+        <div class="picker-row">
+          <select id="inputDirSelect"></select>
+        </div>
+        <input id="inputDir" class="picker-custom-input hidden" value="data" placeholder="Custom input folder path" />
 
         <label>OCR Output Folder</label>
-        <input id="ocrDir" value="data/public-pdf-ocr" />
+        <div class="picker-row">
+          <select id="ocrDirSelect"></select>
+        </div>
+        <input id="ocrDir" class="picker-custom-input hidden" value="data/public-pdf-ocr" placeholder="Custom OCR output folder" />
 
         <label>Text Output Folder</label>
-        <input id="textDir" value="data/public-pdf-text" />
+        <div class="picker-row">
+          <select id="textDirSelect"></select>
+        </div>
+        <input id="textDir" class="picker-custom-input hidden" value="data/public-pdf-text" placeholder="Custom text output folder" />
 
         <label>Public References (one per line)</label>
         <textarea id="publicReferences">BCA Act and Regulations
@@ -40,18 +70,24 @@
       User-uploaded BIM/spec extracts</textarea>
 
         <label>Conversion Include Prefixes (optional, comma-separated)</label>
-        <input id="includePrefixes" value="" placeholder="BCA,URA,SCDF" />
+        <select id="includePrefixesSelect"></select>
+        <input id="includePrefixes" class="picker-custom-input hidden" value="" placeholder="BCA,URA,SCDF" />
 
         <label>Conversion Exclude Files (optional, comma-separated)</label>
-        <input id="excludeFiles" value="" placeholder="BCA_HS_Checks_Scope.pdf" />
+        <select id="excludeFilesSelect"></select>
+        <input id="excludeFiles" class="picker-custom-input hidden" value="" placeholder="BCA_HS_Checks_Scope.pdf" />
+
+        <p class="muted field-hint">How folder browsing works: choose a folder in the dropdown to browse into it automatically, choose `.. Parent Folder` in the same dropdown to move back out, or switch to `Custom...` if you want to type a path directly. By default the server only exposes approved local roots; add more with `PCA_UI_ALLOWED_ROOTS` if needed.</p>
 
         <div class="actions">
           <button id="btnOcr" class="ghost">Run OCR Preprocess</button>
           <button id="btnConvert">Convert PDF to TXT</button>
-          <button id="btnPreviewCorpus" class="ghost">Preview Corpus + References</button>
+          <button id="btnPreviewCorpus" class="ghost">Preview Sources + References</button>
         </div>
       </article>
+    </section>
 
+    <section class="panel">
       <article class="card">
         <h2>Quality and Evidence</h2>
         <label>Use Case Profile</label>
@@ -79,7 +115,10 @@
         <textarea id="context">Cross-document support and contradiction review for compliance decisions.</textarea>
 
         <label>Sources To Use (folder path or comma-separated paths)</label>
-        <input id="sourcesInput" value="data/public-pdf-text" />
+        <div class="picker-row">
+          <select id="sourcesInputSelect"></select>
+        </div>
+        <input id="sourcesInput" class="picker-custom-input hidden" value="data/public-pdf-text" placeholder="Custom source path(s)" />
 
         <label>Expectations (one per line)</label>
         <textarea id="expectations">Clear recommendation
@@ -110,7 +149,7 @@
             </select>
           </div>
           <div>
-            <label>Runtime Provider</label>
+            <label>AI Runtime</label>
             <select id="runtimeProvider">
               <option value="copilot">copilot</option>
               <option value="antigravity">antigravity</option>
@@ -119,6 +158,86 @@
               <option value="other">other</option>
             </select>
           </div>
+        </div>
+
+        <div id="runtimeModeCallout" class="runtime-callout">
+          <div class="card-head compact-head">
+            <h3 id="runtimeModeTitle">Ollama local models</h3>
+            <span id="runtimeModeBadge" class="mono badge">runtime</span>
+          </div>
+          <p id="runtimeModeBody" class="muted">Run PCA with local models managed by Ollama, or switch to BYOM for your own OpenAI-compatible endpoint.</p>
+          <p id="runtimeModeHint" class="mono">Local-first path: pull models in Ollama, then use the generated adapter command below.</p>
+        </div>
+
+        <div class="inline-grid execution-grid">
+          <div>
+            <label>Task Mode</label>
+            <select id="taskMode">
+              <option value="analysis" selected>Analysis and Insight</option>
+              <option value="debate">Debate and Comparison</option>
+              <option value="planning">Planning and Breakdown</option>
+              <option value="dataset-access">Dataset Access and Structuring</option>
+              <option value="read-review">Read, Review, and Compare</option>
+              <option value="write-output">Write and Output Drafting</option>
+              <option value="transform-output">Transform and Package Outputs</option>
+              <option value="coding">Coding and Design Review</option>
+              <option value="development">Development Discussion</option>
+              <option value="programming">Programming Tasks</option>
+              <option value="build">Build and Iterate</option>
+              <option value="refine">Refine and Improve</option>
+            </select>
+          </div>
+          <div>
+            <label>Execution Mode</label>
+            <select id="executionMode">
+              <option value="reasoning-only" selected>Reasoning Only</option>
+              <option value="advisory">Advisory with Next Steps</option>
+              <option value="execution-ready">Execution Ready</option>
+            </select>
+          </div>
+        </div>
+        <p id="executionModeNote" class="muted">PCA can support dataset access, reading, writing, output generation, coding, programming, planning, build, and refinement through the same governed quality layers.</p>
+
+        <div id="byomConfig" class="runtime-config hidden">
+          <div class="card-head compact-head">
+            <h3>Bring Your Own Models</h3>
+            <span class="mono badge">OpenAI-compatible</span>
+          </div>
+
+          <div class="inline-grid">
+            <div>
+              <label>Provider Pattern</label>
+              <select id="byomProviderType">
+                <option value="generic" selected>Generic OpenAI-compatible endpoint</option>
+                <option value="openai">OpenAI-compatible hosted API</option>
+                <option value="openrouter">OpenRouter-style gateway</option>
+                <option value="anthropic-gateway">Claude via OpenAI-compatible gateway</option>
+                <option value="gemini-gateway">Gemini via OpenAI-compatible gateway</option>
+                <option value="xai-gateway">Grok via OpenAI-compatible gateway</option>
+                <option value="deepseek">DeepSeek endpoint</option>
+                <option value="qwen">Qwen endpoint</option>
+                <option value="dola">DoLa or research decoder endpoint</option>
+                <option value="local-gateway">Local gateway (vLLM, LM Studio, LocalAI, LiteLLM)</option>
+              </select>
+            </div>
+            <div>
+              <label>Endpoint</label>
+              <input id="byomEndpoint" value="http://localhost:11434/v1" placeholder="https://your-endpoint.example.com/v1" />
+            </div>
+          </div>
+
+          <div class="inline-grid">
+            <div>
+              <label>API Key</label>
+              <input id="byomApiKey" value="none" placeholder="sk-... or none for local" />
+            </div>
+            <div>
+              <label>Temperature</label>
+              <input id="byomTemperature" type="number" min="0" max="2" step="0.1" value="0.2" />
+            </div>
+          </div>
+
+          <p id="byomCompatibilityNote" class="muted">Use this when the provider exposes an OpenAI-compatible chat/completions API. Claude, Gemini, and Grok typically need a compatible gateway or proxy unless you add a native adapter.</p>
         </div>
 
         <div class="inline-grid">
@@ -189,25 +308,37 @@
         </div>
 
         <h3>Model Selection (By Role)</h3>
+        <label>FoC Model Pack</label>
+        <select id="modelPack">
+          <option value="foc-balanced" selected>FoC Balanced Reasoning</option>
+          <option value="analysis-debate">Analysis and Debate</option>
+          <option value="planning-insight">Planning and Insight</option>
+          <option value="coding-design">Coding and Design Review</option>
+          <option value="qwen-local">Qwen Local Stack</option>
+          <option value="deepseek-local">DeepSeek Local Stack</option>
+          <option value="manual">Manual custom models</option>
+        </select>
+        <p id="modelPackNote" class="muted">Curated free/open model packs for discussion, comparison, planning, coding, development, and PCA-style governed reasoning. PCA improves quality through multi-tier framing, critique, assessment, governance, and execution readiness when selected.</p>
+
         <div class="inline-grid">
           <div>
             <label>Propose Model</label>
-            <input id="modelProposal" value="gpt-5.3-codex" />
+            <input id="modelProposal" value="qwen2.5:7b" />
           </div>
           <div>
             <label>Critique Model</label>
-            <input id="modelCritique" value="gpt-5.3-codex" />
+            <input id="modelCritique" value="llama3.1:8b" />
           </div>
         </div>
 
         <div class="inline-grid">
           <div>
             <label>Assess Model</label>
-            <input id="modelAssess" value="gpt-5.3-codex" />
+            <input id="modelAssess" value="qwen2.5:14b" />
           </div>
           <div>
             <label>Model Notes</label>
-            <input id="modelNotes" value="Paid Copilot runtime; prefer high-quality reasoning models" />
+            <input id="modelNotes" value="FoC-first PCA posture: optimize for thinking, analysis, debate, planning, coding, development, build, and refinement through multi-tier quality improvement and governed role separation." />
           </div>
         </div>
 
@@ -252,19 +383,9 @@
 
     <section class="panel">
       <article class="card">
-        <h2>Guide and Install</h2>
-        <p class="muted">How this works, how to run with Copilot/Antigravity/Ollama/BYOM/GSD, and ready-to-run CLI snippets based on your current selections.</p>
-        <div id="runtimeGuide" class="guide-grid"></div>
-        <h3>CLI Snippets</h3>
-        <pre id="cliSnippetsView">Select a runtime provider to generate snippets.</pre>
-      </article>
-    </section>
-
-    <section class="panel">
-      <article class="card">
-        <h2>Corpus Preview</h2>
+        <h2>Source Preview</h2>
         <p class="muted">Review source file contents and registered references before running analysis.</p>
-        <pre id="corpusPreviewView">No corpus preview yet.</pre>
+        <pre id="corpusPreviewView">No source preview yet.</pre>
       </article>
     </section>
 
@@ -316,18 +437,162 @@
       </article>
     </section>
 
-    <section class="panel grid-two">
-      <article class="card tall">
+    <section class="panel">
+      <article class="card">
         <h2>Latest Result</h2>
         <pre id="resultView">No run yet.</pre>
       </article>
+    </section>
 
-      <article class="card tall">
+    <section class="panel">
+      <article class="card artifact-card">
         <div class="card-head">
           <h2>Artifacts</h2>
           <button id="btnRefreshArtifacts" class="ghost slim">Refresh</button>
         </div>
-        <ul id="artifactList" class="artifact-list"></ul>
+        <p class="muted">Compact artifact ledger for generated files and downloadable outputs.</p>
+        <ul id="artifactList" class="artifact-list artifact-list-compact"></ul>
+      </article>
+    </section>
+
+    <section class="panel">
+      <article class="card">
+        <div class="card-head">
+          <h2>Visual Theme</h2>
+          <select id="themePreset" class="theme-select">
+            <option value="operational" selected>Operational Control Desk</option>
+            <option value="evidence-lab">Evidence Lab</option>
+            <option value="field-manual">Field Manual</option>
+          </select>
+        </div>
+        <p class="muted">Choose a preset or fine-tune the palette and gradient orientation. Theme controls live at the bottom so workflow setup stays focused at the top.</p>
+        <div id="themePreviewGrid" class="theme-preview-grid">
+          <article class="theme-card active" data-theme-option="operational">
+            <div class="theme-card-head">
+              <h3>Operational Control Desk</h3>
+              <span class="mono">teal / rust</span>
+            </div>
+            <p>Sharper operational dashboard look with clearer action contrast for runtime, debate, and governance workflows.</p>
+            <div class="theme-swatches">
+              <span style="background:#f3efe6"></span>
+              <span style="background:#fffdfa"></span>
+              <span style="background:#0b6e69"></span>
+              <span style="background:#c65d1a"></span>
+              <span style="background:#1f7a45"></span>
+            </div>
+          </article>
+          <article class="theme-card" data-theme-option="evidence-lab">
+            <div class="theme-card-head">
+              <h3>Evidence Lab</h3>
+              <span class="mono">steel / amber</span>
+            </div>
+            <p>Cooler analysis-oriented palette for evidence synthesis, comparison, review, and verification-heavy workflows.</p>
+            <div class="theme-swatches">
+              <span style="background:#edf3f6"></span>
+              <span style="background:#fcfeff"></span>
+              <span style="background:#165d86"></span>
+              <span style="background:#d97706"></span>
+              <span style="background:#7cc0d8"></span>
+            </div>
+          </article>
+          <article class="theme-card" data-theme-option="field-manual">
+            <div class="theme-card-head">
+              <h3>Field Manual</h3>
+              <span class="mono">forest / signal</span>
+            </div>
+            <p>Warmer, more distinctive PCA identity with stronger editorial character for a governed decision desk feel.</p>
+            <div class="theme-swatches">
+              <span style="background:#f1eadf"></span>
+              <span style="background:#fffaf2"></span>
+              <span style="background:#355e3b"></span>
+              <span style="background:#d66a1f"></span>
+              <span style="background:#6d675f"></span>
+            </div>
+          </article>
+        </div>
+        <div class="theme-control-grid">
+          <div>
+            <label>Background</label>
+            <input id="themeBg" type="color" value="#f3efe6" />
+          </div>
+          <div>
+            <label>Card Surface</label>
+            <input id="themeCard" type="color" value="#fffdfa" />
+          </div>
+          <div>
+            <label>Card Shell Transparency</label>
+            <div class="range-wrap">
+              <input id="themeCardAlpha" type="range" min="12" max="100" value="82" />
+              <span id="themeCardAlphaValue" class="mono">82%</span>
+            </div>
+          </div>
+          <div>
+            <label>Inner Surface Transparency</label>
+            <div class="range-wrap">
+              <input id="themeInnerAlpha" type="range" min="8" max="100" value="62" />
+              <span id="themeInnerAlphaValue" class="mono">62%</span>
+            </div>
+          </div>
+          <div>
+            <label>Text Ink</label>
+            <input id="themeInk" type="color" value="#17201c" />
+          </div>
+          <div>
+            <label>Interface Font</label>
+            <select id="themeFontSans">
+              <option value="space-grotesk" selected>Space Grotesk</option>
+              <option value="manrope">Manrope</option>
+              <option value="sora">Sora</option>
+              <option value="outfit">Outfit</option>
+              <option value="plus-jakarta-sans">Plus Jakarta Sans</option>
+              <option value="bricolage-grotesque">Bricolage Grotesque</option>
+              <option value="ibm-plex-sans">IBM Plex Sans</option>
+              <option value="fraunces">Fraunces</option>
+              <option value="source-serif-4">Source Serif 4</option>
+              <option value="dm-serif-display">DM Serif Display</option>
+            </select>
+          </div>
+          <div>
+            <label>Mono / Code Font</label>
+            <select id="themeFontMono">
+              <option value="ibm-plex-mono" selected>IBM Plex Mono</option>
+              <option value="jetbrains-mono">JetBrains Mono</option>
+              <option value="fira-mono">Fira Mono</option>
+              <option value="space-grotesk-mono">Space Grotesk Fallback</option>
+            </select>
+          </div>
+          <div>
+            <label>Border / Line</label>
+            <input id="themeLine" type="color" value="#d9cebb" />
+          </div>
+          <div>
+            <label>Primary Accent</label>
+            <input id="themeAccent" type="color" value="#0b6e69" />
+          </div>
+          <div>
+            <label>Secondary Accent</label>
+            <input id="themeAccent2" type="color" value="#c65d1a" />
+          </div>
+          <div>
+            <label>Muted Text</label>
+            <input id="themeMuted" type="color" value="#56605c" />
+          </div>
+          <div>
+            <label>Gradient Start</label>
+            <input id="themeBgStart" type="color" value="#f3efe6" />
+          </div>
+          <div>
+            <label>Gradient End</label>
+            <input id="themeBgEnd" type="color" value="#eef3ec" />
+          </div>
+          <div>
+            <label>Gradient Angle</label>
+            <div class="range-wrap">
+              <input id="themeGradientAngle" type="range" min="0" max="360" value="150" />
+              <span id="themeGradientAngleValue" class="mono">150deg</span>
+            </div>
+          </div>
+        </div>
       </article>
     </section>
 
@@ -337,5 +602,6 @@
   </main>
 
   <script src="/app.js"></script>
+
 </body>
 </html>

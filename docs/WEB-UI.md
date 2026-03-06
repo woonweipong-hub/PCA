@@ -50,8 +50,23 @@ Open:
 
 Environment overrides:
 
-- `PCA_UI_HOST` (default `0.0.0.0`)
+- `PCA_UI_HOST` (default `127.0.0.1`)
 - `PCA_UI_PORT` (default `4173`)
+- `PCA_UI_ALLOWED_ROOTS` (optional extra allowed local roots, separated by `;` on Windows and `:` on Unix-like systems)
+
+Default allowed roots are intentionally narrow:
+
+- `data/`
+- `outputs/`
+
+This means the folder browser, source preview, OCR, and PDF conversion endpoints only operate inside those approved roots unless the user explicitly extends them with `PCA_UI_ALLOWED_ROOTS`.
+
+Example on Windows:
+
+```powershell
+$env:PCA_UI_ALLOWED_ROOTS='C:\Users\<user>\Documents\PCA-Inputs;C:\Shared\Approved-Datasets'
+npm run ui:start
+```
 
 ## API Endpoints
 
@@ -136,10 +151,12 @@ Important notes for online usage:
 
 - The server executes local filesystem/CLI operations; hosted environments must allow process execution and folder access.
 - Use authentication/reverse proxy before exposing publicly.
-- Restrict accessible folders in production by deployment policy.
+- Restrict accessible folders in production by deployment policy and `PCA_UI_ALLOWED_ROOTS`.
 
 ## Security Guidance
 
+- The UI now defaults to localhost-only binding. Keep it that way for normal single-user use.
 - Do not expose this UI directly to the open internet without auth.
+- Do not add broad filesystem roots such as an entire drive letter to `PCA_UI_ALLOWED_ROOTS`.
 - Keep confidential exclusion lists in workflow policy.
 - Store artifacts in controlled storage with retention policy.

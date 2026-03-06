@@ -372,6 +372,8 @@ npm run ui:start
 
 Open `http://localhost:4173`.
 
+The browser UI is localhost-only by default and restricts filesystem access to approved roots under `data/` and `outputs/`. To allow additional local dataset folders, set `PCA_UI_ALLOWED_ROOTS` before starting the UI.
+
 Web UI guide (local + online deployment): `docs/WEB-UI.md`
 
 Antigravity integration guide (CLI-only and hybrid UI workflows): `docs/ANTIGRAVITY-INTEGRATION.md`
