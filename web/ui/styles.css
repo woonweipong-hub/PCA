@@ -824,6 +824,24 @@ html {
   margin-top: 0.9rem;
 }
 
+.use-case-toolbar {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: end;
+  margin-top: 0.8rem;
+}
+
+.use-case-workflow-note {
+  margin: 0;
+  padding: 0.58rem 0.68rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--inner-surface-strong), var(--inner-surface));
+  font-size: 0.81rem;
+  line-height: 1.35;
+}
+
 .use-case-card {
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -1453,6 +1471,7 @@ pre.compact {
   .guide-grid,
   .theme-preview-grid,
   .use-case-grid,
+  .use-case-toolbar,
   .debate-stage-grid,
   .throughput-visual-grid,
   .throughput-stat-grid,
@@ -1468,6 +1487,7 @@ pre.compact {
 @media (max-width: 900px) {
   .grid-two,
   .guide-grid,
+  .use-case-toolbar,
   .debate-stage-grid,
   .throughput-visual-grid,
   .throughput-stat-grid,

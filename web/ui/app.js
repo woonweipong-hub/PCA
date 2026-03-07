@@ -758,6 +758,63 @@ function setupSectionObserver() {
 }
 
 const USE_CASE_PROFILES = {
+  regulatory: {
+    objective: 'Produce a defensible interpretation of public regulatory requirements before downstream action.',
+    decision: 'Interpret regulatory requirements with explicit applicability, contradiction checks, and governance routing',
+    context: 'Cross-document review for public regulations, codes, circulars, and approved guidance where applicability, conflict, and evidence sufficiency matter.',
+    expectations: 'Clause-backed interpretation path\nApplicability boundaries made explicit\nContradictions and evidence gaps surfaced early\nClear HITL or HOTL route recommendation',
+    researchNeeds: 'Latest public regulatory updates\nContradictory or overlapping clauses across sources\nFigure-dependent or context-dependent clauses\nMissing project inputs required before action',
+    constraints: 'Use public or approved datasets only\nDo not overstate certainty when applicability is unresolved\nEscalate conflicts and ambiguous clauses\nPreserve traceability from source to conclusion',
+    policy: 'strict',
+    collaborationMode: 'new-request',
+    userRequests: 'Interpret the governing requirements, keep unresolved questions visible, and route ambiguous issues to human review before action.',
+    openTopics: 'Applicability boundaries\nContradiction review\nEvidence gaps\nProject inputs still required',
+    continuationNotes: 'Continue from the latest evidence-backed interpretation, keep corrections explicit, and preserve a reusable reasoning trail for later review.',
+    activeSearchEnabled: true,
+    maxFiles: 120,
+    debateCycles: 3,
+    passStrategy: 'adaptive',
+    riskLevel: 'high',
+    runtimeProvider: 'ollama',
+    taskMode: 'read-review',
+    executionMode: 'advisory',
+    modelPack: 'qwen-local',
+    modelProposal: 'qwen2.5:7b',
+    modelCritique: 'qwen2.5:14b',
+    modelAssess: 'deepseek-r1:8b',
+    modelNotes: 'Regulatory interpretation posture: prioritize clause reading, conflict surfacing, and governed escalation over speed.'
+  },
+  trhs: {
+    objective: 'Produce a defensible TRHS interpretation across BCA, URA, and SCDF sources before project action.',
+    decision: 'Interpret TRHS regulatory requirements for household shelter compliance and escalation routing',
+    context: 'Cross-authority review for landed and residential household shelter issues, with emphasis on clause applicability, contradiction checks, and project-specific conditions.',
+    expectations: 'Clause-backed interpretation register entries\nConditions and assumptions listed explicitly\nContradictions and evidence gaps surfaced before action\nClear HITL or HOTL route recommendation',
+    researchNeeds: 'Latest public BCA, URA, and SCDF TRHS-related clauses\nContradictory or overlapping requirements across authorities\nFigure-dependent or geometry-dependent clauses needing human review\nProject inputs needed before any compliance claim',
+    constraints: 'Use public regulatory sources only\nDo not treat extracted text as final authority without applicability checks\nEscalate unclear, conflicted, or figure-dependent clauses\nPreserve clause-to-decision traceability',
+    policy: 'strict',
+    sources: 'data/trhs-text',
+    includePrefixes: 'BCA,URA,SCDF',
+    excludeFiles: 'BCA_HS_Checks_Scope.pdf',
+    publicReferences: 'BCA TRHS requirements\nBCA approved document\nBCA understanding approved document\nSCDF Fire Code 2023\nURA Circular DC25-05\nURA landed housing summaries',
+    datasetRegistry: 'data/trhs-text\nTRHS Interpretation Register (TIR)',
+    collaborationMode: 'new-request',
+    userRequests: 'Interpret TRHS requirements, keep unresolved regulatory questions visible, and route ambiguous issues to human review before action.',
+    openTopics: 'Applicability boundaries by development type\nCross-authority contradictions or silent gaps\nFigure-dependent clauses requiring manual confirmation\nProject geometry or detail inputs still missing',
+    continuationNotes: 'Continue from the latest evidence-backed TRHS interpretation, keep unresolved assumptions visible, and convert stable findings into TIR entries instead of losing them in chat drift.',
+    activeSearchEnabled: true,
+    maxFiles: 120,
+    debateCycles: 3,
+    passStrategy: 'adaptive',
+    riskLevel: 'high',
+    runtimeProvider: 'ollama',
+    taskMode: 'read-review',
+    executionMode: 'advisory',
+    modelPack: 'qwen-local',
+    modelProposal: 'qwen2.5:7b',
+    modelCritique: 'qwen2.5:14b',
+    modelAssess: 'deepseek-r1:8b',
+    modelNotes: 'TRHS interpretation posture: prioritize careful clause reading, contradiction surfacing, and governed escalation over speed.'
+  },
   corenetx: {
     objective: 'Reduce back-and-forth and manual BIM submission checks in CORENET X workflows.',
     decision: 'Select minimal design edits to resolve BIM rule non-compliances',
@@ -851,6 +908,14 @@ const USE_CASE_PROFILES = {
 };
 
 const USE_CASE_CARD_META = {
+  regulatory: {
+    title: 'Generic Regulatory Interpretation',
+    outcome: 'Use PCA to parse, compare, and route regulation-heavy decisions through explicit stages.'
+  },
+  trhs: {
+    title: 'TRHS Regulatory Interpretation',
+    outcome: 'Turn public authority text into a governed interpretation path with explicit conditions and escalation.'
+  },
   corenetx: {
     title: 'Automated Pre-Submission',
     outcome: 'Reduce rework and clear submission blockers earlier.'
@@ -1412,8 +1477,76 @@ function applyUseCaseProfile(profileKey) {
   researchNeeds.value = profile.researchNeeds;
   constraints.value = profile.constraints;
   policy.value = profile.policy;
+  if (profile.sources) {
+    sourcesInput.value = profile.sources;
+  }
+  if (profile.includePrefixes !== undefined) {
+    includePrefixes.value = profile.includePrefixes;
+  }
+  if (profile.excludeFiles !== undefined) {
+    excludeFiles.value = profile.excludeFiles;
+  }
+  if (profile.publicReferences) {
+    publicReferences.value = profile.publicReferences;
+  }
+  if (profile.datasetRegistry) {
+    datasetRegistry.value = profile.datasetRegistry;
+  }
+  if (profile.collaborationMode) {
+    collaborationMode.value = profile.collaborationMode;
+  }
+  if (profile.userRequests) {
+    userRequests.value = profile.userRequests;
+  }
+  if (profile.openTopics) {
+    openTopics.value = profile.openTopics;
+  }
+  if (profile.continuationNotes) {
+    continuationNotes.value = profile.continuationNotes;
+  }
+  if (profile.activeSearchEnabled !== undefined) {
+    activeSearchEnabled.checked = Boolean(profile.activeSearchEnabled);
+  }
+  if (profile.maxFiles !== undefined) {
+    maxFiles.value = profile.maxFiles;
+  }
+  if (profile.debateCycles !== undefined) {
+    debateCycles.value = profile.debateCycles;
+  }
+  if (profile.passStrategy) {
+    passStrategy.value = profile.passStrategy;
+  }
+  if (profile.riskLevel) {
+    riskLevel.value = profile.riskLevel;
+  }
+  if (profile.runtimeProvider) {
+    runtimeProvider.value = profile.runtimeProvider;
+  }
+  if (profile.taskMode) {
+    taskMode.value = profile.taskMode;
+  }
+  if (profile.executionMode) {
+    executionMode.value = profile.executionMode;
+  }
+  if (profile.modelPack) {
+    modelPack.value = profile.modelPack;
+  }
+  if (profile.modelProposal) {
+    modelProposal.value = profile.modelProposal;
+  }
+  if (profile.modelCritique) {
+    modelCritique.value = profile.modelCritique;
+  }
+  if (profile.modelAssess) {
+    modelAssess.value = profile.modelAssess;
+  }
+  if (profile.modelNotes) {
+    modelNotes.value = profile.modelNotes;
+  }
   renderRuntimeGuide();
   updateSelectedUseCaseNote();
+  renderInputRegistry();
+  updateMissionControl();
 }
 
 function setBusy(message) {

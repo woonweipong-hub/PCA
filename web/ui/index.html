@@ -231,6 +231,7 @@
           <pre id="outcomeSummaryView">No collaborative throughput snapshot yet.</pre>
         </article>
       </div>
+
     </section>
 
     <section id="top-input" class="panel section-anchor-target">
@@ -287,6 +288,27 @@
             <p class="muted selected-use-case-note" id="selectedUseCaseNote">Choose a use case path to start fast, or continue an earlier session.</p>
           </div>
           <button id="btnContinueSession" class="ghost slim" type="button">Continue Latest Session</button>
+        </div>
+        <div class="use-case-toolbar">
+          <div>
+            <label>Active Use Case</label>
+            <select id="useCaseProfile">
+              <option value="custom">Custom</option>
+              <option value="regulatory">Generic Regulatory Interpretation</option>
+              <option value="trhs">TRHS Regulatory Interpretation</option>
+              <option value="corenetx">Automated Pre-Submission (CORENET X)</option>
+              <option value="accessibility">Accessible Routes and Facilities</option>
+              <option value="buildability">Buildability/Constructability Optimiser</option>
+              <option value="mepcs">MEP and C&amp;S Clash-Aware Design</option>
+              <option value="greenmark">Envelope and Systems Optimisation (GM)</option>
+              <option value="maintainability">Maintainability and FM Access Checks</option>
+              <option value="hschecks">HS Requirements vs Drawings</option>
+              <option value="costverify">Cost Verification (Specs vs Tender)</option>
+              <option value="specdraw">Specification vs Drawing Consistency</option>
+              <option value="bca_master">BCA Master Compliance Pre-Check</option>
+            </select>
+          </div>
+          <p class="muted use-case-workflow-note">For regulation-heavy work, start with `Generic Regulatory Interpretation`, then switch to a domain-specific path such as `TRHS` only when the corpus, authority scope, and interpretation tasks are already clear.</p>
         </div>
         <div id="useCaseHub" class="use-case-grid"></div>
       </article>
@@ -458,23 +480,6 @@
     <section class="panel">
       <article class="card">
         <h2>Quality and Evidence</h2>
-        <div class="hidden">
-          <label>Use Case Profile</label>
-          <select id="useCaseProfile">
-            <option value="custom">Custom</option>
-            <option value="corenetx">Automated Pre-Submission (CORENET X)</option>
-            <option value="accessibility">Accessible Routes and Facilities</option>
-            <option value="buildability">Buildability/Constructability Optimiser</option>
-            <option value="mepcs">MEP and C&S Clash-Aware Design</option>
-            <option value="greenmark">Envelope and Systems Optimisation (GM)</option>
-            <option value="maintainability">Maintainability and FM Access Checks</option>
-            <option value="hschecks">HS Requirements vs Drawings</option>
-            <option value="costverify">Cost Verification (Specs vs Tender)</option>
-            <option value="specdraw">Specification vs Drawing Consistency</option>
-            <option value="bca_master">BCA Master Compliance Pre-Check</option>
-          </select>
-        </div>
-
         <label>Objective</label>
         <input id="objective" value="Produce a defensible compliance interpretation." />
 

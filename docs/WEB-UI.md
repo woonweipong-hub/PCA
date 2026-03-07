@@ -33,11 +33,24 @@ This collaboration does not need to be one-shot or perfectly linear. A PCA sessi
 - Optionally enable Z3 geometry checks for symbolic constraint validation in verify gates.
 - See verify-gate outcomes and route recommendation (`HITL/HOTL`) in live debate events.
 - Build objective-driven framework proposals from user intent, expectations, constraints, and research needs.
-- Start quickly with built-in use-case profiles (CORENET X, accessibility, buildability, MEP/C&S, Green Mark, FM, HS, cost/spec checks, and BCA master compliance pre-check).
+- Start quickly with built-in use-case profiles, including `Generic Regulatory Interpretation`, `TRHS Regulatory Interpretation`, CORENET X, accessibility, buildability, MEP/C&S, Green Mark, FM, HS, cost/spec checks, and BCA master compliance pre-check.
 - Select per-role models (`proposal`, `critique`, `assess`) and runtime notes for traceable runs.
 - Use the always-visible setup guide for runtime-specific setup and generated CLI snippets.
 - View a workflow map in the UI showing objective -> research -> debate -> verification -> artifact flow.
 - Download JSON artifacts from each run.
+
+## Use Case Paths
+
+The Browser UI now exposes `Use Case Paths` directly in the shared interface so users can start from a preset instead of filling every field from scratch.
+
+Recommended starting pattern:
+
+- choose `Custom` when you already know the exact workflow shape you want
+- choose `Generic Regulatory Interpretation` when the work is primarily about reading, comparing, and routing regulations or guidance documents
+- choose `TRHS Regulatory Interpretation` when the work is specifically about household shelter interpretation across BCA, URA, and SCDF material
+- choose the other presets when the work is already closer to a defined review domain such as accessibility, buildability, or BCA master pre-checks
+
+This keeps the Browser UI general-purpose. Domain presets help frame the work faster, but the main interface remains shared across all PCA use cases.
 
 ## Traceability in the UI
 
@@ -83,7 +96,51 @@ Current request-shaping inputs in the UI already support most of that co-working
 
 Together these fields act as the user's working request contract, not just static configuration.
 
+## Simple First Run in the Browser
+
+For a new user, the easiest way to understand PCA in the browser is this:
+
+1. Start the Browser UI locally.
+2. Open `Use Case Paths`.
+3. Pick `Generic Regulatory Interpretation` if you are working from codes, circulars, guidance, or regulatory PDFs.
+4. Set `Sources To Use` to the folder you want PCA to read.
+5. Fill in `Objective`, `Decision`, `Context`, and `Constraints`.
+6. Run `Preview Sources` first to confirm the corpus is the one you expect.
+7. Run `Research Pack` or `Evidence Check` to surface support, contradictions, and open gaps.
+8. Run `Full Pipeline` when you want PCA to drive framing, critique, assessment, and route recommendation together.
+9. Read the top output area first, then refine the request and continue if needed.
+
+This is the simplest mental model:
+
+- `Use Case Paths` helps the user start from the right framing
+- the input area tells PCA what decision is being made
+- the evidence area shows what PCA is grounding the work on
+- the live thread and throughput area show how the recommendation was shaped
+- the output area shows what to do next and whether human review is still required
+
 ## Start Locally
+
+## Simple Browser Start
+
+If you just want to download PCA and use it through the Browser UI, follow this simple path:
+
+1. Download the PCA repository ZIP or release package to your computer.
+2. Extract it to a normal local folder.
+3. Install Node.js 18 or later.
+4. On Windows, open the PCA folder and run `start-browser-ui.cmd`.
+5. If you do not use the launcher, open a terminal in the PCA folder and run `npm install` once.
+6. Start the Browser UI with `npm run ui:start`.
+7. Open `http://localhost:4173` in Edge or Chrome.
+8. Choose a use case path such as `Generic Regulatory Interpretation` or `TRHS Regulatory Interpretation`.
+9. Add your source folder, objective, decision, and constraints.
+10. Run `Preview Sources`, `Research Pack`, `Evidence Check`, or `Full Pipeline` depending on how much structure you need.
+
+What to expect:
+
+- PCA runs locally on your machine through the browser
+- the top area shows the latest recommendation and route
+- the middle sections show use cases, evidence, live debate flow, and artifacts
+- you can pause, edit the request, and continue without losing the session
 
 ## Direct Download and Use Requirements
 

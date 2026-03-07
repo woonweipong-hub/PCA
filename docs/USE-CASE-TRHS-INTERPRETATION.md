@@ -274,3 +274,111 @@ A strong TRHS interpretation package should include:
 1. Technical team runs conversion + evidence-check weekly on updated circulars/codes.
 2. QP/architect/fire consultant reviews only flagged gaps and governance rationale.
 3. Re-run after revisions until verdict is `accepted` or acceptable conditional acceptance.
+
+## Browser UI Use-Case Path
+
+The PCA Browser UI should treat TRHS as a first-class interpretation path, not just a generic compliance prompt.
+
+Important UI/product boundary:
+
+- TRHS should exist as one reusable use-case preset among the other Browser UI use cases
+- it should not require a TRHS-only hardwired output card in the shared top-level interface
+- any deeper TRHS-specific rendering should be approached later as an optional extensible pattern that other regulatory use cases can also reuse
+
+Recommended Browser UI preset behavior:
+
+- set `Sources To Use` to `data/trhs-text`
+- use `strict` policy
+- set `passStrategy` to `adaptive`
+- use `high` risk level
+- keep collaboration prompts focused on unresolved clauses, applicability boundaries, and evidence gaps
+- preserve output as a governed interpretation record, not as a raw answer
+
+Expected user flow in the Browser UI:
+
+1. Convert or refresh the TRHS public corpus into `data/trhs-text`.
+2. Preview sources and inspect the evidence register.
+3. Run `Framework Proposal` to shape the interpretation contract.
+4. Run `Research Pack` to surface contradiction risks and targeted follow-up tasks.
+5. Run `Evidence Check` or `Full Pipeline` to produce a governed interpretation outcome.
+6. Convert stable findings into TIR entries and route unclear items to human review.
+
+What the Browser UI should make explicit for TRHS work:
+
+- which authority sources were used
+- what clauses appear to support the interpretation
+- what project conditions still control applicability
+- whether the issue is aligned, aligned-with-conditions, conflicted, or unclear
+- whether the issue can proceed or must escalate to `HITL`
+
+## Generic Regulatory Interpretation Pattern
+
+TRHS should be developed as one domain instance of a broader regulatory interpretation pattern.
+
+That generic pattern should support:
+
+- clause and source parsing from public regulatory documents
+- applicability framing against a project or decision context
+- contradiction checks across multiple authorities or documents
+- explicit interpretation proposal and critique passes
+- governed assessment and route recommendation
+- persistence of reusable interpretation artifacts
+
+This keeps the Browser UI extensible for future domains beyond TRHS, such as fire code interpretation, accessibility interpretation, circular-update review, or specification-to-requirement parsing.
+
+## GSD-Style Step Split for Regulatory Parsing
+
+It is reasonable to borrow the spirit of GSD's step split, but adapted for regulatory interpretation rather than software delivery.
+
+Recommended staged split:
+
+1. Source Map
+  Identify governing documents, versions, authority scope, exclusions, and corpus boundaries.
+2. Corpus Preparation
+  Convert PDFs, OCR where needed, normalize text, and register source folders.
+3. Clause Parsing
+  Segment clauses, extract candidate requirement units, and preserve traceability.
+4. Applicability Framing
+  Determine which clauses are actually relevant to the user's context, project type, and scenario.
+5. Evidence Research
+  Find support, contradictions, updates, and unresolved gaps across the corpus.
+6. Interpretation Proposal
+  Produce the strongest current reading with explicit assumptions and conditions.
+7. Critique and Conflict Surfacing
+  Challenge the proposal, surface edge cases, and separate stable interpretations from ambiguous ones.
+8. Assessment and Governance
+  Judge readiness, assign `aligned`, `aligned-with-conditions`, `conflicted`, or `unclear` posture, and route to `HITL/HOTL`.
+9. Artifact Persistence
+  Save interpretation records, open issues, and next actions for later reuse and review.
+
+In PCA terms, these stages map naturally onto existing roles:
+
+- Orchestrator: stages 1 to 5
+- Proposer: stage 6
+- Critic: stage 7
+- Assessor and Governor: stage 8
+- Orchestrator plus human reviewer: stage 9
+
+## Relationship to the Earlier TRHS UI Reference
+
+The earlier implementation at `C:\2026_Research\01_JsonL_Conversion` is a useful upstream reference, but it solves a different layer of the problem.
+
+Use that earlier package primarily for:
+
+- clause segmentation
+- canonical JSONL conversion
+- Step 1 audit and trace generation
+- static requirements browsing
+
+Use PCA for the next interpretation layer:
+
+- cross-document evidence synthesis
+- contradiction review across BCA, URA, and SCDF
+- governed propose, critique, assess loops
+- `HITL/HOTL` routing
+- decision artifact persistence
+
+In short:
+
+- `01_JsonL_Conversion` turns authority text into machine-readable clause records
+- PCA turns those records and the source corpus into a governed interpretation and action path
