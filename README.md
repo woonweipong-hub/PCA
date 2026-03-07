@@ -21,9 +21,7 @@ Product framing: the Browser UI can be treated as the platform, while PCA is the
 
 ## About The Author
 
-I am a trained building architect and a public servant, not a professional coder. I use AI to work smarter and build practical tools for the building and construction industry. My current work focuses on automating compliance checks, improving design workflows, and exploring multi-agent AI patterns that help practitioners deliver safer, higher-quality buildings with less manual effort.
-
-LinkedIn: `https://www.linkedin.com/in/woonwei/`
+I am a trained building architect and digital lead in the construction industry, using AI to work smarter and develop practical tools for practitioners. My current work focuses on automating compliance checks, improving design and BIM workflows through human–machine collaboration, and exploring multi‑agent AI patterns that create impactful, effective workflows.
 
 ## Why PCA
 
