@@ -26,9 +26,20 @@
         <button id="btnRenameThread" class="ghost slim" type="button">Rename</button>
       </div>
       <p id="activeThreadLabel" class="muted app-sidebar-note">Current Session</p>
+      <p class="sidebar-section-label">Saved Threads</p>
       <ul id="threadList" class="thread-list">
         <li class="thread-empty">No saved threads yet. Start from the current session or create a new thread.</li>
       </ul>
+      <p class="sidebar-section-label">Archived Threads</p>
+      <ul id="archivedThreadList" class="thread-list archived-thread-list">
+        <li class="thread-empty">No archived threads.</li>
+      </ul>
+      <div class="sidebar-artifacts-block">
+        <p class="sidebar-section-label">Recent Artifacts</p>
+        <ul id="recentArtifactsList" class="recent-artifacts-list">
+          <li class="thread-empty">No artifacts yet.</li>
+        </ul>
+      </div>
     </aside>
 
     <div class="app-content">

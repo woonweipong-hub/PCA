@@ -162,6 +162,12 @@ html {
   width: 100%;
 }
 
+.thread-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
 .thread-empty {
   padding: 0.72rem 0.78rem;
   border: 1px solid var(--line);
@@ -180,6 +186,7 @@ html {
   background: linear-gradient(180deg, var(--inner-surface-strong), var(--inner-surface));
   color: var(--ink);
   text-align: left;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
 }
 
 .thread-button.active {
@@ -190,6 +197,87 @@ html {
 
 .thread-button:hover {
   transform: translateY(-1px);
+}
+
+.thread-button-actions {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.thread-action-button {
+  padding: 0.32rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--inner-surface-strong) 95%, transparent);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1;
+}
+
+.thread-action-button.archive,
+.thread-action-button.restore {
+  color: var(--accent);
+}
+
+.thread-action-button.delete {
+  color: #b91c1c;
+}
+
+.sidebar-section-label {
+  margin: 0.85rem 0 0.45rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.archived-thread-list {
+  margin-top: 0;
+}
+
+.sidebar-artifacts-block {
+  margin-top: 0.2rem;
+}
+
+.recent-artifacts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recent-artifact-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.16rem;
+  padding: 0.6rem 0.68rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--inner-surface-strong), var(--inner-surface));
+}
+
+.recent-artifact-link {
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.recent-artifact-link:hover,
+.recent-artifact-link:focus-visible {
+  color: var(--accent);
+  outline: none;
+}
+
+.recent-artifact-meta {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.67rem;
 }
 
 .thread-button-title {
@@ -891,6 +979,7 @@ html {
   max-height: 270px;
   margin-top: 0.75rem;
   overflow: auto;
+  scroll-behavior: smooth;
 }
 
 .throughput-activity-item {
@@ -1661,6 +1750,7 @@ pre.compact {
   gap: 0.55rem;
   max-height: 460px;
   overflow: auto;
+  scroll-behavior: smooth;
 }
 
 .guide-grid {
@@ -1776,6 +1866,60 @@ pre.compact {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent), 0 18px 40px rgba(0, 0, 0, 0.1);
   animation: output-flash 1.35s ease;
+}
+
+.app-sidebar,
+.thread-list,
+.archived-thread-list,
+.recent-artifacts-list,
+.conversation-history-list,
+.throughput-activity-list,
+.timeline-list,
+.artifact-list {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent) 35%, transparent) transparent;
+}
+
+.app-sidebar::-webkit-scrollbar,
+.thread-list::-webkit-scrollbar,
+.archived-thread-list::-webkit-scrollbar,
+.recent-artifacts-list::-webkit-scrollbar,
+.conversation-history-list::-webkit-scrollbar,
+.throughput-activity-list::-webkit-scrollbar,
+.timeline-list::-webkit-scrollbar,
+.artifact-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.app-sidebar::-webkit-scrollbar-thumb,
+.thread-list::-webkit-scrollbar-thumb,
+.archived-thread-list::-webkit-scrollbar-thumb,
+.recent-artifacts-list::-webkit-scrollbar-thumb,
+.conversation-history-list::-webkit-scrollbar-thumb,
+.throughput-activity-list::-webkit-scrollbar-thumb,
+.timeline-list::-webkit-scrollbar-thumb,
+.artifact-list::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  background-clip: padding-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .plain-view-link,
+  .segment-nav-link,
+  .thread-button,
+  .composer-chip,
+  button,
+  .dashboard-bar-fill,
+  .fresh-output {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 @keyframes output-flash {

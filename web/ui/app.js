@@ -44,6 +44,8 @@ const conversationRailState = document.getElementById('conversationRailState');
 const conversationRailMeta = document.getElementById('conversationRailMeta');
 const conversationHistoryList = document.getElementById('conversationHistoryList');
 const threadList = document.getElementById('threadList');
+const archivedThreadList = document.getElementById('archivedThreadList');
+const recentArtifactsList = document.getElementById('recentArtifactsList');
 const threadNameInput = document.getElementById('threadNameInput');
 const activeThreadLabel = document.getElementById('activeThreadLabel');
 const btnNewThread = document.getElementById('btnNewThread');
@@ -193,6 +195,7 @@ let artifactCount = 0;
 let throughputActivitiesState = [];
 let cycleSnapshotsState = [];
 let conversationHistoryState = [];
+let recentArtifactsState = [];
 let threadWorkspaceState = { activeThreadId: null, threads: [] };
 let activeThreadId = null;
 let activeThreadName = 'Current Session';
@@ -1797,59 +1800,168 @@ function syncActiveThreadUi() {
   }
 }
 
+function renderRecentArtifactsList() {
+  if (!recentArtifactsList) return;
+  recentArtifactsList.innerHTML = '';
+
+  if (!recentArtifactsState.length) {
+    const item = document.createElement('li');
+    item.className = 'thread-empty';
+    item.textContent = 'No artifacts yet.';
+    recentArtifactsList.appendChild(item);
+    return;
+  }
+
+  recentArtifactsState.forEach((artifact) => {
+    const item = document.createElement('li');
+    item.className = 'recent-artifact-item';
+
+    const link = document.createElement('a');
+    link.href = artifact.download_url;
+    link.textContent = artifact.file_name;
+    link.className = 'recent-artifact-link';
+
+    const meta = document.createElement('span');
+    meta.className = 'recent-artifact-meta';
+    meta.textContent = formatDraftTimestamp(artifact.updatedAt || new Date().toISOString());
+
+    item.appendChild(link);
+    item.appendChild(meta);
+    recentArtifactsList.appendChild(item);
+  });
+}
+
+function ensureActiveThreadSelection() {
+  const active = threadWorkspaceState.threads.find((thread) => thread.id === activeThreadId && !thread.archived);
+  if (active) {
+    activeThreadId = active.id;
+    activeThreadName = active.name || 'Current Session';
+    threadWorkspaceState.activeThreadId = active.id;
+    return active;
+  }
+
+  const fallback = [...threadWorkspaceState.threads]
+    .filter((thread) => !thread.archived)
+    .sort((left, right) => new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime())[0];
+
+  if (fallback) {
+    activeThreadId = fallback.id;
+    activeThreadName = fallback.name || 'Current Session';
+    threadWorkspaceState.activeThreadId = fallback.id;
+    return fallback;
+  }
+
+  activeThreadId = null;
+  activeThreadName = 'Current Session';
+  threadWorkspaceState.activeThreadId = null;
+  return null;
+}
+
+function buildThreadActionButton(label, variant, handler) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = `thread-action-button ${variant}`;
+  button.textContent = label;
+  button.addEventListener('click', (event) => {
+    event.stopPropagation();
+    handler();
+  });
+  return button;
+}
+
+function renderThreadRecord(record, isArchived = false) {
+  const meta = getThreadMeta(record);
+  const item = document.createElement('li');
+  item.className = 'thread-item';
+
+  const card = document.createElement('div');
+  card.className = 'thread-card';
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = `thread-button${record.id === activeThreadId && !isArchived ? ' active' : ''}`;
+
+  const title = document.createElement('span');
+  title.className = 'thread-button-title';
+  title.textContent = record.name || 'Untitled Thread';
+
+  const subtitle = document.createElement('span');
+  subtitle.className = 'thread-button-subtitle';
+  subtitle.textContent = meta.subtitle;
+
+  const detail = document.createElement('span');
+  detail.className = 'thread-button-subtitle';
+  detail.textContent = meta.summary;
+
+  const rowMeta = document.createElement('span');
+  rowMeta.className = 'thread-button-meta';
+  rowMeta.textContent = meta.updatedAt;
+
+  const actions = document.createElement('span');
+  actions.className = 'thread-button-actions';
+
+  if (isArchived) {
+    actions.appendChild(buildThreadActionButton('Restore', 'restore', () => restoreThread(record.id)));
+  } else {
+    actions.appendChild(buildThreadActionButton('Archive', 'archive', () => archiveThread(record.id)));
+  }
+  actions.appendChild(buildThreadActionButton('Delete', 'delete', () => deleteThread(record.id)));
+
+  button.appendChild(title);
+  button.appendChild(subtitle);
+  button.appendChild(detail);
+  button.appendChild(rowMeta);
+  button.addEventListener('click', () => {
+    if (!isArchived) {
+      switchToThread(record.id);
+    }
+  });
+
+  card.appendChild(button);
+  card.appendChild(actions);
+  item.appendChild(card);
+  return item;
+}
+
 function renderThreadList() {
   if (!threadList) return;
   threadList.innerHTML = '';
+  if (archivedThreadList) {
+    archivedThreadList.innerHTML = '';
+  }
 
-  if (!threadWorkspaceState.threads.length) {
+  const activeThreads = [...threadWorkspaceState.threads].filter((thread) => !thread.archived);
+  const archivedThreads = [...threadWorkspaceState.threads].filter((thread) => thread.archived);
+
+  if (!activeThreads.length) {
     const item = document.createElement('li');
     item.className = 'thread-empty';
     item.textContent = 'No saved threads yet. Start from the current session or create a new thread.';
     threadList.appendChild(item);
-    syncActiveThreadUi();
-    return;
+  } else {
+    const sortedActive = [...activeThreads].sort((left, right) => {
+      return new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime();
+    });
+    sortedActive.forEach((record) => {
+      threadList.appendChild(renderThreadRecord(record, false));
+    });
   }
 
-  const sorted = [...threadWorkspaceState.threads].sort((left, right) => {
-    return new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime();
-  });
-
-  sorted.forEach((record) => {
-    const meta = getThreadMeta(record);
-    const item = document.createElement('li');
-    item.className = 'thread-item';
-
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = `thread-button${record.id === activeThreadId ? ' active' : ''}`;
-
-    const title = document.createElement('span');
-    title.className = 'thread-button-title';
-    title.textContent = record.name || 'Untitled Thread';
-
-    const subtitle = document.createElement('span');
-    subtitle.className = 'thread-button-subtitle';
-    subtitle.textContent = meta.subtitle;
-
-    const detail = document.createElement('span');
-    detail.className = 'thread-button-subtitle';
-    detail.textContent = meta.summary;
-
-    const rowMeta = document.createElement('span');
-    rowMeta.className = 'thread-button-meta';
-    rowMeta.textContent = meta.updatedAt;
-
-    button.appendChild(title);
-    button.appendChild(subtitle);
-    button.appendChild(detail);
-    button.appendChild(rowMeta);
-    button.addEventListener('click', () => {
-      switchToThread(record.id);
-    });
-
-    item.appendChild(button);
-    threadList.appendChild(item);
-  });
+  if (archivedThreadList) {
+    if (!archivedThreads.length) {
+      const item = document.createElement('li');
+      item.className = 'thread-empty';
+      item.textContent = 'No archived threads.';
+      archivedThreadList.appendChild(item);
+    } else {
+      const sortedArchived = [...archivedThreads].sort((left, right) => {
+        return new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime();
+      });
+      sortedArchived.forEach((record) => {
+        archivedThreadList.appendChild(renderThreadRecord(record, true));
+      });
+    }
+  }
 
   syncActiveThreadUi();
 }
@@ -1866,12 +1978,13 @@ function upsertActiveThread(draftState = collectDraftState()) {
     id: activeThreadId,
     name: activeThreadName,
     updatedAt: new Date().toISOString(),
+    archived: false,
     draft: draftState
   };
 
   const index = threadWorkspaceState.threads.findIndex((thread) => thread.id === record.id);
   if (index >= 0) {
-    threadWorkspaceState.threads[index] = record;
+    threadWorkspaceState.threads[index] = { ...threadWorkspaceState.threads[index], ...record, archived: false };
   } else {
     threadWorkspaceState.threads.unshift(record);
   }
@@ -1881,16 +1994,64 @@ function upsertActiveThread(draftState = collectDraftState()) {
 }
 
 function switchToThread(threadId) {
-  const target = threadWorkspaceState.threads.find((thread) => thread.id === threadId);
-  if (!target) return;
+  return switchToThreadWithOptions(threadId, { persistCurrent: true });
+}
 
-  persistDraft('saved');
+function switchToThreadWithOptions(threadId, options = {}) {
+  const target = threadWorkspaceState.threads.find((thread) => thread.id === threadId);
+  if (!target || target.archived) return;
+
+  if (options.persistCurrent !== false) {
+    persistDraft('saved');
+  }
   activeThreadId = target.id;
   activeThreadName = target.name || 'Current Session';
   threadWorkspaceState.activeThreadId = target.id;
   safeSetThreadWorkspace(threadWorkspaceState);
   applyDraftState(target.draft || {});
   setDraftStatus(`Thread loaded: ${activeThreadName}.`);
+  renderThreadList();
+}
+
+function archiveThread(threadId) {
+  const target = threadWorkspaceState.threads.find((thread) => thread.id === threadId);
+  if (!target) return;
+  target.archived = true;
+  target.updatedAt = new Date().toISOString();
+  const nextActive = ensureActiveThreadSelection();
+  safeSetThreadWorkspace(threadWorkspaceState);
+  renderThreadList();
+  if (nextActive && nextActive.id !== threadId) {
+    switchToThreadWithOptions(nextActive.id, { persistCurrent: false });
+  } else if (!nextActive) {
+    createNewThread();
+  }
+}
+
+function restoreThread(threadId) {
+  const target = threadWorkspaceState.threads.find((thread) => thread.id === threadId);
+  if (!target) return;
+  target.archived = false;
+  target.updatedAt = new Date().toISOString();
+  safeSetThreadWorkspace(threadWorkspaceState);
+  renderThreadList();
+}
+
+function deleteThread(threadId) {
+  const wasActive = threadId === activeThreadId;
+  threadWorkspaceState.threads = threadWorkspaceState.threads.filter((thread) => thread.id !== threadId);
+  if (wasActive) {
+    const nextActive = ensureActiveThreadSelection();
+    safeSetThreadWorkspace(threadWorkspaceState);
+    renderThreadList();
+    if (nextActive) {
+      switchToThreadWithOptions(nextActive.id, { persistCurrent: false });
+    } else {
+      createNewThread();
+    }
+    return;
+  }
+  safeSetThreadWorkspace(threadWorkspaceState);
   renderThreadList();
 }
 
@@ -2272,6 +2433,11 @@ async function refreshArtifacts() {
   const data = await res.json();
   artifactList.innerHTML = '';
   artifactCount = Array.isArray(data.artifacts) ? data.artifacts.length : 0;
+  recentArtifactsState = (data.artifacts || []).slice(0, 6).map((item) => ({
+    file_name: item.file_name,
+    download_url: item.download_url,
+    updatedAt: item.updated_at || item.created_at || new Date().toISOString()
+  }));
 
   (data.artifacts || []).forEach((item) => {
     const li = document.createElement('li');
@@ -2291,6 +2457,7 @@ async function refreshArtifacts() {
     artifactList.appendChild(li);
   }
 
+  renderRecentArtifactsList();
   updateMissionControl();
 }
 
