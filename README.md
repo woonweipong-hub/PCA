@@ -25,7 +25,7 @@ The examples and evidence packs in this repository are based on independent pers
 
 Woon Wei Pong is a trained building architect and digital lead in the construction industry. His work focuses on AI-enabled compliance, design and BIM workflows, and human-machine collaboration for the built environment.
 
-ORCID: https://orcid.org/0009-0004-6856-2189
+ORCID: [0009-0004-6856-2189](https://orcid.org/0009-0004-6856-2189)
 
 ## Why PCA
 
