@@ -12,6 +12,26 @@
 <body>
   <div class="bg-layer"></div>
   <main class="shell wide">
+    <aside class="app-sidebar" aria-label="Session threads">
+      <div class="app-sidebar-head">
+        <div>
+          <p class="segment-kicker">Workspace</p>
+          <h2>Threads</h2>
+        </div>
+        <button id="btnNewThread" class="ghost slim" type="button">New Thread</button>
+      </div>
+      <label for="threadNameInput">Active Thread Name</label>
+      <div class="thread-name-row">
+        <input id="threadNameInput" type="text" value="Current Session" placeholder="Name this thread" />
+        <button id="btnRenameThread" class="ghost slim" type="button">Rename</button>
+      </div>
+      <p id="activeThreadLabel" class="muted app-sidebar-note">Current Session</p>
+      <ul id="threadList" class="thread-list">
+        <li class="thread-empty">No saved threads yet. Start from the current session or create a new thread.</li>
+      </ul>
+    </aside>
+
+    <div class="app-content">
     <header class="hero">
       <h1>From Ideas to Impact</h1>
     </header>
@@ -102,28 +122,29 @@
             <span class="mono">decision record</span>
           </div>
           <p class="muted">The current recommendation, route, and immediate next move extracted from the latest governed run.</p>
-          <pre id="resultView">No run yet.</pre>
-        </article>
-        <article class="card secondary-output-card">
-          <div class="card-head">
-            <h2>Conversation Throughputs Showcase</h2>
-            <span class="mono">live flow</span>
-          </div>
-          <p class="muted">See what the conversation is trying to resolve, where the route currently points, and every major activity that moved the thread forward.</p>
-          <div class="throughput-stat-grid">
-            <article class="throughput-stat-card">
+          <div class="throughput-stat-grid output-priority-strip">
+            <article class="throughput-stat-card priority-stat-card">
               <span class="mission-metric-label">Current Request</span>
               <strong id="throughputRequest">No active request yet.</strong>
             </article>
-            <article class="throughput-stat-card">
+            <article class="throughput-stat-card priority-stat-card">
               <span class="mission-metric-label">Route</span>
               <strong id="throughputRoute">Route pending</strong>
             </article>
-            <article class="throughput-stat-card">
+            <article class="throughput-stat-card priority-stat-card">
               <span class="mission-metric-label">Next Move</span>
               <strong id="throughputNextMove">Await next governed action.</strong>
             </article>
           </div>
+          <pre id="resultView">No run yet.</pre>
+        </article>
+        <div class="output-side-column">
+        <article class="card secondary-output-card">
+          <div class="card-head">
+            <h2>Governed Run Visuals</h2>
+            <span class="mono">live flow</span>
+          </div>
+          <p class="muted">Visual support for the main answer: process state, score movement, and major governed activities.</p>
           <div class="throughput-visual-grid">
             <article class="visual-card">
               <div class="card-head compact-head">
@@ -189,6 +210,12 @@
             <li class="throughput-empty">No activities yet.</li>
           </ul>
         </article>
+        <article class="card secondary-output-card snapshot-card">
+          <h2>Collaborative Throughput Snapshot</h2>
+          <p class="muted">Condensed view of what changed, what remains open, and the most practical next move.</p>
+          <pre id="outcomeSummaryView">No collaborative throughput snapshot yet.</pre>
+        </article>
+        </div>
       </div>
 
       <div class="debate-stage-grid">
@@ -257,17 +284,24 @@
         </article>
       </div>
 
-      <div class="panel output-snapshot-panel">
-        <article class="card secondary-output-card snapshot-card">
-          <h2>Collaborative Throughput Snapshot</h2>
-          <p class="muted">Condensed view of what changed, what remains open, and the most practical next move.</p>
-          <pre id="outcomeSummaryView">No collaborative throughput snapshot yet.</pre>
-        </article>
-      </div>
-
     </section>
 
     <section id="top-input" class="panel section-anchor-target">
+      <div class="input-workbench">
+      <aside class="card conversation-rail-card">
+        <div class="card-head compact-head conversation-rail-head">
+          <div>
+            <h2>Thread Memory</h2>
+            <p class="muted">Compact session history beside the composer, closer to the Copilot rhythm but still grounded in PCA flow.</p>
+          </div>
+          <span id="conversationRailState" class="mono badge">ready</span>
+        </div>
+        <p id="conversationRailMeta" class="mono conversation-rail-meta">New Request • Custom • 0 open topics</p>
+        <ul id="conversationHistoryList" class="conversation-history-list">
+          <li class="conversation-history-empty">No thread activity yet. Starter prompts, queued requests, and governed run events will appear here.</li>
+        </ul>
+      </aside>
+
       <article class="card continuous-input-card">
         <div class="card-head continuous-input-head">
           <div>
@@ -302,6 +336,7 @@
           </div>
         </div>
       </article>
+      </div>
     </section>
 
     <section id="segment-live-thread" class="panel structured-segment section-anchor-target">
@@ -997,6 +1032,7 @@ Side issues to revisit after main decision</textarea>
       <span id="statusDraft">autosave ready</span>
       <span id="statusArtifacts">0 artifacts</span>
     </footer>
+    </div>
   </main>
 
   <script src="/app.js"></script>

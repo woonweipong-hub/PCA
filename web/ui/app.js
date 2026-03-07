@@ -40,6 +40,14 @@ const useCaseHub = document.getElementById('useCaseHub');
 const selectedUseCaseNote = document.getElementById('selectedUseCaseNote');
 const quickInputBar = document.getElementById('quickInputBar');
 const quickInputStatus = document.getElementById('quickInputStatus');
+const conversationRailState = document.getElementById('conversationRailState');
+const conversationRailMeta = document.getElementById('conversationRailMeta');
+const conversationHistoryList = document.getElementById('conversationHistoryList');
+const threadList = document.getElementById('threadList');
+const threadNameInput = document.getElementById('threadNameInput');
+const activeThreadLabel = document.getElementById('activeThreadLabel');
+const btnNewThread = document.getElementById('btnNewThread');
+const btnRenameThread = document.getElementById('btnRenameThread');
 const composerStatusRuntime = document.getElementById('composerStatusRuntime');
 const composerStatusModels = document.getElementById('composerStatusModels');
 const composerStatusCycles = document.getElementById('composerStatusCycles');
@@ -178,11 +186,16 @@ const sourcesInputSelect = document.getElementById('sourcesInputSelect');
 const CUSTOM_OPTION_VALUE = '__custom__';
 const PARENT_OPTION_VALUE = '__parent__';
 const UI_DRAFT_STORAGE_KEY = 'pca-ui-draft-v1';
+const UI_THREAD_WORKSPACE_KEY = 'pca-ui-thread-workspace-v1';
 
 let draftSaveTimer = null;
 let artifactCount = 0;
 let throughputActivitiesState = [];
 let cycleSnapshotsState = [];
+let conversationHistoryState = [];
+let threadWorkspaceState = { activeThreadId: null, threads: [] };
+let activeThreadId = null;
+let activeThreadName = 'Current Session';
 let processFlowState = {
   input: { status: 'idle', detail: 'Waiting for input capture.' },
   organize: { status: 'idle', detail: 'Waiting for framework planning.' },
@@ -497,6 +510,83 @@ function renderRoleStageCards() {
     });
   });
   renderComposerStatusStrip();
+  updateConversationRailMeta();
+}
+
+function formatHistoryTimestamp(value = new Date()) {
+  try {
+    return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(value);
+  } catch (_error) {
+    return '';
+  }
+}
+
+function updateConversationRailMeta() {
+  if (!conversationRailMeta && !conversationRailState) return;
+  const selectedKey = useCaseProfile.value;
+  const selectedMeta = USE_CASE_CARD_META[selectedKey];
+  const topics = parseLineList(openTopics.value);
+  const governorSnapshot = roleStageState.governor || { state: 'Idle' };
+
+  if (conversationRailState) {
+    conversationRailState.textContent = governorSnapshot.state === 'Idle'
+      ? 'thread ready'
+      : `governor ${String(governorSnapshot.state).toLowerCase()}`;
+  }
+  if (conversationRailMeta) {
+    conversationRailMeta.textContent = `${formatCollaborationLabel(collaborationMode.value)} • ${selectedMeta ? selectedMeta.title : 'Custom'} • ${topics.length} open topic${topics.length === 1 ? '' : 's'}`;
+  }
+}
+
+function renderConversationHistory() {
+  if (!conversationHistoryList) return;
+  conversationHistoryList.innerHTML = '';
+  if (!conversationHistoryState.length) {
+    const item = document.createElement('li');
+    item.className = 'conversation-history-empty';
+    item.textContent = 'No thread activity yet. Starter prompts, queued requests, and governed run events will appear here.';
+    conversationHistoryList.appendChild(item);
+    updateConversationRailMeta();
+    return;
+  }
+
+  conversationHistoryState.forEach((entry) => {
+    const item = document.createElement('li');
+    item.className = `conversation-history-item ${entry.tone || 'neutral'}`;
+
+    const title = document.createElement('p');
+    title.className = 'conversation-history-title';
+    title.textContent = entry.title;
+
+    const detail = document.createElement('p');
+    detail.className = 'conversation-history-detail';
+    detail.textContent = entry.detail;
+
+    const meta = document.createElement('span');
+    meta.className = 'conversation-history-meta';
+    meta.textContent = entry.meta;
+
+    item.appendChild(title);
+    item.appendChild(detail);
+    item.appendChild(meta);
+    conversationHistoryList.appendChild(item);
+  });
+
+  updateConversationRailMeta();
+}
+
+function pushConversationHistory(title, detail, tone = 'neutral', channel = 'thread', persist = true) {
+  conversationHistoryState.unshift({
+    title: truncateText(title, 72),
+    detail: truncateText(detail, 150),
+    tone,
+    meta: `${channel} • ${formatHistoryTimestamp(new Date())}`
+  });
+  conversationHistoryState = conversationHistoryState.slice(0, 10);
+  renderConversationHistory();
+  if (persist) {
+    scheduleDraftSave();
+  }
 }
 
 function renderComposerStatusStrip() {
@@ -769,6 +859,7 @@ function updateMissionControl() {
   if (dashboardRuntimeValue) {
     dashboardRuntimeValue.textContent = runtimeProvider.value;
   }
+  updateConversationRailMeta();
 }
 
 function updateActiveSection(sectionId) {
@@ -1658,6 +1749,168 @@ function formatDraftTimestamp(value) {
   return date.toLocaleString();
 }
 
+function createThreadId() {
+  return `thread-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function safeGetThreadWorkspace() {
+  try {
+    const raw = window.localStorage.getItem(UI_THREAD_WORKSPACE_KEY);
+    if (!raw) return { activeThreadId: null, threads: [] };
+    const parsed = JSON.parse(raw);
+    return {
+      activeThreadId: parsed && parsed.activeThreadId ? parsed.activeThreadId : null,
+      threads: Array.isArray(parsed && parsed.threads) ? parsed.threads : []
+    };
+  } catch (_error) {
+    return { activeThreadId: null, threads: [] };
+  }
+}
+
+function safeSetThreadWorkspace(payload) {
+  try {
+    window.localStorage.setItem(UI_THREAD_WORKSPACE_KEY, JSON.stringify(payload));
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
+function getThreadMeta(record) {
+  const draft = record && record.draft ? record.draft : {};
+  const profile = USE_CASE_CARD_META[draft.useCaseProfile] || null;
+  const mode = draft.collaborationMode ? formatCollaborationLabel(draft.collaborationMode) : 'New Request';
+  const summary = draft.decision || draft.objective || 'No decision framed yet.';
+  return {
+    subtitle: `${mode} • ${profile ? profile.title : 'Custom'}`,
+    summary: truncateText(summary, 54),
+    updatedAt: formatDraftTimestamp(record ? record.updatedAt : null)
+  };
+}
+
+function syncActiveThreadUi() {
+  if (threadNameInput) {
+    threadNameInput.value = activeThreadName;
+  }
+  if (activeThreadLabel) {
+    activeThreadLabel.textContent = activeThreadName;
+  }
+}
+
+function renderThreadList() {
+  if (!threadList) return;
+  threadList.innerHTML = '';
+
+  if (!threadWorkspaceState.threads.length) {
+    const item = document.createElement('li');
+    item.className = 'thread-empty';
+    item.textContent = 'No saved threads yet. Start from the current session or create a new thread.';
+    threadList.appendChild(item);
+    syncActiveThreadUi();
+    return;
+  }
+
+  const sorted = [...threadWorkspaceState.threads].sort((left, right) => {
+    return new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime();
+  });
+
+  sorted.forEach((record) => {
+    const meta = getThreadMeta(record);
+    const item = document.createElement('li');
+    item.className = 'thread-item';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `thread-button${record.id === activeThreadId ? ' active' : ''}`;
+
+    const title = document.createElement('span');
+    title.className = 'thread-button-title';
+    title.textContent = record.name || 'Untitled Thread';
+
+    const subtitle = document.createElement('span');
+    subtitle.className = 'thread-button-subtitle';
+    subtitle.textContent = meta.subtitle;
+
+    const detail = document.createElement('span');
+    detail.className = 'thread-button-subtitle';
+    detail.textContent = meta.summary;
+
+    const rowMeta = document.createElement('span');
+    rowMeta.className = 'thread-button-meta';
+    rowMeta.textContent = meta.updatedAt;
+
+    button.appendChild(title);
+    button.appendChild(subtitle);
+    button.appendChild(detail);
+    button.appendChild(rowMeta);
+    button.addEventListener('click', () => {
+      switchToThread(record.id);
+    });
+
+    item.appendChild(button);
+    threadList.appendChild(item);
+  });
+
+  syncActiveThreadUi();
+}
+
+function upsertActiveThread(draftState = collectDraftState()) {
+  if (!activeThreadId) {
+    activeThreadId = createThreadId();
+  }
+  if (!activeThreadName || !activeThreadName.trim()) {
+    activeThreadName = 'Current Session';
+  }
+
+  const record = {
+    id: activeThreadId,
+    name: activeThreadName,
+    updatedAt: new Date().toISOString(),
+    draft: draftState
+  };
+
+  const index = threadWorkspaceState.threads.findIndex((thread) => thread.id === record.id);
+  if (index >= 0) {
+    threadWorkspaceState.threads[index] = record;
+  } else {
+    threadWorkspaceState.threads.unshift(record);
+  }
+  threadWorkspaceState.activeThreadId = record.id;
+  safeSetThreadWorkspace(threadWorkspaceState);
+  renderThreadList();
+}
+
+function switchToThread(threadId) {
+  const target = threadWorkspaceState.threads.find((thread) => thread.id === threadId);
+  if (!target) return;
+
+  persistDraft('saved');
+  activeThreadId = target.id;
+  activeThreadName = target.name || 'Current Session';
+  threadWorkspaceState.activeThreadId = target.id;
+  safeSetThreadWorkspace(threadWorkspaceState);
+  applyDraftState(target.draft || {});
+  setDraftStatus(`Thread loaded: ${activeThreadName}.`);
+  renderThreadList();
+}
+
+function renameActiveThread() {
+  const nextName = String(threadNameInput && threadNameInput.value ? threadNameInput.value : activeThreadName).trim();
+  if (!nextName) return;
+  activeThreadName = nextName;
+  syncActiveThreadUi();
+  upsertActiveThread();
+}
+
+function createNewThread() {
+  persistDraft('saved');
+  activeThreadId = createThreadId();
+  activeThreadName = `Thread ${threadWorkspaceState.threads.length + 1}`;
+  syncActiveThreadUi();
+  upsertActiveThread();
+  setDraftStatus(`New thread created: ${activeThreadName}.`);
+}
+
 function setDraftStatus(message) {
   if (draftStatus) {
     draftStatus.textContent = message;
@@ -1727,12 +1980,17 @@ function collectDraftState() {
     datasetRegistry: datasetRegistry.value,
     includePrefixes: includePrefixes.value,
     excludeFiles: excludeFiles.value,
-    themePreset: themePreset.value
+    themePreset: themePreset.value,
+    conversationHistory: conversationHistoryState
   };
 }
 
 function applyDraftState(draft) {
   if (!draft || typeof draft !== 'object') return;
+
+  if (Array.isArray(draft.conversationHistory)) {
+    conversationHistoryState = draft.conversationHistory.slice(0, 10);
+  }
 
   useCaseProfile.value = draft.useCaseProfile || useCaseProfile.value;
   objective.value = draft.objective || objective.value;
@@ -1788,11 +2046,14 @@ function applyDraftState(draft) {
   renderRuntimeGuide();
   renderInputRegistry();
   loadPathOptions();
+  renderConversationHistory();
   setDraftStatus(`Session restored from ${formatDraftTimestamp(draft.savedAt)}.`);
 }
 
 function persistDraft(reason = 'autosaved') {
-  const saved = safeSetDraft(collectDraftState());
+  const draftState = collectDraftState();
+  const saved = safeSetDraft(draftState);
+  upsertActiveThread(draftState);
   setDraftStatus(saved ? `Session ${reason} at ${formatDraftTimestamp(new Date().toISOString())}.` : 'Session save unavailable in this browser.');
 }
 
@@ -1812,11 +2073,13 @@ function restoreSavedDraft() {
     return;
   }
   applyDraftState(draft);
+  pushConversationHistory('Session restored', `Draft from ${formatDraftTimestamp(draft.savedAt)} reloaded into the current browser session.`, 'ok', 'session');
 }
 
 function clearSavedDraft() {
   const removed = safeRemoveDraft();
   setDraftStatus(removed ? 'Saved session cleared for this browser.' : 'Session clear unavailable in this browser.');
+  pushConversationHistory('Saved session cleared', 'Browser draft storage was cleared for the current workspace session.', removed ? 'ok' : 'warn', 'session', false);
 }
 
 function consumeQuickInput() {
@@ -1849,6 +2112,7 @@ async function submitQuickInputToPipeline() {
   if (!value) return;
   appendTextBlock(userRequests, value);
   appendTextBlock(continuationNotes, `Continue from quick input: ${value}`);
+  pushConversationHistory('Prompt sent to PCA', value, 'neutral', 'user');
   clearQuickInput('Sent into the live request. Running the full pipeline now.');
   await btnPipeline.click();
 }
@@ -2325,6 +2589,7 @@ function resetDebateTimeline() {
   resetRoleStageCards();
   resetThroughputShowcase();
   appendThroughputActivity('Run Queued', 'A new governed cycle has started and stage activity will appear below.', 'neutral');
+  pushConversationHistory('Governed run queued', 'A new debate or pipeline run started from the current workspace state.', 'neutral', 'run');
 }
 
 function appendDebateEvent(eventLabel, details, tone = 'neutral') {
@@ -2347,6 +2612,7 @@ function appendDebateEvent(eventLabel, details, tone = 'neutral') {
   debateTimeline.appendChild(li);
   debateTimeline.scrollTop = debateTimeline.scrollHeight;
   appendThroughputActivity(eventLabel, details, tone);
+  pushConversationHistory(eventLabel, details, tone, 'run');
 }
 
 function parseSseChunk(raw) {
@@ -2946,6 +3212,28 @@ if (btnContinueSession) {
   });
 }
 
+if (btnNewThread) {
+  btnNewThread.addEventListener('click', () => {
+    createNewThread();
+  });
+}
+
+if (btnRenameThread) {
+  btnRenameThread.addEventListener('click', () => {
+    renameActiveThread();
+  });
+}
+
+if (threadNameInput) {
+  threadNameInput.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' || event.isComposing) {
+      return;
+    }
+    event.preventDefault();
+    renameActiveThread();
+  });
+}
+
 if (quickInputBar) {
   quickInputBar.addEventListener('input', () => {
     const value = quickInputBar.value.trim();
@@ -2973,6 +3261,7 @@ if (composerChips.length > 0 && quickInputBar) {
       quickInputBar.focus();
       quickInputBar.setSelectionRange(quickInputBar.value.length, quickInputBar.value.length);
       setQuickInputStatus('Starter prompt loaded. Press Enter to send or edit it first.');
+      pushConversationHistory('Starter prompt loaded', prompt, 'neutral', 'user');
     });
   });
 }
@@ -2982,6 +3271,7 @@ if (btnQueueRequest) {
     const value = consumeQuickInput();
     if (!value) return;
     appendTextBlock(userRequests, value);
+    pushConversationHistory('Added to request', value, 'neutral', 'user');
     clearQuickInput('Added to User Requests and saved into the active session.');
   });
 }
@@ -2991,6 +3281,7 @@ if (btnQueueTopic) {
     const value = consumeQuickInput();
     if (!value) return;
     appendTextBlock(openTopics, value);
+    pushConversationHistory('Open topic added', value, 'critique', 'user');
     clearQuickInput('Added to Open Topics and saved into the active session.');
   });
 }
@@ -3080,6 +3371,16 @@ applyModelPack(modelPack.value);
 renderTaskExecutionMode();
 applyTheme(themePreset.value);
 
+threadWorkspaceState = safeGetThreadWorkspace();
+if (threadWorkspaceState.activeThreadId) {
+  const activeThread = threadWorkspaceState.threads.find((thread) => thread.id === threadWorkspaceState.activeThreadId);
+  if (activeThread) {
+    activeThreadId = activeThread.id;
+    activeThreadName = activeThread.name || 'Current Session';
+    applyDraftState(activeThread.draft || {});
+  }
+}
+
 renderRuntimeGuide();
 renderInputRegistry();
 renderUseCaseHub();
@@ -3088,14 +3389,23 @@ updateMissionControl();
 updateActiveSection('top-output');
 setupSectionObserver();
 renderRoleStageCards();
+renderConversationHistory();
+renderThreadList();
 resetThroughputShowcase();
 renderProcessFlow();
 
 const savedDraft = safeGetDraft();
-if (savedDraft) {
+if (!threadWorkspaceState.threads.length && savedDraft) {
   setDraftStatus(`Saved session available from ${formatDraftTimestamp(savedDraft.savedAt)}.`);
 } else {
   setDraftStatus('Session persistence ready. Inputs, discussion trail, and visible outputs autosave in this browser.');
+}
+
+if (!activeThreadId) {
+  activeThreadId = createThreadId();
+  activeThreadName = 'Current Session';
+  syncActiveThreadUi();
+  upsertActiveThread();
 }
 
 window.addEventListener('beforeunload', () => {
