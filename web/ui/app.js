@@ -1,12 +1,56 @@
 const statusEl = document.getElementById('status');
+const statusRuntime = document.getElementById('statusRuntime');
+const statusDraft = document.getElementById('statusDraft');
+const statusArtifacts = document.getElementById('statusArtifacts');
 const resultView = document.getElementById('resultView');
 const outcomeSummaryView = document.getElementById('outcomeSummaryView');
+const throughputRequest = document.getElementById('throughputRequest');
+const throughputRoute = document.getElementById('throughputRoute');
+const throughputNextMove = document.getElementById('throughputNextMove');
+const throughputShowcase = document.getElementById('throughputShowcase');
+const throughputFlowStateLabel = document.getElementById('throughputFlowState');
+const throughputFlow = document.getElementById('throughputFlow');
+const throughputDashboardState = document.getElementById('throughputDashboardState');
+const dashboardScoreValue = document.getElementById('dashboardScoreValue');
+const dashboardScoreFill = document.getElementById('dashboardScoreFill');
+const dashboardCoverageValue = document.getElementById('dashboardCoverageValue');
+const dashboardCoverageFill = document.getElementById('dashboardCoverageFill');
+const dashboardRiskValue = document.getElementById('dashboardRiskValue');
+const dashboardRiskFill = document.getElementById('dashboardRiskFill');
+const dashboardSourcesValue = document.getElementById('dashboardSourcesValue');
+const dashboardArtifactsValue = document.getElementById('dashboardArtifactsValue');
+const dashboardRuntimeValue = document.getElementById('dashboardRuntimeValue');
+const throughputCycleState = document.getElementById('throughputCycleState');
+const throughputCycleChart = document.getElementById('throughputCycleChart');
+const stageProposeState = document.getElementById('stageProposeState');
+const stageProposeSummary = document.getElementById('stageProposeSummary');
+const stageProposeActivities = document.getElementById('stageProposeActivities');
+const stageCritiqueState = document.getElementById('stageCritiqueState');
+const stageCritiqueSummary = document.getElementById('stageCritiqueSummary');
+const stageCritiqueActivities = document.getElementById('stageCritiqueActivities');
+const stageAssessState = document.getElementById('stageAssessState');
+const stageAssessSummary = document.getElementById('stageAssessSummary');
+const stageAssessActivities = document.getElementById('stageAssessActivities');
 const artifactList = document.getElementById('artifactList');
 const draftStatus = document.getElementById('draftStatus');
 const useCaseHub = document.getElementById('useCaseHub');
 const selectedUseCaseNote = document.getElementById('selectedUseCaseNote');
 const quickInputBar = document.getElementById('quickInputBar');
 const quickInputStatus = document.getElementById('quickInputStatus');
+const missionRunState = document.getElementById('missionRunState');
+const missionActiveSection = document.getElementById('missionActiveSection');
+const metricUseCase = document.getElementById('metricUseCase');
+const metricObjective = document.getElementById('metricObjective');
+const metricRuntime = document.getElementById('metricRuntime');
+const metricModels = document.getElementById('metricModels');
+const metricCollaboration = document.getElementById('metricCollaboration');
+const metricTopics = document.getElementById('metricTopics');
+const metricSources = document.getElementById('metricSources');
+const metricEvidenceDetail = document.getElementById('metricEvidenceDetail');
+const metricArtifacts = document.getElementById('metricArtifacts');
+const metricArtifactsDetail = document.getElementById('metricArtifactsDetail');
+const metricDraft = document.getElementById('metricDraft');
+const metricDraftDetail = document.getElementById('metricDraftDetail');
 
 const inputDir = document.getElementById('inputDir');
 const ocrDir = document.getElementById('ocrDir');
@@ -79,6 +123,11 @@ const btnContinueSession = document.getElementById('btnContinueSession');
 const btnQueueRequest = document.getElementById('btnQueueRequest');
 const btnQueueTopic = document.getElementById('btnQueueTopic');
 const btnRunFromBar = document.getElementById('btnRunFromBar');
+const btnMissionFramework = document.getElementById('btnMissionFramework');
+const btnMissionResearch = document.getElementById('btnMissionResearch');
+const btnMissionEvidence = document.getElementById('btnMissionEvidence');
+const btnMissionDebate = document.getElementById('btnMissionDebate');
+const btnMissionPipeline = document.getElementById('btnMissionPipeline');
 
 const debateState = document.getElementById('debateState');
 const debateTimeline = document.getElementById('debateTimeline');
@@ -123,6 +172,590 @@ const PARENT_OPTION_VALUE = '__parent__';
 const UI_DRAFT_STORAGE_KEY = 'pca-ui-draft-v1';
 
 let draftSaveTimer = null;
+let artifactCount = 0;
+let throughputActivitiesState = [];
+let cycleSnapshotsState = [];
+let processFlowState = {
+  input: { status: 'idle', detail: 'Waiting for input capture.' },
+  organize: { status: 'idle', detail: 'Waiting for framework planning.' },
+  test: { status: 'idle', detail: 'Waiting for research synthesis.' },
+  verify: { status: 'idle', detail: 'Waiting for verification.' },
+  recommend: { status: 'idle', detail: 'Waiting for recommendation.' },
+  route: { status: 'idle', detail: 'Waiting for route decision.' },
+  implement: { status: 'idle', detail: 'Waiting for implementation posture.' }
+};
+let roleStageState = {
+  propose: { state: 'Idle', summary: 'No proposal activity yet.', activities: [] },
+  critique: { state: 'Idle', summary: 'No critique activity yet.', activities: [] },
+  assess: { state: 'Idle', summary: 'No assessment activity yet.', activities: [] }
+};
+
+const PROCESS_FLOW_STEPS = [
+  { key: 'input', label: 'Input' },
+  { key: 'organize', label: 'Framework' },
+  { key: 'test', label: 'Research' },
+  { key: 'verify', label: 'Verify' },
+  { key: 'recommend', label: 'Recommend' },
+  { key: 'route', label: 'Route' },
+  { key: 'implement', label: 'Implement' }
+];
+
+const ROLE_STAGE_ELEMENTS = {
+  propose: {
+    stateEl: stageProposeState,
+    summaryEl: stageProposeSummary,
+    listEl: stageProposeActivities,
+    empty: 'Waiting for proposal activity.'
+  },
+  critique: {
+    stateEl: stageCritiqueState,
+    summaryEl: stageCritiqueSummary,
+    listEl: stageCritiqueActivities,
+    empty: 'Waiting for critique activity.'
+  },
+  assess: {
+    stateEl: stageAssessState,
+    summaryEl: stageAssessSummary,
+    listEl: stageAssessActivities,
+    empty: 'Waiting for assessment activity.'
+  }
+};
+
+function truncateText(value, maxLength = 92) {
+  const text = String(value || '').trim();
+  if (!text) return 'n/a';
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1)}...` : text;
+}
+
+function sentenceCase(value) {
+  const text = String(value || '').trim();
+  if (!text) return 'Idle';
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function renderProcessFlow() {
+  if (!throughputFlow) return;
+  throughputFlow.innerHTML = '';
+  PROCESS_FLOW_STEPS.forEach((step) => {
+    const state = processFlowState[step.key] || { status: 'idle', detail: '' };
+    const node = document.createElement('article');
+    node.className = `flow-step ${state.status || 'idle'}`;
+    const label = document.createElement('span');
+    label.className = 'flow-step-label';
+    label.textContent = step.label;
+    const status = document.createElement('span');
+    status.className = 'flow-step-state';
+    status.textContent = sentenceCase(state.status || 'idle');
+    node.title = state.detail || step.label;
+    node.appendChild(label);
+    node.appendChild(status);
+    throughputFlow.appendChild(node);
+  });
+}
+
+function setProcessFlowStep(stepKey, status, detail) {
+  if (!processFlowState[stepKey]) return;
+  processFlowState[stepKey] = {
+    status: status || processFlowState[stepKey].status,
+    detail: detail || processFlowState[stepKey].detail
+  };
+  renderProcessFlow();
+}
+
+function updateFlowFromPipelineStage(stage, status, detail) {
+  const map = {
+    input: 'input',
+    'process.organize': 'organize',
+    'process.test': 'test',
+    'process.verify': 'verify',
+    'output.recommend': 'recommend',
+    'output.route': 'route',
+    'output.implement': 'implement'
+  };
+  const key = map[stage];
+  if (!key) return;
+  setProcessFlowStep(key, status, detail);
+  if (throughputFlowStateLabel) {
+    throughputFlowStateLabel.textContent = `${sentenceCase(key)} ${status}`;
+  }
+}
+
+function setProcessFlowFromDebateEvent(type, data = {}) {
+  if (type === 'start') {
+    setProcessFlowStep('input', 'running', 'Preparing debate input and live context.');
+  }
+  if (type === 'framework') {
+    setProcessFlowStep('input', 'completed', 'Input and context captured for the live run.');
+    setProcessFlowStep('organize', 'completed', 'Framework and governance policy loaded.');
+  }
+  if (type === 'dataset-selection') {
+    setProcessFlowStep('test', 'completed', `Dataset selected with ${data.source_count || 0} sources.`);
+  }
+  if (type === 'step' && data.stage === 'assess') {
+    setProcessFlowStep('verify', data.verify_gates && data.verify_gates.all_passed ? 'completed' : 'running', 'Assessment and verify gate state updated.');
+    setProcessFlowStep('recommend', 'completed', `Verdict: ${data.verdict || 'unknown'}.`);
+  }
+  if (type === 'final') {
+    const route = data.route_recommendation || {};
+    const gatesPassed = data.verify_gates && data.verify_gates.all_passed;
+    setProcessFlowStep('verify', gatesPassed ? 'completed' : 'blocked', gatesPassed ? 'Verify gates passed.' : 'Verify gates remain open.');
+    setProcessFlowStep('recommend', 'completed', 'Final recommendation assembled.');
+    setProcessFlowStep('route', route.recommended_mode === 'HOTL' ? 'completed' : 'blocked', route.reason || 'Route updated.');
+    setProcessFlowStep('implement', data.human_checkpoint && data.human_checkpoint.required ? 'pending' : 'ready', data.human_checkpoint ? data.human_checkpoint.reason : 'Implementation posture updated.');
+    if (throughputFlowStateLabel) {
+      throughputFlowStateLabel.textContent = route.recommended_mode || 'completed';
+    }
+  }
+}
+
+function renderCycleChart() {
+  if (!throughputCycleChart) return;
+  throughputCycleChart.innerHTML = '';
+  if (!cycleSnapshotsState.length) {
+    const empty = document.createElement('div');
+    empty.className = 'cycle-chart-empty';
+    empty.textContent = 'Cycle scores and coverage will render here during live runs.';
+    throughputCycleChart.appendChild(empty);
+    return;
+  }
+  cycleSnapshotsState.forEach((snapshot, index) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'cycle-bar';
+    const stack = document.createElement('div');
+    stack.className = 'cycle-bar-stack';
+    const scoreBar = document.createElement('span');
+    scoreBar.className = 'cycle-bar-score';
+    scoreBar.style.height = `${Math.max(6, Math.min(Number(snapshot.score) || 0, 100))}%`;
+    const coverageBar = document.createElement('span');
+    coverageBar.className = 'cycle-bar-coverage';
+    coverageBar.style.height = `${Math.max(6, Math.min(Number(snapshot.coverage) || 0, 100))}%`;
+    stack.appendChild(scoreBar);
+    stack.appendChild(coverageBar);
+    const label = document.createElement('div');
+    label.className = 'cycle-bar-label';
+    label.textContent = snapshot.label || `C${index + 1}`;
+    wrapper.appendChild(stack);
+    wrapper.appendChild(label);
+    throughputCycleChart.appendChild(wrapper);
+  });
+}
+
+function setCycleSnapshots(snapshots, stateLabel = 'live') {
+  cycleSnapshotsState = Array.isArray(snapshots) ? snapshots : [];
+  if (throughputCycleState) {
+    throughputCycleState.textContent = stateLabel;
+  }
+  renderCycleChart();
+}
+
+function resetVisualDashboards() {
+  processFlowState = {
+    input: { status: 'queued', detail: 'Waiting for input capture.' },
+    organize: { status: 'idle', detail: 'Waiting for framework planning.' },
+    test: { status: 'idle', detail: 'Waiting for research synthesis.' },
+    verify: { status: 'idle', detail: 'Waiting for verification.' },
+    recommend: { status: 'idle', detail: 'Waiting for recommendation.' },
+    route: { status: 'idle', detail: 'Waiting for route decision.' },
+    implement: { status: 'idle', detail: 'Waiting for implementation posture.' }
+  };
+  renderProcessFlow();
+  if (throughputFlowStateLabel) {
+    throughputFlowStateLabel.textContent = 'run queued';
+  }
+  if (throughputDashboardState) {
+    throughputDashboardState.textContent = 'live metrics';
+  }
+  if (dashboardScoreValue) dashboardScoreValue.textContent = '0 / 100';
+  if (dashboardScoreFill) dashboardScoreFill.style.width = '0%';
+  if (dashboardCoverageValue) dashboardCoverageValue.textContent = '0%';
+  if (dashboardCoverageFill) dashboardCoverageFill.style.width = '0%';
+  if (dashboardRiskValue) dashboardRiskValue.textContent = '0 flags';
+  if (dashboardRiskFill) dashboardRiskFill.style.width = '0%';
+  if (dashboardSourcesValue) dashboardSourcesValue.textContent = '0';
+  if (dashboardArtifactsValue) dashboardArtifactsValue.textContent = String(artifactCount);
+  if (dashboardRuntimeValue) dashboardRuntimeValue.textContent = runtimeProvider.value;
+  setCycleSnapshots([], 'awaiting signal');
+}
+
+function updateVisualDashboards(payload) {
+  const { envelope, route, verifyGates, scoreSummary } = extractRunEnvelope(payload);
+  const riskFlags = Array.isArray(envelope.risk_flags)
+    ? envelope.risk_flags
+    : (envelope.final_assessment && Array.isArray(envelope.final_assessment.risk_flags)
+      ? envelope.final_assessment.risk_flags
+      : (payload && payload.output && payload.output.recommend && payload.output.recommend.assessment && Array.isArray(payload.output.recommend.assessment.risk_flags)
+        ? payload.output.recommend.assessment.risk_flags
+        : []));
+  const evidenceSourceCount = envelope.dataset_selection && envelope.dataset_selection.source_count
+    ? envelope.dataset_selection.source_count
+    : (payload && payload.process && payload.process.verify && payload.process.verify.evidence
+      ? payload.process.verify.evidence.source_count || 0
+      : (envelope.evidence && envelope.evidence.source_count ? envelope.evidence.source_count : 0));
+  const weightedScore = scoreSummary && scoreSummary.weighted_score_100 !== undefined && scoreSummary.weighted_score_100 !== null
+    ? Number(scoreSummary.weighted_score_100)
+    : 0;
+  const coveragePercent = scoreSummary && scoreSummary.coverage && scoreSummary.coverage.ratio !== undefined
+    ? Math.round(Number(scoreSummary.coverage.ratio) * 100)
+    : (payload && payload.scoring && payload.scoring.final_coverage_ratio !== undefined && payload.scoring.final_coverage_ratio !== null
+      ? Math.round(Number(payload.scoring.final_coverage_ratio) * 100)
+      : 0);
+  const riskPercent = Math.min(riskFlags.length * 20, 100);
+
+  if (dashboardScoreValue) dashboardScoreValue.textContent = `${Math.round(weightedScore)} / 100`;
+  if (dashboardScoreFill) dashboardScoreFill.style.width = `${Math.max(0, Math.min(weightedScore, 100))}%`;
+  if (dashboardCoverageValue) dashboardCoverageValue.textContent = `${coveragePercent}%`;
+  if (dashboardCoverageFill) dashboardCoverageFill.style.width = `${Math.max(0, Math.min(coveragePercent, 100))}%`;
+  if (dashboardRiskValue) dashboardRiskValue.textContent = `${riskFlags.length} flag${riskFlags.length === 1 ? '' : 's'}`;
+  if (dashboardRiskFill) dashboardRiskFill.style.width = `${riskPercent}%`;
+  if (dashboardSourcesValue) dashboardSourcesValue.textContent = String(evidenceSourceCount || 0);
+  if (dashboardArtifactsValue) dashboardArtifactsValue.textContent = String(artifactCount);
+  if (dashboardRuntimeValue) dashboardRuntimeValue.textContent = `${runtimeProvider.value}`;
+  if (throughputDashboardState) {
+    throughputDashboardState.textContent = route && route.recommended_mode ? route.recommended_mode : (verifyGates && verifyGates.all_passed ? 'gates passed' : 'awaiting route');
+  }
+
+  const snapshots = payload && payload.scoring && Array.isArray(payload.scoring.cycle_snapshots)
+    ? payload.scoring.cycle_snapshots.map((item, index) => ({
+      label: `C${item.cycle || index + 1}`,
+      score: item.weighted_score_100 || 0,
+      coverage: item.coverage_ratio ? Math.round(item.coverage_ratio * 100) : 0
+    }))
+    : [{
+      label: 'C1',
+      score: weightedScore,
+      coverage: coveragePercent
+    }];
+  setCycleSnapshots(snapshots, snapshots.length > 1 ? 'cycle scores' : 'final score');
+}
+
+function extractRunEnvelope(payload) {
+  const envelope = payload && payload.result ? payload.result : (payload || {});
+  const collaboration = envelope.input_registry && envelope.input_registry.collaboration_context
+    ? envelope.input_registry.collaboration_context
+    : (payload && payload.input && payload.input.data ? payload.input.data.collaboration_context : null);
+  const route = envelope.route_recommendation || (payload && payload.output ? payload.output.route : null);
+  const verifyGates = envelope.verify_gates || (payload && payload.output && payload.output.recommend
+    ? payload.output.recommend.verify_gates
+    : null);
+  const checkpoint = envelope.human_checkpoint || null;
+  const implementation = payload && payload.output ? payload.output.implement : null;
+  const processQuality = envelope.process_quality || null;
+  const researchSynthesis = envelope.research_synthesis || null;
+  const activeSearchPlan = envelope.active_ai_search_plan || null;
+  const scoreSummary = envelope.final_assessment && envelope.final_assessment.score_summary
+    ? envelope.final_assessment.score_summary
+    : (payload && payload.output && payload.output.recommend && payload.output.recommend.assessment
+      ? payload.output.recommend.assessment.score_summary
+      : null);
+  return {
+    envelope,
+    collaboration,
+    route,
+    verifyGates,
+    checkpoint,
+    implementation,
+    processQuality,
+    researchSynthesis,
+    activeSearchPlan,
+    scoreSummary
+  };
+}
+
+function renderRoleStageCards() {
+  Object.entries(ROLE_STAGE_ELEMENTS).forEach(([key, elements]) => {
+    const snapshot = roleStageState[key];
+    if (!snapshot || !elements) return;
+    elements.stateEl.textContent = snapshot.state;
+    elements.summaryEl.textContent = snapshot.summary;
+    elements.listEl.innerHTML = '';
+    if (!snapshot.activities.length) {
+      const item = document.createElement('li');
+      item.className = 'stage-empty';
+      item.textContent = elements.empty;
+      elements.listEl.appendChild(item);
+      return;
+    }
+    snapshot.activities.forEach((activity) => {
+      const item = document.createElement('li');
+      item.textContent = activity;
+      elements.listEl.appendChild(item);
+    });
+  });
+}
+
+function setRoleStageActivity(stage, state, summary, activity) {
+  const snapshot = roleStageState[stage];
+  if (!snapshot) return;
+  if (state) snapshot.state = state;
+  if (summary) snapshot.summary = truncateText(summary, 220);
+  if (activity) {
+    snapshot.activities.unshift(truncateText(activity, 150));
+    snapshot.activities = snapshot.activities.slice(0, 5);
+  }
+  renderRoleStageCards();
+}
+
+function resetRoleStageCards() {
+  roleStageState = {
+    propose: { state: 'Queued', summary: 'Proposal path is waiting for new activity.', activities: [] },
+    critique: { state: 'Queued', summary: 'Critique path is waiting for proposal output.', activities: [] },
+    assess: { state: 'Queued', summary: 'Assessment path is waiting for proposal and critique output.', activities: [] }
+  };
+  renderRoleStageCards();
+}
+
+function renderThroughputShowcase() {
+  if (!throughputShowcase) return;
+  throughputShowcase.innerHTML = '';
+  if (!throughputActivitiesState.length) {
+    const item = document.createElement('li');
+    item.className = 'throughput-empty';
+    item.textContent = 'No activities yet.';
+    throughputShowcase.appendChild(item);
+    return;
+  }
+
+  throughputActivitiesState.forEach((entry) => {
+    const item = document.createElement('li');
+    item.className = `throughput-activity-item ${entry.tone || 'neutral'}`;
+    const title = document.createElement('div');
+    title.className = 'throughput-activity-title';
+    title.textContent = entry.title;
+    const details = document.createElement('div');
+    details.className = 'throughput-activity-details';
+    details.textContent = entry.details;
+    item.appendChild(title);
+    item.appendChild(details);
+    throughputShowcase.appendChild(item);
+  });
+}
+
+function appendThroughputActivity(title, details, tone = 'neutral') {
+  throughputActivitiesState.unshift({
+    title: truncateText(title, 84),
+    details: truncateText(details, 180),
+    tone
+  });
+  throughputActivitiesState = throughputActivitiesState.slice(0, 12);
+  renderThroughputShowcase();
+}
+
+function resetThroughputShowcase() {
+  throughputActivitiesState = [];
+  if (throughputRequest) {
+    throughputRequest.textContent = truncateText(userRequests.value || decision.value || 'No active request yet.', 96);
+  }
+  if (throughputRoute) {
+    throughputRoute.textContent = 'Route pending';
+  }
+  if (throughputNextMove) {
+    throughputNextMove.textContent = 'Await next governed action.';
+  }
+  renderThroughputShowcase();
+  resetVisualDashboards();
+}
+
+function buildDecisionRecordSummary(label, payload) {
+  if (payload && payload.error) {
+    return `${label}\n\nStatus: blocked\nIssue: ${payload.error}`;
+  }
+
+  const {
+    envelope,
+    collaboration,
+    route,
+    verifyGates,
+    checkpoint,
+    implementation,
+    processQuality,
+    scoreSummary
+  } = extractRunEnvelope(payload);
+
+  const recommendation = firstNonEmpty(
+    checkpoint ? checkpoint.decision : null,
+    implementation ? implementation.note : null,
+    route ? route.reason : null,
+    processQuality ? processQuality.recommendation : null,
+    envelope.decision,
+    'No recommendation captured yet.'
+  );
+
+  const nextMove = firstNonEmpty(
+    implementation ? implementation.next_step : null,
+    implementation ? implementation.note : null,
+    route ? route.reason : null,
+    checkpoint ? checkpoint.reason : null,
+    'Review the latest governed output and continue the next cycle.'
+  );
+
+  const lines = [
+    label,
+    '',
+    `Recommendation: ${recommendation}`,
+    `Request in focus: ${firstNonEmpty(collaboration ? collaboration.user_requests : null, envelope.objective, envelope.decision, 'No request summary captured.')}`,
+    `Route: ${route ? `${route.recommended_mode || 'n/a'} - ${route.reason || 'reason pending'}` : 'pending'}`,
+    `Next move: ${nextMove}`
+  ];
+
+  if (scoreSummary && scoreSummary.weighted_score_100 !== undefined && scoreSummary.weighted_score_100 !== null) {
+    lines.push(`Score: ${scoreSummary.weighted_score_100}/100`);
+  }
+
+  if (verifyGates) {
+    lines.push(`Verify gates: ${verifyGates.all_passed ? 'all passed' : 'conditions remain open'}`);
+  }
+
+  return lines.join('\n');
+}
+
+function updateThroughputSummary(payload) {
+  const { envelope, collaboration, route, implementation, processQuality, researchSynthesis, activeSearchPlan } = extractRunEnvelope(payload);
+  const nextMove = firstNonEmpty(
+    implementation ? implementation.note : null,
+    processQuality ? processQuality.recommendation : null,
+    route ? route.reason : null,
+    researchSynthesis && Array.isArray(researchSynthesis.targeted_research_tasks) ? researchSynthesis.targeted_research_tasks[0] : null,
+    activeSearchPlan && Array.isArray(activeSearchPlan.suggested_queries) ? activeSearchPlan.suggested_queries[0] : null,
+    'Await next governed action.'
+  );
+
+  if (throughputRequest) {
+    throughputRequest.textContent = truncateText(
+      firstNonEmpty(collaboration ? collaboration.user_requests : null, envelope.objective, envelope.decision, userRequests.value, 'No active request yet.'),
+      110
+    );
+  }
+  if (throughputRoute) {
+    throughputRoute.textContent = truncateText(route ? `${route.recommended_mode || 'route pending'}${route.reason ? ` - ${route.reason}` : ''}` : 'Route pending', 110);
+  }
+  if (throughputNextMove) {
+    throughputNextMove.textContent = truncateText(nextMove, 110);
+  }
+}
+
+function syncStageCardsFromPayload(payload) {
+  const { envelope, route, verifyGates, checkpoint, implementation, processQuality, researchSynthesis, scoreSummary } = extractRunEnvelope(payload);
+  setRoleStageActivity(
+    'propose',
+    'Ready',
+    firstNonEmpty(envelope.objective, envelope.decision, 'Proposal target captured for this run.'),
+    firstNonEmpty(checkpoint ? checkpoint.decision : null, envelope.decision, 'Proposal state updated.')
+  );
+
+  const critiqueSignal = firstNonEmpty(
+    processQuality ? processQuality.recommendation : null,
+    researchSynthesis && Array.isArray(researchSynthesis.targeted_research_tasks) ? researchSynthesis.targeted_research_tasks[0] : null,
+    openTopics.value,
+    'Critique cues captured from the current run.'
+  );
+  setRoleStageActivity('critique', 'Ready', critiqueSignal, critiqueSignal);
+
+  const assessSignal = firstNonEmpty(
+    route ? route.reason : null,
+    implementation ? implementation.note : null,
+    checkpoint ? checkpoint.reason : null,
+    'Assessment is waiting for a final route.'
+  );
+  const assessStatus = verifyGates ? (verifyGates.all_passed ? 'Passed' : 'Review') : (route ? 'Routed' : 'Ready');
+  const assessActivity = scoreSummary && scoreSummary.weighted_score_100 !== undefined && scoreSummary.weighted_score_100 !== null
+    ? `Score ${scoreSummary.weighted_score_100}/100${route && route.recommended_mode ? `, route ${route.recommended_mode}` : ''}`
+    : assessSignal;
+  setRoleStageActivity('assess', assessStatus, assessSignal, assessActivity);
+}
+
+function formatCollaborationLabel(value) {
+  return String(value || 'new-request')
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function updateMissionControl() {
+  const selectedKey = useCaseProfile.value;
+  const selectedMeta = USE_CASE_CARD_META[selectedKey];
+  const references = parseLineList(publicReferences.value);
+  const datasets = parseLineList(datasetRegistry.value);
+  const topics = parseLineList(openTopics.value);
+
+  if (metricUseCase) {
+    metricUseCase.textContent = selectedMeta ? selectedMeta.title : 'Custom';
+  }
+  if (metricObjective) {
+    metricObjective.textContent = truncateText(objective.value || 'Select or shape the current decision path.');
+  }
+  if (metricRuntime) {
+    metricRuntime.textContent = `${runtimeProvider.value} / ${taskMode.value} / ${executionMode.value}`;
+  }
+  if (metricModels) {
+    metricModels.textContent = `proposal ${truncateText(modelProposal.value, 20)}, critique ${truncateText(modelCritique.value, 20)}, assess ${truncateText(modelAssess.value, 20)}`;
+  }
+  if (metricCollaboration) {
+    metricCollaboration.textContent = formatCollaborationLabel(collaborationMode.value);
+  }
+  if (metricTopics) {
+    metricTopics.textContent = `${topics.length} open topic${topics.length === 1 ? '' : 's'} tracked.`;
+  }
+  if (metricSources) {
+    metricSources.textContent = truncateText(sourcesInput.value || textDir.value, 48);
+  }
+  if (metricEvidenceDetail) {
+    metricEvidenceDetail.textContent = `${references.length} reference${references.length === 1 ? '' : 's'}, ${datasets.length} registered dataset${datasets.length === 1 ? '' : 's'}.`;
+  }
+  if (metricArtifacts) {
+    metricArtifacts.textContent = `${artifactCount} available`;
+  }
+  if (metricArtifactsDetail) {
+    metricArtifactsDetail.textContent = artifactCount > 0
+      ? 'Decision records and outputs are ready to inspect or download.'
+      : 'Refresh after a run to keep the record visible.';
+  }
+  if (statusRuntime) {
+    statusRuntime.textContent = `${runtimeProvider.value} / ${policy.value}`;
+  }
+  if (statusArtifacts) {
+    statusArtifacts.textContent = `${artifactCount} artifact${artifactCount === 1 ? '' : 's'}`;
+  }
+  if (dashboardArtifactsValue) {
+    dashboardArtifactsValue.textContent = String(artifactCount);
+  }
+  if (dashboardRuntimeValue) {
+    dashboardRuntimeValue.textContent = runtimeProvider.value;
+  }
+}
+
+function updateActiveSection(sectionId) {
+  const links = document.querySelectorAll('.segment-nav-link');
+  links.forEach((link) => {
+    const href = link.getAttribute('href') || '';
+    link.classList.toggle('active', href === `#${sectionId}`);
+    if (href === `#${sectionId}` && missionActiveSection) {
+      missionActiveSection.textContent = link.textContent.trim();
+    }
+  });
+}
+
+function setupSectionObserver() {
+  const targets = document.querySelectorAll('.section-anchor-target');
+  if (!targets.length || typeof IntersectionObserver === 'undefined') {
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    const visible = entries
+      .filter((entry) => entry.isIntersecting)
+      .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+    if (visible.length > 0) {
+      updateActiveSection(visible[0].target.id);
+    }
+  }, {
+    rootMargin: '-20% 0px -55% 0px',
+    threshold: [0.2, 0.45, 0.7]
+  });
+
+  targets.forEach((target) => observer.observe(target));
+}
 
 const USE_CASE_PROFILES = {
   corenetx: {
@@ -785,16 +1418,23 @@ function applyUseCaseProfile(profileKey) {
 
 function setBusy(message) {
   statusEl.textContent = message;
-  [btnOcr, btnConvert, btnFramework, btnResearch, btnQuality, btnEvidence, btnPipeline, btnLiveDebate].forEach((btn) => {
+  if (missionRunState) {
+    missionRunState.textContent = 'Running';
+  }
+  [btnOcr, btnConvert, btnFramework, btnResearch, btnQuality, btnEvidence, btnPipeline, btnLiveDebate, btnMissionFramework, btnMissionResearch, btnMissionEvidence, btnMissionDebate, btnMissionPipeline].forEach((btn) => {
     btn.disabled = true;
   });
 }
 
 function clearBusy(message = 'Idle') {
   statusEl.textContent = message;
-  [btnOcr, btnConvert, btnFramework, btnResearch, btnQuality, btnEvidence, btnPipeline, btnLiveDebate].forEach((btn) => {
+  if (missionRunState) {
+    missionRunState.textContent = message === 'Idle' ? 'Idle' : 'Ready';
+  }
+  [btnOcr, btnConvert, btnFramework, btnResearch, btnQuality, btnEvidence, btnPipeline, btnLiveDebate, btnMissionFramework, btnMissionResearch, btnMissionEvidence, btnMissionDebate, btnMissionPipeline].forEach((btn) => {
     btn.disabled = false;
   });
+  updateMissionControl();
 }
 
 function safeGetDraft() {
@@ -834,6 +1474,15 @@ function formatDraftTimestamp(value) {
 function setDraftStatus(message) {
   if (draftStatus) {
     draftStatus.textContent = message;
+  }
+  if (metricDraft) {
+    metricDraft.textContent = truncateText(message, 24);
+  }
+  if (metricDraftDetail) {
+    metricDraftDetail.textContent = message;
+  }
+  if (statusDraft) {
+    statusDraft.textContent = truncateText(message, 28);
   }
 }
 
@@ -1008,6 +1657,15 @@ function clearQuickInput(message) {
   scheduleDraftSave();
 }
 
+async function submitQuickInputToPipeline() {
+  const value = consumeQuickInput();
+  if (!value) return;
+  appendTextBlock(userRequests, value);
+  appendTextBlock(continuationNotes, `Continue from quick input: ${value}`);
+  clearQuickInput('Sent into the live request. Running the full pipeline now.');
+  await btnPipeline.click();
+}
+
 function firstNonEmpty(...values) {
   for (const value of values) {
     if (typeof value === 'string' && value.trim()) {
@@ -1091,8 +1749,12 @@ function buildOutcomeSummary(label, payload) {
 }
 
 function showResult(label, payload) {
+  updateThroughputSummary(payload);
+  updateVisualDashboards(payload);
   outcomeSummaryView.textContent = buildOutcomeSummary(label, payload);
-  resultView.textContent = `${label}\n\n${JSON.stringify(payload, null, 2)}`;
+  resultView.textContent = buildDecisionRecordSummary(label, payload);
+  syncStageCardsFromPayload(payload);
+  appendThroughputActivity(label, firstNonEmpty(buildDecisionRecordSummary(label, payload).split('\n').slice(2, 4).join(' '), 'Run output updated.'), payload && payload.error ? 'warn' : 'ok');
   focusOutputSurface();
 }
 
@@ -1158,6 +1820,7 @@ async function refreshArtifacts() {
   const res = await fetch('/api/artifacts');
   const data = await res.json();
   artifactList.innerHTML = '';
+  artifactCount = Array.isArray(data.artifacts) ? data.artifacts.length : 0;
 
   (data.artifacts || []).forEach((item) => {
     const li = document.createElement('li');
@@ -1176,6 +1839,8 @@ async function refreshArtifacts() {
     li.textContent = 'No artifacts yet.';
     artifactList.appendChild(li);
   }
+
+  updateMissionControl();
 }
 
 function commonPayload() {
@@ -1377,6 +2042,7 @@ function renderInputRegistry() {
       assess: modelAssess.value
     }
   }, null, 2);
+  updateMissionControl();
 }
 
 btnFramework.addEventListener('click', async () => {
@@ -1469,6 +2135,9 @@ function resetDebateTimeline() {
   checkpointReason.textContent = '';
   frameworkView.textContent = 'Framework loading...';
   scoringView.textContent = 'Scoring pending cycle assessments...';
+  resetRoleStageCards();
+  resetThroughputShowcase();
+  appendThroughputActivity('Run Queued', 'A new governed cycle has started and stage activity will appear below.', 'neutral');
 }
 
 function appendDebateEvent(eventLabel, details, tone = 'neutral') {
@@ -1490,6 +2159,7 @@ function appendDebateEvent(eventLabel, details, tone = 'neutral') {
   li.appendChild(text);
   debateTimeline.appendChild(li);
   debateTimeline.scrollTop = debateTimeline.scrollHeight;
+  appendThroughputActivity(eventLabel, details, tone);
 }
 
 function parseSseChunk(raw) {
@@ -1517,6 +2187,8 @@ function parseSseChunk(raw) {
 
 function renderStepEvent(step) {
   if (step.stage === 'propose') {
+    setCycleSnapshots([{ label: `C${step.cycle}`, score: 10 + (step.cycle * 10), coverage: 12 + (step.cycle * 8) }], `cycle ${step.cycle}`);
+    setRoleStageActivity('propose', `Cycle ${step.cycle}`, step.proposal || 'Proposal prepared.', `Cycle ${step.cycle}: ${step.proposal || 'Proposal prepared.'}`);
     appendDebateEvent(
       `Cycle ${step.cycle} - Propose`,
       step.proposal || 'Proposal prepared.',
@@ -1529,6 +2201,7 @@ function renderStepEvent(step) {
     const risks = Array.isArray(step.extracted_risk_flags) && step.extracted_risk_flags.length > 0
       ? ` Risks: ${step.extracted_risk_flags.join(', ')}.`
       : ' Risks: none extracted.';
+    setRoleStageActivity('critique', `Cycle ${step.cycle}`, `${step.critique || 'Critique completed.'}${risks}`, `Cycle ${step.cycle}: ${step.critique || 'Critique completed.'}`);
     appendDebateEvent(
       `Cycle ${step.cycle} - Critique`,
       `${step.critique || 'Critique completed.'}${risks}`,
@@ -1552,6 +2225,8 @@ function renderStepEvent(step) {
       ? 'delta n/a'
       : `delta ${score.delta_weighted_score_100 > 0 ? '+' : ''}${score.delta_weighted_score_100}`;
 
+    setRoleStageActivity('assess', `Cycle ${step.cycle}`, `Verdict: ${step.verdict || 'unknown'}. Human control: ${control}.`, `Cycle ${step.cycle}: ${scoreText}, ${coverageText}, ${deltaText}.`);
+    setCycleSnapshots([{ label: `C${step.cycle}`, score: step.scoring && step.scoring.weighted_score_100 ? step.scoring.weighted_score_100 : 0, coverage: step.scoring && step.scoring.coverage_ratio ? Math.round(step.scoring.coverage_ratio * 100) : 0 }], `cycle ${step.cycle}`);
     appendDebateEvent(
       `Cycle ${step.cycle} - Assess`,
       `Verdict: ${step.verdict || 'unknown'}. Human control: ${control}. ${scoreText}, ${coverageText}, ${deltaText}.`,
@@ -1617,6 +2292,7 @@ async function runLiveDebate() {
         const data = parsed.data;
 
         if (evt === 'start') {
+          setProcessFlowFromDebateEvent('start', data);
           appendDebateEvent('Debate Started', data.message || 'Live debate has started.', 'neutral');
           return;
         }
@@ -1627,6 +2303,7 @@ async function runLiveDebate() {
         }
 
         if (evt === 'framework') {
+          setProcessFlowFromDebateEvent('framework', data);
           frameworkView.textContent = JSON.stringify(data, null, 2);
           appendDebateEvent('Framework Loaded', 'Assessment framework, topology, and governance policy loaded.', 'neutral');
           return;
@@ -1662,6 +2339,7 @@ async function runLiveDebate() {
         }
 
         if (evt === 'dataset-selection') {
+          setProcessFlowFromDebateEvent('dataset-selection', data);
           appendDebateEvent(
             'Dataset Selection',
             `Using ${data.source_count} source files (selected ${data.selected_files}/${data.discovered_files}). Preview: ${(data.source_preview || []).join(', ') || 'n/a'}`,
@@ -1671,6 +2349,7 @@ async function runLiveDebate() {
         }
 
         if (evt === 'step') {
+          setProcessFlowFromDebateEvent('step', data);
           renderStepEvent(data);
           return;
         }
@@ -1681,6 +2360,7 @@ async function runLiveDebate() {
         }
 
         if (evt === 'final') {
+          setProcessFlowFromDebateEvent('final', data);
           finalPayload = data;
           outcomeSummaryView.textContent = buildOutcomeSummary('Live Debate Completed', data);
           const checkpoint = data.human_checkpoint || {};
@@ -1902,6 +2582,7 @@ btnPipeline.addEventListener('click', async () => {
         }
 
         if (evt === 'stage') {
+          updateFlowFromPipelineStage(data.stage, data.status, data.detail);
           const tone = data.status === 'blocked' ? 'warn' : (data.status === 'completed' || data.status === 'ready' ? 'ok' : 'neutral');
           appendDebateEvent(
             `Stage ${data.stage}`,
@@ -2064,7 +2745,18 @@ if (btnContinueSession) {
 if (quickInputBar) {
   quickInputBar.addEventListener('input', () => {
     const value = quickInputBar.value.trim();
-    setQuickInputStatus(value ? 'Ready to add this into the live collaboration context.' : 'The bar feeds the active collaboration fields and autosaves with the rest of the session.');
+    setQuickInputStatus(value ? 'Press Enter to send. Use Alt+Enter for a new line.' : 'Enter sends immediately into the live request. Alt+Enter adds a line break.');
+  });
+
+  quickInputBar.addEventListener('keydown', async (event) => {
+    if (event.key !== 'Enter' || event.isComposing) {
+      return;
+    }
+    if (event.altKey) {
+      return;
+    }
+    event.preventDefault();
+    await submitQuickInputToPipeline();
   });
 }
 
@@ -2088,13 +2780,28 @@ if (btnQueueTopic) {
 
 if (btnRunFromBar) {
   btnRunFromBar.addEventListener('click', async () => {
-    const value = consumeQuickInput();
-    if (!value) return;
-    appendTextBlock(userRequests, value);
-    appendTextBlock(continuationNotes, `Continue from quick input: ${value}`);
-    clearQuickInput('Queued into the live request. Running the full pipeline now.');
-    await btnPipeline.click();
+    await submitQuickInputToPipeline();
   });
+}
+
+if (btnMissionFramework) {
+  btnMissionFramework.addEventListener('click', () => btnFramework.click());
+}
+
+if (btnMissionResearch) {
+  btnMissionResearch.addEventListener('click', () => btnResearch.click());
+}
+
+if (btnMissionEvidence) {
+  btnMissionEvidence.addEventListener('click', () => btnEvidence.click());
+}
+
+if (btnMissionDebate) {
+  btnMissionDebate.addEventListener('click', () => btnLiveDebate.click());
+}
+
+if (btnMissionPipeline) {
+  btnMissionPipeline.addEventListener('click', () => btnPipeline.click());
 }
 
 useCaseProfile.addEventListener('change', () => {
@@ -2160,6 +2867,12 @@ renderRuntimeGuide();
 renderInputRegistry();
 renderUseCaseHub();
 updateSelectedUseCaseNote();
+updateMissionControl();
+updateActiveSection('top-output');
+setupSectionObserver();
+renderRoleStageCards();
+resetThroughputShowcase();
+renderProcessFlow();
 
 const savedDraft = safeGetDraft();
 if (savedDraft) {

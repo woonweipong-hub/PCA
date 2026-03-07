@@ -374,6 +374,39 @@ pca prepare discuss --decision "Architecture framing" --context "Phase 1 migrati
 
 PCA includes a local-first web UI for running OCR, conversion, quality checks, evidence checks, and downloading run artifacts.
 
+### Direct Download and Use Requirements
+
+For users who want to just download PCA and use the Browser UI directly, the requirements should be understood clearly:
+
+- this is a local web application, not a static page opened by double-clicking `web/ui/index.html`
+- the Browser UI requires the local Node server because it depends on local API routes, SSE streaming, artifact generation, and controlled filesystem access
+- the minimum direct-use requirement is Node.js 18+ with npm
+- Ollama is the recommended direct local runtime when users want Qwen or DeepSeek models without relying on another PCA surface
+
+Minimum direct-use path:
+
+1. Download the repository zip or release package.
+2. Install Node.js 18+.
+3. On Windows, you can run `start-browser-ui.cmd` from the PCA folder for a direct local launch.
+4. Otherwise run `npm install` once.
+5. Optionally install Ollama and pull the local models you want to use.
+6. Run `npm run ui:start`.
+7. Open `http://localhost:4173`.
+
+Recommended Ollama direct-use models:
+
+- `qwen2.5:7b`
+- `qwen2.5:14b`
+- `deepseek-r1:8b`
+
+Optional requirement:
+
+- install `requirements-z3.txt` only if you want Python-backed symbolic verification in verify gates
+
+Windows direct-launch helper:
+
+- `start-browser-ui.cmd` installs dependencies if needed, opens the browser, and starts the local UI server
+
 ```bash
 npm run ui:start
 ```

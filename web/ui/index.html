@@ -13,10 +13,20 @@
   <div class="bg-layer"></div>
   <main class="shell wide">
     <header class="hero">
-      <p class="eyebrow">PCA Browser Platform</p>
       <h1>From Ideas to Impact</h1>
-      <p class="subtitle">Output stays visible first. Setup, data, PCA roles, models, and tools stay on the page in plain view so collaboration can continue without hunting through hidden layers.</p>
     </header>
+
+    <section class="hero-access-strip panel" aria-label="Plain view workspace access">
+      <div class="plain-view-dock">
+        <a class="plain-view-link" href="#top-output">Output First</a>
+        <a class="plain-view-link" href="#top-input">Input</a>
+        <a class="plain-view-link" href="#segment-live-thread">Thread</a>
+        <a class="plain-view-link" href="#segment-evidence-outputs">Evidence</a>
+        <a class="plain-view-link" href="#data-source-setup">Data + Setup</a>
+        <a class="plain-view-link" href="#continuous-collaboration">Collaboration</a>
+        <a class="plain-view-link" href="#segment-runtime-setup">Roles + Models + Tools</a>
+      </div>
+    </section>
 
     <nav class="segment-nav" aria-label="Quick page navigation">
       <a class="segment-nav-link" href="#top-output">Results + Input</a>
@@ -26,17 +36,196 @@
       <a class="segment-nav-link" href="#segment-appearance">Visual Theme</a>
     </nav>
 
+    <section class="panel mission-control-panel">
+      <article class="card mission-control-card">
+        <div class="card-head mission-control-head">
+          <div>
+            <p class="segment-kicker">Mission Control</p>
+            <h2>Session Pulse</h2>
+            <p class="muted">Keep the current route, collaboration posture, evidence scope, and next action visible before diving back into the longer workspace.</p>
+          </div>
+          <div class="mission-control-state">
+            <span class="mono mission-pill" id="missionRunState">Idle</span>
+            <span class="mono mission-pill" id="missionActiveSection">Results + Input</span>
+          </div>
+        </div>
+
+        <div id="missionMetrics" class="mission-metrics-grid" aria-live="polite">
+          <article class="mission-metric-card">
+            <span class="mission-metric-label">Use Case</span>
+            <strong id="metricUseCase">Custom</strong>
+            <p id="metricObjective" class="mission-metric-note">Select or shape the current decision path.</p>
+          </article>
+          <article class="mission-metric-card">
+            <span class="mission-metric-label">Runtime Stack</span>
+            <strong id="metricRuntime">ollama / analysis / reasoning-only</strong>
+            <p id="metricModels" class="mission-metric-note">proposal n/a, critique n/a, assess n/a</p>
+          </article>
+          <article class="mission-metric-card">
+            <span class="mission-metric-label">Collaboration</span>
+            <strong id="metricCollaboration">New Request</strong>
+            <p id="metricTopics" class="mission-metric-note">0 open topics tracked.</p>
+          </article>
+          <article class="mission-metric-card">
+            <span class="mission-metric-label">Evidence Scope</span>
+            <strong id="metricSources">data/public-pdf-text</strong>
+            <p id="metricEvidenceDetail" class="mission-metric-note">0 references, 0 registered datasets.</p>
+          </article>
+          <article class="mission-metric-card">
+            <span class="mission-metric-label">Artifacts</span>
+            <strong id="metricArtifacts">0 available</strong>
+            <p id="metricArtifactsDetail" class="mission-metric-note">Refresh after a run to keep the record visible.</p>
+          </article>
+          <article class="mission-metric-card">
+            <span class="mission-metric-label">Draft Status</span>
+            <strong id="metricDraft">Autosave ready</strong>
+            <p id="metricDraftDetail" class="mission-metric-note">Session state persists in this browser.</p>
+          </article>
+        </div>
+
+        <div class="mission-action-row">
+          <button id="btnMissionFramework" class="ghost slim" type="button">Framework</button>
+          <button id="btnMissionResearch" class="ghost slim" type="button">Research</button>
+          <button id="btnMissionEvidence" class="ghost slim" type="button">Evidence</button>
+          <button id="btnMissionDebate" class="ghost slim" type="button">Live Debate</button>
+          <button id="btnMissionPipeline" class="accent slim" type="button">Full Pipeline</button>
+          <a class="mono mission-jump-link" href="#continuous-collaboration">jump to collaboration</a>
+        </div>
+      </article>
+    </section>
+
     <section id="top-output" class="panel section-anchor-target">
       <div class="grid-two output-grid">
         <article class="card primary-output-card">
           <div class="card-head">
-            <h2>Latest Result</h2>
-            <span class="mono">output first</span>
+            <h2>Final Recommendation</h2>
+            <span class="mono">decision record</span>
           </div>
-          <p class="muted">Visible first for immediate review and reaction.</p>
+          <p class="muted">The current recommendation, route, and immediate next move extracted from the latest governed run.</p>
           <pre id="resultView">No run yet.</pre>
         </article>
         <article class="card secondary-output-card">
+          <div class="card-head">
+            <h2>Conversation Throughputs Showcase</h2>
+            <span class="mono">live flow</span>
+          </div>
+          <p class="muted">See what the conversation is trying to resolve, where the route currently points, and every major activity that moved the thread forward.</p>
+          <div class="throughput-stat-grid">
+            <article class="throughput-stat-card">
+              <span class="mission-metric-label">Current Request</span>
+              <strong id="throughputRequest">No active request yet.</strong>
+            </article>
+            <article class="throughput-stat-card">
+              <span class="mission-metric-label">Route</span>
+              <strong id="throughputRoute">Route pending</strong>
+            </article>
+            <article class="throughput-stat-card">
+              <span class="mission-metric-label">Next Move</span>
+              <strong id="throughputNextMove">Await next governed action.</strong>
+            </article>
+          </div>
+          <div class="throughput-visual-grid">
+            <article class="visual-card">
+              <div class="card-head compact-head">
+                <h3>Process Diagram</h3>
+                <span id="throughputFlowState" class="mono">awaiting run</span>
+              </div>
+              <div id="throughputFlow" class="throughput-flow"></div>
+            </article>
+            <article class="visual-card">
+              <div class="card-head compact-head">
+                <h3>Visual Dashboard</h3>
+                <span id="throughputDashboardState" class="mono">live metrics</span>
+              </div>
+              <div class="dashboard-bar-stack">
+                <div class="dashboard-bar-group">
+                  <div class="dashboard-bar-label-row">
+                    <span>Score</span>
+                    <span id="dashboardScoreValue" class="mono">0 / 100</span>
+                  </div>
+                  <div class="dashboard-bar-track"><span id="dashboardScoreFill" class="dashboard-bar-fill score"></span></div>
+                </div>
+                <div class="dashboard-bar-group">
+                  <div class="dashboard-bar-label-row">
+                    <span>Coverage</span>
+                    <span id="dashboardCoverageValue" class="mono">0%</span>
+                  </div>
+                  <div class="dashboard-bar-track"><span id="dashboardCoverageFill" class="dashboard-bar-fill coverage"></span></div>
+                </div>
+                <div class="dashboard-bar-group">
+                  <div class="dashboard-bar-label-row">
+                    <span>Risk Load</span>
+                    <span id="dashboardRiskValue" class="mono">0 flags</span>
+                  </div>
+                  <div class="dashboard-bar-track"><span id="dashboardRiskFill" class="dashboard-bar-fill risk"></span></div>
+                </div>
+              </div>
+              <div class="dashboard-mini-stats">
+                <article class="dashboard-mini-stat">
+                  <span class="mission-metric-label">Sources</span>
+                  <strong id="dashboardSourcesValue">0</strong>
+                </article>
+                <article class="dashboard-mini-stat">
+                  <span class="mission-metric-label">Artifacts</span>
+                  <strong id="dashboardArtifactsValue">0</strong>
+                </article>
+                <article class="dashboard-mini-stat">
+                  <span class="mission-metric-label">Runtime</span>
+                  <strong id="dashboardRuntimeValue">ollama</strong>
+                </article>
+              </div>
+            </article>
+            <article class="visual-card">
+              <div class="card-head compact-head">
+                <h3>Cycle Chart</h3>
+                <span id="throughputCycleState" class="mono">awaiting signal</span>
+              </div>
+              <div id="throughputCycleChart" class="cycle-chart">
+                <div class="cycle-chart-empty">Cycle scores and coverage will render here during live runs.</div>
+              </div>
+            </article>
+          </div>
+          <ul id="throughputShowcase" class="throughput-activity-list">
+            <li class="throughput-empty">No activities yet.</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="debate-stage-grid">
+        <article class="card stage-card stage-card-propose">
+          <div class="card-head">
+            <h2>Propose</h2>
+            <span id="stageProposeState" class="mono stage-pill">Idle</span>
+          </div>
+          <p id="stageProposeSummary" class="muted stage-summary">No proposal activity yet.</p>
+          <ul id="stageProposeActivities" class="stage-activity-list">
+            <li class="stage-empty">Waiting for proposal activity.</li>
+          </ul>
+        </article>
+        <article class="card stage-card stage-card-critique">
+          <div class="card-head">
+            <h2>Critique</h2>
+            <span id="stageCritiqueState" class="mono stage-pill">Idle</span>
+          </div>
+          <p id="stageCritiqueSummary" class="muted stage-summary">No critique activity yet.</p>
+          <ul id="stageCritiqueActivities" class="stage-activity-list">
+            <li class="stage-empty">Waiting for critique activity.</li>
+          </ul>
+        </article>
+        <article class="card stage-card stage-card-assess">
+          <div class="card-head">
+            <h2>Assess</h2>
+            <span id="stageAssessState" class="mono stage-pill">Idle</span>
+          </div>
+          <p id="stageAssessSummary" class="muted stage-summary">No assessment activity yet.</p>
+          <ul id="stageAssessActivities" class="stage-activity-list">
+            <li class="stage-empty">Waiting for assessment activity.</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="panel output-snapshot-panel">
+        <article class="card secondary-output-card snapshot-card">
           <h2>Collaborative Throughput Snapshot</h2>
           <p class="muted">Condensed view of what changed, what remains open, and the most practical next move.</p>
           <pre id="outcomeSummaryView">No collaborative throughput snapshot yet.</pre>
@@ -48,20 +237,20 @@
       <article class="card continuous-input-card">
         <div class="card-head continuous-input-head">
           <div>
-            <h2>Continuous Input Bar</h2>
-            <p class="muted">Add the next instruction, correction, or side question without leaving the visible output context.</p>
+            <h2>User Input &amp; Requests</h2>
+            <p class="muted">Press Enter to send. Use Alt+Enter for a new line while keeping the visible output context.</p>
           </div>
           <a class="mono badge badge-link" href="#continuous-collaboration">continuous co-work</a>
         </div>
         <div class="continuous-input-row">
-          <textarea id="quickInputBar" class="continuous-input-text" placeholder="Type the next instruction, clarification, correction, or follow-up question here."></textarea>
+          <textarea id="quickInputBar" class="continuous-input-text" placeholder="Type the next instruction, clarification, correction, or follow-up question here. Press Enter to send, Alt+Enter for a new line."></textarea>
           <div class="continuous-input-actions">
             <button id="btnQueueRequest" class="ghost" type="button">Add To Request</button>
             <button id="btnQueueTopic" class="ghost" type="button">Add Open Topic</button>
             <button id="btnRunFromBar" class="accent" type="button">Continue With Pipeline</button>
           </div>
         </div>
-        <p id="quickInputStatus" class="muted continuous-input-status">The bar feeds the active collaboration fields and autosaves with the rest of the session.</p>
+        <p id="quickInputStatus" class="muted continuous-input-status">Enter sends immediately into the live request. Alt+Enter adds a line break.</p>
       </article>
     </section>
 
@@ -130,30 +319,50 @@
 
     <section class="panel">
       <article class="card">
-        <h2>Workflow Map (Governance-Enhanced)</h2>
-        <p class="muted">Input (Data -> Requirements -> Objectives) -> Process (Organize -> Test -> Verify) -> Output (Recommend -> Route HITL/HOTL -> Implement -> Document).</p>
-        <div class="workflow-map">
-          <div class="wf-step">1. Input: Data</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">2. Input: Requirements</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">3. Input: Objectives</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">4. Process: Organize</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">5. Process: Test</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">6. Process: Verify</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">7. Output: Recommend</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">8. Output: Route HITL/HOTL</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">9. Output: Implement</div>
-          <div class="wf-arrow">-></div>
-          <div class="wf-step">10. Output: Document</div>
+        <h2>PCA Process Board</h2>
+        <p class="muted">Eight visible steps. No hidden box. No guesswork. Each box links to the part of the workspace where that stage is made explicit.</p>
+        <div class="process-board">
+          <a class="process-step-card" href="#data-source-setup">
+            <span class="process-step-number">01</span>
+            <h3>Raw Data Ingestion</h3>
+            <p>Bring in PDFs, OCR outputs, text corpora, and registered source folders.</p>
+          </a>
+          <a class="process-step-card" href="#top-input">
+            <span class="process-step-number">02</span>
+            <h3>Frame</h3>
+            <p>State the objective, decision, user request, constraints, and continuation context.</p>
+          </a>
+          <a class="process-step-card" href="#segment-evidence-outputs">
+            <span class="process-step-number">03</span>
+            <h3>Evidence</h3>
+            <p>Inspect sources, evidence registers, and what the run is actually grounded on.</p>
+          </a>
+          <a class="process-step-card" href="#segment-live-thread">
+            <span class="process-step-number">04</span>
+            <h3>Compare</h3>
+            <p>Expose proposals, critiques, tradeoffs, alternatives, and open topics in the live thread.</p>
+          </a>
+          <a class="process-step-card" href="#continuous-collaboration">
+            <span class="process-step-number">05</span>
+            <h3>Verify</h3>
+            <p>Run evidence gates, policy checks, and optional Z3-backed hard-constraint validation.</p>
+          </a>
+          <a class="process-step-card" href="#top-output">
+            <span class="process-step-number">06</span>
+            <h3>Route</h3>
+            <p>Make the human-control path visible: proceed, monitor, or escalate to HITL.</p>
+          </a>
+          <a class="process-step-card" href="#top-output">
+            <span class="process-step-number">07</span>
+            <h3>Act</h3>
+            <p>Show the current workable recommendation, next move, and implementation-ready output.</p>
+          </a>
+          <a class="process-step-card" href="#decision-record">
+            <span class="process-step-number">08</span>
+            <h3>Record</h3>
+            <p>Keep the decision trail, artifacts, rationale, and downloadable record for reuse.</p>
+          </a>
         </div>
-        <pre class="compact">Input (Data -> Requirements -> Objectives) -> Process (Organize -> Test -> Verify) -> Output (Recommend -> Route HITL/HOTL -> Implement -> Document).</pre>
       </article>
     </section>
 
@@ -168,13 +377,13 @@
       </article>
     </section>
 
-    <section class="panel">
+    <section id="decision-record" class="panel section-anchor-target">
       <article class="card artifact-card">
         <div class="card-head">
-          <h2>Artifacts</h2>
+          <h2>Action and Record</h2>
           <button id="btnRefreshArtifacts" class="ghost slim">Refresh</button>
         </div>
-        <p class="muted">Compact artifact ledger for generated files and downloadable outputs.</p>
+        <p class="muted">Decision record, downloadable artifacts, and retained output trail for implementation, review, and audit.</p>
         <ul id="artifactList" class="artifact-list artifact-list-compact"></ul>
       </article>
     </section>
@@ -729,6 +938,9 @@ Side issues to revisit after main decision</textarea>
 
     <footer class="statusbar">
       <span id="status">Idle</span>
+      <span id="statusRuntime">ollama</span>
+      <span id="statusDraft">autosave ready</span>
+      <span id="statusArtifacts">0 artifacts</span>
     </footer>
   </main>
 

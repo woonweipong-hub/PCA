@@ -85,6 +85,69 @@ Together these fields act as the user's working request contract, not just stati
 
 ## Start Locally
 
+## Direct Download and Use Requirements
+
+If the goal is: download PCA, open the Browser UI quickly, and use it directly on a local machine, the requirements should be stated explicitly.
+
+Direct-download use means:
+
+- the user can download the repository zip or a packaged release to a local folder
+- the user can install the minimum local runtime once
+- the user can start the Browser UI locally and open it in a normal browser
+- the user does not need VS Code, Copilot chat, Antigravity, or a hosted deployment just to use the Browser UI
+
+Non-negotiable requirement:
+
+- the Browser UI is not a static HTML file that can be opened directly with double-click on `index.html`
+- it depends on the local Node server because the UI calls local API endpoints for OCR, conversion, evidence checks, debate streaming, pipeline runs, artifact download, and local filesystem restrictions
+
+Minimum local requirements for direct Browser UI use:
+
+- Node.js 18 or later
+- npm (normally included with Node.js)
+- a modern browser such as Edge or Chrome
+- local write access to the downloaded PCA folder so artifacts can be stored in `outputs/`
+
+Runtime requirements for Ollama-backed direct use:
+
+- Ollama installed locally
+- Ollama running locally
+- at least one pulled local model for each active role
+
+Recommended direct-use model set:
+
+- `qwen2.5:7b` for propose
+- `llama3.1:8b` or `qwen2.5:14b` for critique
+- `qwen2.5:14b` or a local DeepSeek model for assess
+
+Example Ollama preparation:
+
+```bash
+ollama pull qwen2.5:7b
+ollama pull qwen2.5:14b
+ollama pull deepseek-r1:8b
+```
+
+Optional direct-use requirements:
+
+- Python plus `z3-solver` if the user wants symbolic verify-gate checks
+- extra local dataset folders added through `PCA_UI_ALLOWED_ROOTS` if the user wants to browse outside `data/` and `outputs/`
+
+Direct-download quick start should therefore be treated as this sequence:
+
+1. Download PCA to a local folder.
+2. Install Node.js.
+3. On Windows, run `start-browser-ui.cmd` in the PCA folder if you want a direct local launch path.
+4. Otherwise run `npm install` once in the PCA folder.
+5. If using Ollama, install Ollama and pull the local models you want.
+6. Start the Browser UI with `npm run ui:start`.
+7. Open `http://localhost:4173`.
+
+Direct-download acceptance requirement for the Browser UI:
+
+- a user with only the downloaded PCA folder, Node.js, npm, and optional Ollama should be able to start the Browser UI locally and use the core governed workflow without needing any other PCA operating surface
+- on Windows, `start-browser-ui.cmd` should serve as the simplest direct-launch path for that local experience
+
 ```bash
 npm install
 npm run ui:start
@@ -93,6 +156,17 @@ npm run ui:start
 Open:
 
 - `http://localhost:4173`
+
+If you want this to feel like a direct-download product rather than a developer setup, package or release notes should always include these four items together:
+
+- required Node version
+- whether Ollama is optional or expected
+- required local models for the default UI preset
+- exact startup command: `npm install` then `npm run ui:start`
+
+Windows convenience launcher:
+
+- `start-browser-ui.cmd` checks for Node/npm, installs dependencies if `node_modules/` is missing, opens the browser, and starts the local UI server
 
 Environment overrides:
 
