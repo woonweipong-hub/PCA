@@ -439,7 +439,7 @@ html {
 
 .debate-stage-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 1rem;
 }
@@ -468,6 +468,10 @@ html {
 
 .stage-card-assess::before {
   background: #0ea5e9;
+}
+
+.stage-card-governor::before {
+  background: #7c3aed;
 }
 
 .stage-pill {
@@ -514,6 +518,39 @@ html {
 
 .output-snapshot-panel {
   margin-top: 1rem;
+}
+
+.pca-difference-panel {
+  margin-top: 1rem;
+}
+
+.pca-difference-card {
+  padding-bottom: 0.95rem;
+}
+
+.pca-difference-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.75rem;
+}
+
+.difference-item {
+  padding: 0.72rem 0.78rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--inner-surface-strong), var(--inner-surface));
+}
+
+.difference-item h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.92rem;
+}
+
+.difference-item p {
+  margin: 0;
+  font-size: 0.83rem;
+  line-height: 1.45;
 }
 
 .snapshot-card {
@@ -775,31 +812,101 @@ html {
   margin: 0.1rem 0 0;
 }
 
+.composer-starter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.composer-chip {
+  min-height: 1.9rem;
+  padding: 0.32rem 0.68rem;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--inner-surface-strong) 96%, transparent);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.15;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.composer-chip:hover,
+.composer-chip:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--inner-surface-strong));
+  outline: none;
+}
+
+.composer-shell {
+  margin-top: 0.75rem;
+  padding: 0.72rem;
+  border: 1px solid color-mix(in srgb, var(--line) 92%, transparent);
+  border-radius: 14px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--inner-surface-strong) 98%, transparent), color-mix(in srgb, var(--inner-surface) 98%, transparent));
+}
+
+.composer-status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.65rem;
+}
+
+.composer-status-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.8rem;
+  padding: 0.28rem 0.58rem;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card-surface) 80%, transparent);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1.2;
+}
+
 .continuous-input-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.7rem;
   align-items: stretch;
 }
 
+.composer-row {
+  gap: 0;
+}
+
 .continuous-input-text {
-  min-height: 75px;
+  min-height: 96px;
   resize: vertical;
+  border-radius: 12px;
 }
 
 .continuous-input-actions {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 0.55rem;
-  min-width: 220px;
 }
 
-.continuous-input-actions button {
-  width: 100%;
+.composer-actions {
+  justify-content: flex-end;
+}
+
+.composer-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  margin-top: 0.6rem;
 }
 
 .continuous-input-status {
-  margin: 0.45rem 0 0;
+  margin: 0;
   font-size: 0.8rem;
 }
 
@@ -1196,6 +1303,11 @@ button.slim {
   margin: 0.35rem 0 0;
 }
 
+.runtime-foc-note {
+  padding-top: 0.2rem;
+  border-top: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+}
+
 .execution-grid {
   margin-top: 0.9rem;
 }
@@ -1472,11 +1584,21 @@ pre.compact {
   .theme-preview-grid,
   .use-case-grid,
   .use-case-toolbar,
+  .pca-difference-grid,
   .debate-stage-grid,
   .throughput-visual-grid,
   .throughput-stat-grid,
   .mission-metrics-grid {
     grid-template-columns: 1fr;
+  }
+
+  .composer-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .composer-actions {
+    justify-content: stretch;
   }
 
   .theme-control-grid {
@@ -1488,6 +1610,7 @@ pre.compact {
   .grid-two,
   .guide-grid,
   .use-case-toolbar,
+  .pca-difference-grid,
   .debate-stage-grid,
   .throughput-visual-grid,
   .throughput-stat-grid,
@@ -1498,6 +1621,16 @@ pre.compact {
   .throughput-flow,
   .dashboard-mini-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .composer-chip {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .composer-status-chip {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .structured-segment {
@@ -1573,6 +1706,10 @@ pre.compact {
   .throughput-flow,
   .dashboard-mini-stats {
     grid-template-columns: 1fr;
+  }
+
+  .continuous-input-actions {
+    flex-direction: column;
   }
 
   button {

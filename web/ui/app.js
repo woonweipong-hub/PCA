@@ -31,12 +31,20 @@ const stageCritiqueActivities = document.getElementById('stageCritiqueActivities
 const stageAssessState = document.getElementById('stageAssessState');
 const stageAssessSummary = document.getElementById('stageAssessSummary');
 const stageAssessActivities = document.getElementById('stageAssessActivities');
+const stageGovernorState = document.getElementById('stageGovernorState');
+const stageGovernorSummary = document.getElementById('stageGovernorSummary');
+const stageGovernorActivities = document.getElementById('stageGovernorActivities');
 const artifactList = document.getElementById('artifactList');
 const draftStatus = document.getElementById('draftStatus');
 const useCaseHub = document.getElementById('useCaseHub');
 const selectedUseCaseNote = document.getElementById('selectedUseCaseNote');
 const quickInputBar = document.getElementById('quickInputBar');
 const quickInputStatus = document.getElementById('quickInputStatus');
+const composerStatusRuntime = document.getElementById('composerStatusRuntime');
+const composerStatusModels = document.getElementById('composerStatusModels');
+const composerStatusCycles = document.getElementById('composerStatusCycles');
+const composerStatusGovernor = document.getElementById('composerStatusGovernor');
+const composerChips = Array.from(document.querySelectorAll('.composer-chip'));
 const missionRunState = document.getElementById('missionRunState');
 const missionActiveSection = document.getElementById('missionActiveSection');
 const metricUseCase = document.getElementById('metricUseCase');
@@ -187,7 +195,8 @@ let processFlowState = {
 let roleStageState = {
   propose: { state: 'Idle', summary: 'No proposal activity yet.', activities: [] },
   critique: { state: 'Idle', summary: 'No critique activity yet.', activities: [] },
-  assess: { state: 'Idle', summary: 'No assessment activity yet.', activities: [] }
+  assess: { state: 'Idle', summary: 'No assessment activity yet.', activities: [] },
+  governor: { state: 'Idle', summary: 'No governance route yet.', activities: [] }
 };
 
 const PROCESS_FLOW_STEPS = [
@@ -218,6 +227,12 @@ const ROLE_STAGE_ELEMENTS = {
     summaryEl: stageAssessSummary,
     listEl: stageAssessActivities,
     empty: 'Waiting for assessment activity.'
+  },
+  governor: {
+    stateEl: stageGovernorState,
+    summaryEl: stageGovernorSummary,
+    listEl: stageGovernorActivities,
+    empty: 'Waiting for verify gates and route activity.'
   }
 };
 
@@ -481,6 +496,23 @@ function renderRoleStageCards() {
       elements.listEl.appendChild(item);
     });
   });
+  renderComposerStatusStrip();
+}
+
+function renderComposerStatusStrip() {
+  if (composerStatusRuntime) {
+    composerStatusRuntime.textContent = `Runtime: ${runtimeProvider.value} / ${modelPack.value}`;
+  }
+  if (composerStatusModels) {
+    composerStatusModels.textContent = `Models: ${truncateText(modelProposal.value, 18)} / ${truncateText(modelCritique.value, 18)} / ${truncateText(modelAssess.value, 18)}`;
+  }
+  if (composerStatusCycles) {
+    composerStatusCycles.textContent = `Cycles: ${Math.max(1, Math.min(Number(debateCycles.value || 3), 5))} ${passStrategy.value || 'adaptive'} / ${policy.value}`;
+  }
+  if (composerStatusGovernor) {
+    const governorSnapshot = roleStageState.governor || { state: 'Idle', summary: 'No governance route yet.' };
+    composerStatusGovernor.textContent = `Governor: ${governorSnapshot.state} - ${truncateText(governorSnapshot.summary, 62)}`;
+  }
 }
 
 function setRoleStageActivity(stage, state, summary, activity) {
@@ -499,7 +531,8 @@ function resetRoleStageCards() {
   roleStageState = {
     propose: { state: 'Queued', summary: 'Proposal path is waiting for new activity.', activities: [] },
     critique: { state: 'Queued', summary: 'Critique path is waiting for proposal output.', activities: [] },
-    assess: { state: 'Queued', summary: 'Assessment path is waiting for proposal and critique output.', activities: [] }
+    assess: { state: 'Queued', summary: 'Assessment path is waiting for proposal and critique output.', activities: [] },
+    governor: { state: 'Queued', summary: 'Governance path is waiting for verify gates and route output.', activities: [] }
   };
   renderRoleStageCards();
 }
@@ -661,6 +694,20 @@ function syncStageCardsFromPayload(payload) {
     ? `Score ${scoreSummary.weighted_score_100}/100${route && route.recommended_mode ? `, route ${route.recommended_mode}` : ''}`
     : assessSignal;
   setRoleStageActivity('assess', assessStatus, assessSignal, assessActivity);
+
+  const governanceSignal = firstNonEmpty(
+    route ? route.reason : null,
+    checkpoint ? checkpoint.reason : null,
+    verifyGates ? `Verify gates ${verifyGates.all_passed ? 'passed' : 'need review'}.` : null,
+    'Governance is waiting for verify gates and route output.'
+  );
+  const governanceState = route && route.recommended_mode
+    ? route.recommended_mode
+    : (verifyGates ? (verifyGates.all_passed ? 'Ready' : 'Review') : 'Queued');
+  const governanceActivity = route && route.recommended_mode
+    ? `Route ${route.recommended_mode}${checkpoint && checkpoint.required ? ' with human checkpoint' : ''}`
+    : governanceSignal;
+  setRoleStageActivity('governor', governanceState, governanceSignal, governanceActivity);
 }
 
 function formatCollaborationLabel(value) {
@@ -1370,10 +1417,16 @@ function renderRuntimeModePanel() {
 function renderRuntimeGuide() {
   const runtime = runtimeProvider.value;
   const active = RUNTIME_GUIDE_TEXT[runtime] || RUNTIME_GUIDE_TEXT.other;
+  const cycles = Math.max(1, Math.min(Number(debateCycles.value || 3), 5));
+  const strategy = passStrategy.value || 'adaptive';
   const cards = [
     {
       title: 'Why PCA Helps FoC AI',
       body: 'PCA improves raw AI output by separating proposal, critique, assessment, and governance instead of relying on a single unstructured answer.'
+    },
+    {
+      title: 'Copilot-Like UX, Stronger Framework',
+      body: `The browser stays fast and assistant-like, but each run can execute ${cycles} governed cycle${cycles === 1 ? '' : 's'} with a ${strategy} pass strategy so evidence gaps and route changes stay visible.`
     },
     {
       title: active.title,
@@ -1381,7 +1434,7 @@ function renderRuntimeGuide() {
     },
     {
       title: 'FoC and BYOM Paths',
-      body: 'Use Ollama for the fastest free local path, or BYOM for DeepSeek, Qwen, and other compatible models exposed through your own endpoint.'
+      body: 'Use Ollama for the fastest free local path, or BYOM for DeepSeek, Qwen, Llama, Gemma, Phi, and other compatible models exposed through your own endpoint or local gateway.'
     },
     {
       title: 'Recommended Free Model Families',
@@ -1406,6 +1459,7 @@ function renderRuntimeGuide() {
     runtimeGuide.appendChild(el);
   });
 
+  renderComposerStatusStrip();
   renderRuntimeModePanel();
   cliSnippetsView.textContent = buildCliSnippets();
 }
@@ -2359,6 +2413,11 @@ function renderStepEvent(step) {
       : `delta ${score.delta_weighted_score_100 > 0 ? '+' : ''}${score.delta_weighted_score_100}`;
 
     setRoleStageActivity('assess', `Cycle ${step.cycle}`, `Verdict: ${step.verdict || 'unknown'}. Human control: ${control}.`, `Cycle ${step.cycle}: ${scoreText}, ${coverageText}, ${deltaText}.`);
+    const verifyState = step.verify_gates ? (step.verify_gates.all_passed ? 'Ready' : 'Review') : 'Assessing';
+    const verifyActivity = step.verify_gates
+      ? `Cycle ${step.cycle}: verify gates ${step.verify_gates.all_passed ? 'passed' : 'need review'}.`
+      : `Cycle ${step.cycle}: governance waiting for verify gates.`;
+    setRoleStageActivity('governor', verifyState, `Human control: ${control}.`, verifyActivity);
     setCycleSnapshots([{ label: `C${step.cycle}`, score: step.scoring && step.scoring.weighted_score_100 ? step.scoring.weighted_score_100 : 0, coverage: step.scoring && step.scoring.coverage_ratio ? Math.round(step.scoring.coverage_ratio * 100) : 0 }], `cycle ${step.cycle}`);
     appendDebateEvent(
       `Cycle ${step.cycle} - Assess`,
@@ -2514,6 +2573,12 @@ async function runLiveDebate() {
             );
           }
           if (data.route_recommendation) {
+            setRoleStageActivity(
+              'governor',
+              data.route_recommendation.recommended_mode || 'Routed',
+              data.route_recommendation.reason || 'Governance route generated.',
+              `Final route: ${data.route_recommendation.recommended_mode || 'n/a'}`
+            );
             appendDebateEvent(
               'Route Recommendation',
               `${data.route_recommendation.recommended_mode || 'n/a'} - ${data.route_recommendation.reason || 'No reason provided.'}`,
@@ -2744,6 +2809,12 @@ btnPipeline.addEventListener('click', async () => {
             humanCheckpoint.classList.remove('hidden');
             checkpointDecision.textContent = `Route: ${route.recommended_mode || 'n/a'}`;
             checkpointReason.textContent = route.reason || 'No route reason provided.';
+            setRoleStageActivity(
+              'governor',
+              route.recommended_mode || 'Routed',
+              route.reason || 'Governance route generated.',
+              `Pipeline route: ${route.recommended_mode || 'n/a'}`
+            );
           }
           return;
         }
@@ -2890,6 +2961,19 @@ if (quickInputBar) {
     }
     event.preventDefault();
     await submitQuickInputToPipeline();
+  });
+}
+
+if (composerChips.length > 0 && quickInputBar) {
+  composerChips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const prompt = chip.dataset.prompt || '';
+      if (!prompt) return;
+      quickInputBar.value = prompt;
+      quickInputBar.focus();
+      quickInputBar.setSelectionRange(quickInputBar.value.length, quickInputBar.value.length);
+      setQuickInputStatus('Starter prompt loaded. Press Enter to send or edit it first.');
+    });
   });
 }
 

@@ -222,6 +222,39 @@
             <li class="stage-empty">Waiting for assessment activity.</li>
           </ul>
         </article>
+        <article class="card stage-card stage-card-governor">
+          <div class="card-head">
+            <h2>Governor</h2>
+            <span id="stageGovernorState" class="mono stage-pill">Idle</span>
+          </div>
+          <p id="stageGovernorSummary" class="muted stage-summary">No governance route yet.</p>
+          <ul id="stageGovernorActivities" class="stage-activity-list">
+            <li class="stage-empty">Waiting for verify gates and route activity.</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="panel pca-difference-panel">
+        <article class="card pca-difference-card">
+          <div class="card-head compact-head">
+            <h2>PCA Loop, Not Single-Pass Chat</h2>
+            <span class="mono">copilot-like ui, governed underneath</span>
+          </div>
+          <div class="pca-difference-grid">
+            <article class="difference-item">
+              <h3>Familiar Composer</h3>
+              <p class="muted">The input flow stays fast and assistant-like: type, press Enter, keep outputs visible, and continue the thread without changing screens.</p>
+            </article>
+            <article class="difference-item">
+              <h3>Repeated PCA Cycles</h3>
+              <p class="muted">Instead of one answer, PCA can run propose, critique, assess, and govern across multiple cycles so contradictions, weak evidence, and route changes remain visible.</p>
+            </article>
+            <article class="difference-item">
+              <h3>Free Models First</h3>
+              <p class="muted">Default posture is FoC local or BYOM: Ollama with Qwen, DeepSeek, Llama, Gemma, Phi, or your own OpenAI-compatible endpoint.</p>
+            </article>
+          </div>
+        </article>
       </div>
 
       <div class="panel output-snapshot-panel">
@@ -239,19 +272,35 @@
         <div class="card-head continuous-input-head">
           <div>
             <h2>User Input &amp; Requests</h2>
-            <p class="muted">Press Enter to send. Use Alt+Enter for a new line while keeping the visible output context.</p>
+            <p class="muted">A Copilot-style composer for the next instruction, correction, or follow-up while the governed output stays visible above.</p>
           </div>
           <a class="mono badge badge-link" href="#continuous-collaboration">continuous co-work</a>
         </div>
-        <div class="continuous-input-row">
-          <textarea id="quickInputBar" class="continuous-input-text" placeholder="Type the next instruction, clarification, correction, or follow-up question here. Press Enter to send, Alt+Enter for a new line."></textarea>
-          <div class="continuous-input-actions">
-            <button id="btnQueueRequest" class="ghost" type="button">Add To Request</button>
-            <button id="btnQueueTopic" class="ghost" type="button">Add Open Topic</button>
-            <button id="btnRunFromBar" class="accent" type="button">Continue With Pipeline</button>
+        <div class="composer-starter-row" aria-label="Starter prompts">
+          <button class="composer-chip" type="button" data-prompt="Interpret the current regulatory requirements against the active context and keep unresolved conditions visible.">Interpret Requirements</button>
+          <button class="composer-chip" type="button" data-prompt="Find contradictions, overlaps, and silent gaps across the current evidence sources.">Find Contradictions</button>
+          <button class="composer-chip" type="button" data-prompt="Continue from the latest output, strengthen the critique, and route anything uncertain to human review.">Strengthen Critique</button>
+          <button class="composer-chip" type="button" data-prompt="Turn the current result into an action plan with next steps, owners, and evidence-backed follow-up tasks.">Build Action Plan</button>
+        </div>
+        <div class="composer-shell">
+          <div class="composer-status-strip" aria-label="PCA composer status">
+            <span id="composerStatusRuntime" class="composer-status-chip">Runtime: ollama / foc-balanced</span>
+            <span id="composerStatusModels" class="composer-status-chip">Models: qwen2.5:7b / llama3.1:8b / qwen2.5:14b</span>
+            <span id="composerStatusCycles" class="composer-status-chip">Cycles: 3 adaptive</span>
+            <span id="composerStatusGovernor" class="composer-status-chip">Governor: Idle</span>
+          </div>
+          <div class="continuous-input-row composer-row">
+            <textarea id="quickInputBar" class="continuous-input-text" placeholder="Ask PCA what to do next. Enter sends immediately. Alt+Enter adds a new line."></textarea>
+          </div>
+          <div class="composer-footer">
+            <p id="quickInputStatus" class="muted continuous-input-status">Enter sends immediately into the live request. Alt+Enter adds a line break.</p>
+            <div class="continuous-input-actions composer-actions">
+              <button id="btnQueueRequest" class="ghost slim" type="button">Add To Request</button>
+              <button id="btnQueueTopic" class="ghost slim" type="button">Add Open Topic</button>
+              <button id="btnRunFromBar" class="accent slim" type="button">Run With Pipeline</button>
+            </div>
           </div>
         </div>
-        <p id="quickInputStatus" class="muted continuous-input-status">Enter sends immediately into the live request. Alt+Enter adds a line break.</p>
       </article>
     </section>
 
@@ -591,6 +640,7 @@ Side issues to revisit after main decision</textarea>
           </div>
           <p id="runtimeModeBody" class="muted">Run PCA with local models managed by Ollama, or switch to BYOM for your own OpenAI-compatible endpoint.</p>
           <p id="runtimeModeHint" class="mono">Local-first path: pull models in Ollama, then use the generated adapter command below.</p>
+          <p class="muted runtime-foc-note">FoC-first setup: keep the Copilot-like browser experience, but drive it with free local Qwen, DeepSeek, Llama, Gemma, Phi, or a BYOM-compatible gateway.</p>
         </div>
 
         <div class="inline-grid execution-grid">
