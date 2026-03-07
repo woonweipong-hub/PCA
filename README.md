@@ -10,6 +10,8 @@ Product framing: the Browser UI can be treated as the platform, while PCA is the
 
 "This project is independently developed. Any similarity to other systems reflects common industry patterns (for example proposer/critic/evaluator workflows) and does not imply code, prompt, or proprietary method reuse."
 
+The examples and evidence packs in this repository are based on independent personal data exploration and publicly available regulatory datasets only. It does not include any internal, confidential, restricted, or otherwise non-public government material.
+
 ```text
 ██████╗   ██████╗    █████╗
 ██╔══██╗ ██╔════╝   ██╔══██╗
@@ -21,7 +23,9 @@ Product framing: the Browser UI can be treated as the platform, while PCA is the
 
 ## About The Author
 
-I am a trained building architect and digital lead in the construction industry, using AI to work smarter and develop practical tools for practitioners. My current work focuses on automating compliance checks, improving design and BIM workflows through human–machine collaboration, and exploring multi‑agent AI patterns that create impactful, effective workflows.
+Woon Wei Pong is a trained building architect and digital lead in the construction industry. His work focuses on AI-enabled compliance, design and BIM workflows, and human-machine collaboration for the built environment.
+
+ORCID: https://orcid.org/0009-0004-6856-2189
 
 ## Why PCA
 
